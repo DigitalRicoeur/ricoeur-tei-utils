@@ -1,0 +1,302 @@
+#lang at-exp racket
+
+(require xml
+         )
+
+(define/contract (cdata->plain-text it)
+  (-> cdata? string?)
+  (match (cdata-string it)
+    [(regexp #rx"<!\\[CDATA\\[(.*)\\]\\]>" (list _ content))
+     content]
+    [content content]))
+
+(define/contract (valid-char->plain-text num)
+  (-> valid-char? string?)
+  (string (integer->char num)))
+
+(define-values {element% element-or-xexpr/c}
+  (letrec ([element<%> (interface ()
+                         [to-xexpr (->m xexpr/c)]
+                         [to-plain-text (->m string?)]
+                         )])
+    (define element-or-xexpr/c
+      (or/c (is-a?/c element<%>)
+            string?
+            symbol?
+            valid-char?
+            cdata?
+            comment?
+            p-i?))
+    (define/contract element%
+      (class/c (init-field [name symbol?]
+                           [attributes (listof (list/c symbol? string?))]
+                           [body (listof element-or-xexpr/c)]))
+      (class* object% {element<%>}
+        (inspect #f)
+        (super-new)
+        (init-field name
+                    [attributes null]
+                    [body null]
+                    )
+        (define/public (to-xexpr)
+          (list* name attributes (for/list ([child (in-list body)])
+                                   (if (xexpr? child)
+                                       child
+                                       (send child to-xexpr)))))
+        (define/public (to-plain-text)
+          (string-join (map element-or-xexpr->plain-text
+                            body)
+                       ""))
+        #|END element%|#))
+    (values element% element-or-xexpr/c)))
+
+
+(define/contract (element-or-xexpr->plain-text child)
+  (-> element-or-xexpr/c string?)
+  (cond [(string? child)
+         child]
+        [((is-a?/c element%) child)
+         (send child to-plain-text)]
+        [(or (comment? child)
+             (p-i? child))
+         ""]
+        [(cdata? child)
+         (cdata->plain-text child)]
+        [(valid-char? child)
+         (valid-char->plain-text child)]
+        [(symbol? child) ;TODO: improve this
+         (xexpr->string child)]))
+
+(define (tag->element tag)
+  (-> (and/c list? xexpr/c) (is-a?/c element%))
+  (define-values {name attributes raw-body}
+    (match tag
+      [(list-rest name
+                  (? (listof (list/c symbol? string?)) attributes)
+                  raw-body)
+       (values name attributes raw-body)]
+      [(cons name raw-body)
+       (values name null raw-body)]))
+  (new (case name
+         [(TEI.2) TEI.2%]
+         [(text) text%]
+         [(body) body%]
+         [(front) front%]
+         [(back) back%]
+         [(pb) pb%]
+         [(p) p%]
+         [(ab) ab%]
+         [(head) head%]
+         [(div) div%]
+         [else element%])
+       [name name]
+       [attributes attributes]
+       [body (for/list ([child (in-list raw-body)])
+               (if (list? child)
+                   (tag->element child)
+                   child))]))
+
+(define element<%>
+  (class->interface element%))
+
+
+(define-values {elements-only-mixin elements-only-element%/c}
+  (let ([elements-only<%> (interface () )])
+    (values (mixin {element<%>} {elements-only<%>}
+              (inspect #f)
+              (init [body null])
+              (super-new [body (filter (is-a?/c element%) body)]))
+            (is-a?/c elements-only<%>))))
+
+(define guess-paragraphs<%>
+  (interface (element<%>)
+    guess-paragraphs))
+
+(define guess-paragraphs-mixin
+  (mixin {element<%>} {guess-paragraphs<%>}
+    (inspect #f)
+    (super-new)
+    (inherit-field name attributes body)
+    (define/public (guess-paragraphs)
+      (new this%
+           [name name]
+           [attributes attributes]
+           [body (flatten
+                  (for/list ([child (in-list body)])
+                    (if ((is-a?/c guess-paragraphs<%>) child)
+                        (send child guess-paragraphs)
+                        child)))]))))
+    
+
+(define TEI.2%
+  (class (guess-paragraphs-mixin
+          (elements-only-mixin element%))
+    (inspect #f)
+    (super-new)
+    (inherit-field body)
+    (inherit to-xexpr)
+    (match-define (list teiHeader text)
+      body)
+    (define/override (to-plain-text)
+      (send text to-plain-text))
+    (define/public (write-TEI [out (current-output-port)])
+      (displayln @~a{
+ <?xml version="1.0" encoding="utf-8"?>
+ <!DOCTYPE TEI.2 PUBLIC "-//TEI P4//DTD Main Document Type//EN" "tei2.dtd" [
+ @"  "<!ENTITY % TEI.XML   'INCLUDE' >
+ @"  "<!ENTITY % TEI.prose 'INCLUDE' >
+ @"  "<!ENTITY % TEI.linking 'INCLUDE' >
+ ]>}
+                 out)
+      (write-xexpr (to-xexpr)))))
+
+(define text%
+  (class (guess-paragraphs-mixin
+          (elements-only-mixin element%))
+    (inspect #f)
+    (super-new)))
+
+(define body%
+  (class (guess-paragraphs-mixin
+          (elements-only-mixin element%))
+    (inspect #f)
+    (super-new)))
+
+(define front%
+  (class (guess-paragraphs-mixin
+          (elements-only-mixin element%))
+    (inspect #f)
+    (super-new)))
+
+(define back%
+  (class (guess-paragraphs-mixin
+          (elements-only-mixin element%))
+    (inspect #f)
+    (super-new)))
+
+(define pb%
+  (class (elements-only-mixin element%)
+    (inspect #f)
+    (super-new)
+    (inherit-field attributes)
+    (define n
+      (let/ec return
+        (let ([str (car (dict-ref attributes 'n (λ () (return #f))))])
+          (or (string->number str) str))))
+    (define/override (to-plain-text)
+      "\f")))
+
+(define p%
+  (class element%
+    (inspect #f)
+    (super-new)
+    (inherit-field body)
+    (define/override (to-plain-text)
+      (cond
+        [(null? body)
+         ""]
+        [else
+         (string-join
+          (for/list ([child
+                      (in-list
+                       (let ([body (let ([body
+                                          (for/list ([child (in-list body)])
+                                            (if ((is-a?/c element%) child)
+                                                child
+                                                (element-or-xexpr->plain-text child)))])
+                                     (if (string? (first body))
+                                         (cons (string-trim (first body)
+                                                            #:right? #f)
+                                               (rest body))
+                                         body))])
+                         (if (string? (last body))
+                             (append (drop-right body 1)
+                                     (list (string-trim (last body)
+                                                        #:left? #f)))
+                             body)))])
+            (if (string? child)
+                (string-normalize-spaces child #:trim? #f)
+                (send child to-plain-text)))
+          ""
+          #:before-first "\n"
+          #:after-last "\n")]))))
+
+
+(define ab%
+  (let ()
+    (struct parbreak ())
+    (class* element% {guess-paragraphs<%>}
+      (inspect #f)
+      (super-new)
+      (inherit-field body)
+      (define/private (insert-parbreaks)
+        (flatten
+         (for/list ([child (in-list body)])
+           (cond
+             [(string? child)
+              (add-between (regexp-split #px"\n\\s*\n" child)
+                           (parbreak))]
+             [else
+              child]))))
+      (define/private (group-by-parbreaks)
+        (let loop ([this-group null]
+                   [to-go (insert-parbreaks)])
+          (match to-go
+            ['() (list this-group)]
+            [(cons (? parbreak?) more)
+             (cons this-group
+                   (loop null more))]
+            [(cons (pregexp #px"^\\s*$") more)
+             (loop this-group more)]
+            [(cons this-item more)
+             (loop (append this-group
+                           (list this-item))
+                   more)])))
+      (define/public (guess-paragraphs)
+        (for/list ([pargroup (in-list (group-by-parbreaks))]
+                   #:unless (null? pargroup))
+          (match pargroup
+            [(list (? (is-a?/c element%) elem))
+             elem]
+            [_
+             (new p%
+                  [name 'p]
+                  [body pargroup])]))))))
+
+(define head%
+  (class element%
+    (inspect #f)
+    (super-new)))
+
+(define div%
+  (class (guess-paragraphs-mixin
+          (elements-only-mixin element%))
+    (inspect #f)
+    (super-new)))
+
+
+(define (read-TEI [in (current-input-port)])
+  (tag->element
+   (xml->xexpr
+    (document-element
+     (read-xml in)))))
+
+#|
+(with-output-to-file
+    "/Users/philip/code/ricoeur/texts/TEI/oneself_as_another-para.xml"
+  #:exists 'replace
+  (λ () 
+    (send (send
+            (call-with-input-file
+                "/Users/philip/code/ricoeur/texts/TEI/oneself_as_another.xml"
+              read-TEI)
+            guess-paragraphs)
+           write-TEI)))
+
+
+(displayln (send
+            (call-with-input-file
+                "/Users/philip/code/ricoeur/texts/TEI/oneself_as_another.xml"
+              read-TEI)
+            to-plain-text))
+|#
