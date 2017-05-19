@@ -1,6 +1,15 @@
 #lang at-exp racket
 
 (require xml
+         "xml-entity-utils.rkt"
+         "tei-xexpr-contracts.rkt"
+         )
+
+(provide tag->element
+         read-TEI
+         element<%>
+         TEI.2<%>
+         element-or-xexpr/c
          )
 
 (define/contract (cdata->plain-text it)
@@ -31,7 +40,11 @@
       (class/c (init-field [name symbol?]
                            [attributes (listof (list/c symbol? string?))]
                            [body (listof element-or-xexpr/c)]))
-      (class* object% {element<%>}
+      (class* object% (element<%>
+                       (interface (element<%>)
+                         [get-name (->m symbol?)]
+                         [get-attributes (->m (listof (list/c symbol? string?)))]
+                         [get-body (->m (listof element-or-xexpr/c))]))
         (inspect #f)
         (super-new)
         (init-field name
@@ -47,6 +60,10 @@
           (string-join (map element-or-xexpr->plain-text
                             body)
                        ""))
+        (public*
+         [get-name (λ () name)]
+         [get-attributes (λ () attributes)]
+         [get-body (λ () body)])
         #|END element%|#))
     (values element% element-or-xexpr/c)))
 
@@ -64,11 +81,15 @@
          (cdata->plain-text child)]
         [(valid-char? child)
          (valid-char->plain-text child)]
-        [(symbol? child) ;TODO: improve this
-         (xexpr->string child)]))
+        [(symbol? child) 
+         (string (entity-symbol->char child))]))
+
+
+(define element<%>
+  (class->interface element%))
 
 (define (tag->element tag)
-  (-> (and/c list? xexpr/c) (is-a?/c element%))
+  (-> any-tei-xexpr/c (is-a?/c element<%>))
   (define-values {name attributes raw-body}
     (match tag
       [(list-rest name
@@ -88,6 +109,17 @@
          [(ab) ab%]
          [(head) head%]
          [(div) div%]
+         [(teiHeader) teiHeader%] 
+         [(fileDesc) fileDesc%]
+         [(titleStmt) titleStmt%]
+         [(publicationStmt) publicationStmt%]
+         [(sourceDesc) sourceDesc%]
+         [(title) title%]
+         [(author) author%]
+         [(editor) editor%]
+         [(authority) authority%]
+         [(availability) availability%]
+         [(bibl) bibl%]
          [else element%])
        [name name]
        [attributes attributes]
@@ -96,9 +128,12 @@
                    (tag->element child)
                    child))]))
 
-(define element<%>
-  (class->interface element%))
-
+(define/contract (read-TEI [in (current-input-port)])
+  (->* {} {input-port?} (is-a?/c element<%>))
+  (tag->element
+   (xml->xexpr
+    (document-element
+     (read-xml in)))))
 
 (define-values {elements-only-mixin elements-only-element%/c}
   (let ([elements-only<%> (interface () )])
@@ -126,11 +161,14 @@
                     (if ((is-a?/c guess-paragraphs<%>) child)
                         (send child guess-paragraphs)
                         child)))]))))
-    
 
 (define TEI.2%
-  (class (guess-paragraphs-mixin
-          (elements-only-mixin element%))
+  (class* (guess-paragraphs-mixin
+           (elements-only-mixin element%))
+    {(interface (guess-paragraphs<%>)
+       [guess-paragraphs (->m (recursive-contract
+                               (is-a?/c TEI.2%)))]
+       [write-TEI (->*m {} {output-port?} any)])}
     (inspect #f)
     (super-new)
     (inherit-field body)
@@ -149,6 +187,9 @@
  ]>}
                  out)
       (write-xexpr (to-xexpr)))))
+
+(define TEI.2<%>
+  (class->interface TEI.2%))
 
 (define text%
   (class (guess-paragraphs-mixin
@@ -274,12 +315,60 @@
     (inspect #f)
     (super-new)))
 
+(define teiHeader%
+  (class (elements-only-mixin element%)
+    (inspect #f)
+    (super-new)))
 
-(define (read-TEI [in (current-input-port)])
-  (tag->element
-   (xml->xexpr
-    (document-element
-     (read-xml in)))))
+(define fileDesc%
+  (class (elements-only-mixin element%)
+    (inspect #f)
+    (super-new)))
+
+(define titleStmt%
+  (class (elements-only-mixin element%)
+    (inspect #f)
+    (super-new)))
+
+(define publicationStmt%
+  (class (elements-only-mixin element%)
+    (inspect #f)
+    (super-new)))
+
+(define sourceDesc%
+  (class (elements-only-mixin element%)
+    (inspect #f)
+    (super-new)))
+
+(define title%
+  (class element%
+    (inspect #f)
+    (super-new)))
+
+(define author%
+  (class element%
+    (inspect #f)
+    (super-new)))
+
+(define editor%
+  (class element%
+    (inspect #f)
+    (super-new)))
+
+(define authority%
+  (class element%
+    (inspect #f)
+    (super-new)))
+
+(define availability%
+  (class element%
+    (inspect #f)
+    (super-new)))
+
+(define bibl%
+  (class element%
+    (inspect #f)
+    (super-new)))
 
 #|
 (with-output-to-file
