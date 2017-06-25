@@ -10,7 +10,7 @@
          any-tei-xexpr/c
          )
 
-(define/contract (tei-xexpr/c name)
+(define/contract (tei-xexpr/c name) ;case-lambda
   (-> symbol? flat-contract?)
   (case name
     [(TEI.2) TEI.2/c]

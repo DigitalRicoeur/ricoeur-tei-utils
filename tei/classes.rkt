@@ -3,14 +3,24 @@
 (require xml
          "xml-entity-utils.rkt"
          "tei-xexpr-contracts.rkt"
+         roman-numeral
+         data/maybe
+         (rename-in data/functor
+                    [map fmap])
          )
 
 (provide tag->element
          read-TEI
          element<%>
          TEI.2<%>
+         teiHeader<%>
+         TEI-info<%>
+         pb<%> 
          element-or-xexpr/c
          )
+
+(module+ private:term-search
+  (provide smoosh))
 
 (define/contract (cdata->plain-text it)
   (-> cdata? string?)
@@ -23,11 +33,13 @@
   (-> valid-char? string?)
   (string (integer->char num)))
 
+(define-member-name smoosh (generate-member-key))
+
 (define-values {element% element-or-xexpr/c}
-  (letrec ([element<%> (interface ()
-                         [to-xexpr (->m xexpr/c)]
-                         [to-plain-text (->m string?)]
-                         )])
+  (let ([element<%> (interface ()
+                      [to-xexpr (->m xexpr/c)]
+                      [to-plain-text (->m string?)]
+                      )])
     (define element-or-xexpr/c
       (or/c (is-a?/c element<%>)
             string?
@@ -40,8 +52,7 @@
       (class/c (init-field [name symbol?]
                            [attributes (listof (list/c symbol? string?))]
                            [body (listof element-or-xexpr/c)]))
-      (class* object% (element<%>
-                       (interface (element<%>)
+      (class* object% ((interface (element<%>)
                          [get-name (->m symbol?)]
                          [get-attributes (->m (listof (list/c symbol? string?)))]
                          [get-body (->m (listof element-or-xexpr/c))]))
@@ -60,6 +71,12 @@
           (string-join (map element-or-xexpr->plain-text
                             body)
                        ""))
+        (define/public (smoosh)
+          (flatten
+           (for/list ([child (in-list body)])
+             (if (string? child)
+                 child
+                 (send child smoosh)))))
         (public*
          [get-name (λ () name)]
          [get-attributes (λ () attributes)]
@@ -128,8 +145,12 @@
                    (tag->element child)
                    child))]))
 
+(define (discard-bom p)
+   (void (regexp-try-match #rx"^\uFEFF" p)))
+
 (define/contract (read-TEI [in (current-input-port)])
   (->* {} {input-port?} (is-a?/c element<%>))
+  (discard-bom in)
   (tag->element
    (xml->xexpr
     (document-element
@@ -162,13 +183,24 @@
                         (send child guess-paragraphs)
                         child)))]))))
 
+(define get-title<%>
+  (interface (element<%>)
+    [get-title (->m string?)]))
+
+(define TEI-info<%>
+  (interface (get-title<%>)))
+
 (define TEI.2%
   (class* (guess-paragraphs-mixin
            (elements-only-mixin element%))
-    {(interface (guess-paragraphs<%>)
+    ((interface (guess-paragraphs<%>)
        [guess-paragraphs (->m (recursive-contract
                                (is-a?/c TEI.2%)))]
-       [write-TEI (->*m {} {output-port?} any)])}
+       #;[smoosh (->m (listof (or/c string?
+                                  (recursive-contract
+                                   (is-a?/c pb<%>)))))]
+       [write-TEI (->*m {} {output-port?} any)])
+     TEI-info<%>)
     (inspect #f)
     (super-new)
     (inherit-field body)
@@ -177,8 +209,14 @@
       body)
     (define/override (to-plain-text)
       (send text to-plain-text))
+    (define/override (smoosh)
+      (send text smoosh))
+    (define/public (get-teiHeader)
+      teiHeader)
+    (define/public (get-title)
+      (send teiHeader get-title))
     (define/public (write-TEI [out (current-output-port)])
-      (displayln @~a{
+      (displayln @string-append{
  <?xml version="1.0" encoding="utf-8"?>
  <!DOCTYPE TEI.2 PUBLIC "-//TEI P4//DTD Main Document Type//EN" "tei2.dtd" [
  @"  "<!ENTITY % TEI.XML   'INCLUDE' >
@@ -221,11 +259,28 @@
     (super-new)
     (inherit-field attributes)
     (define n
-      (let/ec return
-        (let ([str (car (dict-ref attributes 'n (λ () (return #f))))])
-          (or (string->number str) str))))
+      (fmap car (false->maybe (dict-ref attributes 'n #f))))
+    (define interp
+      (match (from-just #f n)
+        [#f #f]
+        [(app string->number (? number? it))
+         (cons 'number it)]
+        [(app (curry exn->maybe exn:fail? roman->number)
+              (just it))
+         (cons 'roman it)]
+        [(? string? it)
+         (cons #f it)]))
+    (define/public (get-number)
+      n)
+    (define/public (interpret-number)
+      interp)
     (define/override (to-plain-text)
-      "\f")))
+      "\f")
+    (define/override (smoosh)
+      this)))
+
+(define pb<%>
+  (class->interface pb%))
 
 (define p%
   (class element%
@@ -316,19 +371,39 @@
     (super-new)))
 
 (define teiHeader%
-  (class (elements-only-mixin element%)
+  (class* (elements-only-mixin element%) (TEI-info<%>)
     (inspect #f)
-    (super-new)))
+    (super-new)
+    (inherit-field body)
+    (define/public (get-title)
+      (send (findf (is-a?/c fileDesc%) body) get-title))))
+
+(define teiHeader<%>
+  (class->interface teiHeader%))
 
 (define fileDesc%
-  (class (elements-only-mixin element%)
+  (class* (elements-only-mixin element%) (get-title<%>)
     (inspect #f)
-    (super-new)))
+    (super-new)
+    (inherit-field body)
+    (define/public (get-title)
+      (send (findf (is-a?/c titleStmt%) body) get-title))))
+              
 
 (define titleStmt%
-  (class (elements-only-mixin element%)
+  (class* (elements-only-mixin element%) (get-title<%>)
     (inspect #f)
-    (super-new)))
+    (super-new)
+    (inherit-field body)
+    (define promise:title
+      (delay
+        (string-join (for/list ([t (in-list body)]
+                                #:when ((is-a?/c title%) t))
+                       (string-normalize-spaces
+                        (string-trim (send t get-plain-text))))
+                     ": ")))
+    (define/public (get-title)
+      (force promise:title))))
 
 (define publicationStmt%
   (class (elements-only-mixin element%)

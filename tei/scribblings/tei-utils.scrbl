@@ -7,6 +7,7 @@
 
 @(require (for-label racket
                      xml
+                     data/maybe
                      ricoeur/tei
                      ricoeur/tei/xmllint
                      ))
@@ -71,13 +72,29 @@ working with TEI XML files, developed for Digital Ricœur.
  }
 }
 
-@definterface[TEI.2<%> (element<%>)]{
+
+@definterface[TEI-info<%> (element<%>)]{
+ This interface defines methods for accessing the catalog
+ information about a TEI document
+
+ @defmethod[(get-title) string?]{
+  Returns the title of the document.
+ }
+}
+
+
+@definterface[TEI.2<%> (element<%> TEI-info<%>)]{
  This interface defines additional methods for the top-level
  @litchar{<TEI.2>}@tt{...}@litchar{</TEI.2>} element.
 
  @defmethod[(guess-paragraphs) (is-a?/c TEI.2<%>)]{
   Returns an object like @(this-obj), but having attempted to
   infer paragraph breaks in the text.
+ }
+
+ @defmethod[(get-teiHeader) (is-a?/c teiHeader<%>)]{
+  Returns an object representing the @tt{teiHeader} element
+  from the document
  }
 
  @defmethod[(write-TEI [out output-port? (current-output-port)])
@@ -87,7 +104,29 @@ working with TEI XML files, developed for Digital Ricœur.
   Use @(method TEI.2<%> write-TEI) rather than 
   @racket[(write-xexpr (send #,(this-obj) #,(method element<%> to-xexpr))
                        out)] because @(method TEI.2<%> write-TEI)
-  also writes an XML declaration and appropriate DOCTYPE declaration.
+  also writes an XML declaration and appropriate @tt{DOCTYPE} declaration.
+ }
+}
+
+
+@definterface[teiHeader<%> (TEI-info<%>)]{
+This interface identifies objects representing
+@litchar{<teiHeader>}@tt{...}@litchar{</teiHeader>} elements.
+}
+
+@definterface[pb<%> (element<%>)]{
+This interface identifies objects representing pagebreak elements.
+
+@defmethod[(get-number) (maybe/c string?)]{
+Returns an optional value containing the original string
+from the element's @litchar{n} attribute or @racket[nothing]
+if none was present.
+ }
+
+@defmethod[(interpret-number) (or/c #f
+                                    (cons/c (or/c 'number 'roman) number?)
+                                    (cons/c #f string?))]{
+  Attempts to interpret the element's @litchar{n} attribute.
  }
 }
 
@@ -120,8 +159,8 @@ working with TEI XML files, developed for Digital Ricœur.
 @section{XML Validation}
 @defmodule[ricoeur/tei/xmllint
            #:no-declare]
-@(declare-exporting ricoeur/tei
-                    ricoeur/tei/xmllint
+@(declare-exporting ricoeur/tei/xmllint
+                    ricoeur/tei
                     )
 
 
@@ -149,7 +188,8 @@ a warning is displayed.
 @defproc[(directory-validate-xml [dir (and/c path-string? directory-exists?)]
                                  [#:quiet? quiet? any/c #f])
          boolean?]{
- Checks that every path in @racket[dir] and its recursive subdirectories
+ Checks that every path ending in @litchar{.xml}
+ in @racket[dir] and its recursive subdirectories
  is a valid XML file.
 
  When @racket[quiet?] is @racket[#f], writes any
