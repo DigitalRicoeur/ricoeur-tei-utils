@@ -30,10 +30,9 @@ working with TEI XML files, developed for Digital Ricœur.
 }
 
 @defproc[(read-TEI [in input-port? (current-input-port)])
-         (is-a?/c element<%>)]{
+         (is-a?/c TEI.2<%>)]{
  Produces a Racket object representing the TEI XML
- document read from @racket[in]. If the document is
- valid, the resulting object will implement @racket[TEI.2<%>].
+ document read from @racket[in]. 
 }
 
 @defproc[(tag->element [tag any-tei-xexpr/c])
@@ -117,17 +116,17 @@ This interface identifies objects representing
 @definterface[pb<%> (element<%>)]{
 This interface identifies objects representing pagebreak elements.
 
-@defmethod[(get-number) (maybe/c string?)]{
-Returns an optional value containing the original string
+@defmethod[(get-page-string) (maybe/c string?)]{
+Returns a @racket[just] value containing the original string
 from the element's @litchar{n} attribute or @racket[nothing]
 if none was present.
  }
 
-@defmethod[(interpret-number) (or/c #f
+@;{defmethod[(interpret-number) (or/c #f
                                     (cons/c (or/c 'number 'roman) number?)
                                     (cons/c #f string?))]{
   Attempts to interpret the element's @litchar{n} attribute.
- }
+ }}
 }
 
 @section{Contracts}

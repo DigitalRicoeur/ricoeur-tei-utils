@@ -10,14 +10,16 @@
          )
 
 (provide tag->element
-         read-TEI
          element<%>
          TEI.2<%>
          teiHeader<%>
          TEI-info<%>
          pb<%> 
          element-or-xexpr/c
-         )
+         (contract-out
+          [read-TEI
+           (->* {} {input-port?} (is-a?/c TEI.2<%>))]
+          ))
 
 (module+ private:term-search
   (provide smoosh))
@@ -148,8 +150,8 @@
 (define (discard-bom p)
    (void (regexp-try-match #rx"^\uFEFF" p)))
 
-(define/contract (read-TEI [in (current-input-port)])
-  (->* {} {input-port?} (is-a?/c element<%>))
+(define (read-TEI [in (current-input-port)])
+  ;TODO: enforce TEI.2<%>
   (discard-bom in)
   (tag->element
    (xml->xexpr
@@ -219,9 +221,9 @@
       (displayln @string-append{
  <?xml version="1.0" encoding="utf-8"?>
  <!DOCTYPE TEI.2 PUBLIC "-//TEI P4//DTD Main Document Type//EN" "tei2.dtd" [
- @"  "<!ENTITY % TEI.XML   'INCLUDE' >
- @"  "<!ENTITY % TEI.prose 'INCLUDE' >
- @"  "<!ENTITY % TEI.linking 'INCLUDE' >
+ @"  "<!ENTITY % TEI.XML   "INCLUDE" >
+ @"  "<!ENTITY % TEI.prose "INCLUDE" >
+ @"  "<!ENTITY % TEI.linking "INCLUDE" >
  ]>}
                  out)
       (write-xexpr (to-xexpr)))))
@@ -260,7 +262,7 @@
     (inherit-field attributes)
     (define n
       (fmap car (false->maybe (dict-ref attributes 'n #f))))
-    (define interp
+    #|(define interp
       (match (from-just #f n)
         [#f #f]
         [(app string->number (? number? it))
@@ -269,11 +271,11 @@
               (just it))
          (cons 'roman it)]
         [(? string? it)
-         (cons #f it)]))
-    (define/public (get-number)
+         (cons #f it)]))|#
+    (define/public (get-page-string)
       n)
-    (define/public (interpret-number)
-      interp)
+    #|(define/public (interpret-number)
+      interp)|#
     (define/override (to-plain-text)
       "\f")
     (define/override (smoosh)
@@ -400,7 +402,7 @@
         (string-join (for/list ([t (in-list body)]
                                 #:when ((is-a?/c title%) t))
                        (string-normalize-spaces
-                        (string-trim (send t get-plain-text))))
+                        (string-trim (send t to-plain-text))))
                      ": ")))
     (define/public (get-title)
       (force promise:title))))
