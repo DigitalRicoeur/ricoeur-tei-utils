@@ -13,7 +13,7 @@
 (define/contract (tei-xexpr/c name) ;case-lambda
   (-> symbol? flat-contract?)
   (case name
-    [(TEI.2) TEI.2/c]
+    [(TEI) TEI/c]
     [(teiHeader) teiHeader/c]
     [(fileDesc) fileDesc/c]
     [(titleStmt) titleStmt/c]
@@ -261,7 +261,7 @@
                       required-order
                       ))
 
-(define TEI.2-only-children
+(define TEI-only-children
   (or/c 'teiHeader 'text))
 
 (define teiHeader-only-children
@@ -274,14 +274,14 @@
         'seriesStmt 'notesStmt 'sourceDesc))
 
 (define restricted-children/c
-  (or/c TEI.2-only-children
+  (or/c TEI-only-children
         teiHeader-only-children
         fileDesc-only-children
         ))
 
-(define TEI.2/c
-  (make-tag-contract 'TEI.2
-                     #:child-tag/c TEI.2-only-children
+(define TEI/c
+  (make-tag-contract 'TEI
+                     #:child-tag/c TEI-only-children
                      #:required-children '(teiHeader text)
                      #:elements-only? #t
                      #:required-order '(teiHeader text)))

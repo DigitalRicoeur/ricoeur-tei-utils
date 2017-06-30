@@ -17,6 +17,10 @@
 (define scribblings '(("tei/scribblings/tei-utils.scrbl"
                        ()
                        ("Digital Ricœur" 0)
+                       )
+                      ("tei/scribblings/guidelines.scrbl"
+                       ()
+                       ("Digital Ricœur" 0)
                        )))
 (define raco-commands '(("tei-to-plain-text"
                          (submod ricoeur/tei/tools/tei-to-plain-text main)

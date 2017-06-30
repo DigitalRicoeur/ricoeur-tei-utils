@@ -12,7 +12,7 @@
                      ))
 
 @(define-runtime-path example-image
-   "ricoeur-tei-example-cropped.png")
+   "screenshot.png")
 
 This document describes some basic guidelines for TEI tagging texts
 for Digital Ricœur. A foundational assumption is that we want to
@@ -26,9 +26,13 @@ and recording basic catalog information.
 
 @section{Prerequisites}
 
-@;Use best OCRed source available
+We should always start from the highest-quality OCRed text files.
 
-@;Have excaped @litchar{<} and @litchar{&} with @litchar{&lt;} and @litchar{&amp;}
+In addition, before we start adding XML syntax, we must encode the 
+reserved characters @litchar{<} and @litchar{&} in the text
+with @litchar{&lt;} and @litchar{&amp;}, respectively. This can be
+done automatically using the script @tt{encode-entities.rkt} in
+the @tt{texts} repository.
 
 @section{Getting Started: Minimal Template for Valid TEI Documents}
 
@@ -51,7 +55,7 @@ by blank lines, we can automatically convert an annonymous block
 to a series of paragraph elements
 with a Racket script using @(method TEI.2<%> guess-paragraphs).
 
-In the following examples, syntax typeset like @litchar{this}
+In the following example, syntax typeset like @litchar{this}
 should appear verbatim. Keywords typeset like @racketvarfont{this}
 indicate sections that should be filled in with a specific
 type of content, which is explained below the example.
@@ -61,13 +65,8 @@ Whitespace is not significant.
   "example.xml"
   (verbatim
    @litchar{<?xml version="1.0" encoding="utf-8"?>}"\n"
-   @litchar{<!DOCTYPE TEI.2 PUBLIC "-//TEI P4//DTD Main Document Type//EN" }"\n"
-   "  "@litchar{"tei2.dtd" [}"\n"
-   "    "@litchar{<!ENTITY % TEI.XML   'INCLUDE' >}"\n"
-   "    "@litchar{<!ENTITY % TEI.prose 'INCLUDE' >}"\n"
-   "    "@litchar{<!ENTITY % TEI.linking 'INCLUDE' >}"\n"
-   @litchar{]>}"\n"
-   @litchar{<TEI.2>}"\n"
+   @litchar{<!DOCTYPE TEI SYSTEM "DR-TEI.dtd">}"\n"
+   @litchar{<TEI>}"\n"
    "  "@litchar{<teiHeader>}"\n"
    "    "@litchar{<fileDesc>}"\n"
    "      "@litchar{<titleStmt>}"\n"
@@ -93,7 +92,7 @@ Whitespace is not significant.
    "      "@litchar{</ab>}"\n"
    "    "@litchar{</body>}"\n"
    "  "@litchar{</text>}"\n"
-   @litchar{</TEI.2>}))
+   @litchar{</TEI>}))
 
 @(define (defkeyword it . body)
    (list
@@ -130,15 +129,21 @@ Whitespace is not significant.
  template is where the actual digitized text should be included,
  along with pagebreak tags.
 
- @; notes about other tags and non-destructive editing
+ When prepairing the text, we should be careful to practice non-destructive
+ editing. For example, while we aren't focusing on adding @litchar{note}
+ tags at this stage, we should leave the numbers in place for footnotes and
+ endnotes so that we can add them later. However, we should remove redundant
+ "decorative" text (like the title of a book printed at the top of every page)
+ that isn't really part of the work itself, and it is always good to correct
+ OCR errors if we see them.
 
  For more details about pagebreak tags, which are especially
- important for our initial goals, see @secref["Encoding Page Numbers"] @; FIX ME!!!
+ important for our initial goals, see @secref["Encoding_Page_Numbers"] 
 }
 
 The following screenshot illustrates a valid TEI XML file based on this template:
 
-@image[example-image #:scale 0.5]{
+@image[example-image #:scale 0.75]{
  The example document with XML syntax highlighting.
 }
 
@@ -159,6 +164,7 @@ The following screenshot illustrates a valid TEI XML file based on this template
                            (list #`(list @elem{Attributes:}
                                          (tabular
                                           #:sep @hspace[1]
+                                          #:column-properties '(top top)
                                           (list (list (litchar (symbol->string 'attr-name))
                                                       @elem{:}
                                                       attr-desc) ...)))))
@@ -240,12 +246,23 @@ Like the @litchar{body} element, @litchar{front} and @litchar{back}
                @litchar{<div type="chapter" n="1">}(linebreak)
                "  "@elem{Chapter text goes here.}(linebreak)
                @litchar{</div>}))]{
-@; Can div contain <ab>? Can div contain immediate text?
+ Once we have finished tagging pagebreaks, marking large-scale structural divisions
+ (like chapters or sections) will likely be a next step. These divisions are
+ marked with @litchar{div} tags, which have a @litchar{type} attribute that has
+ one of a fixed list of values to denote the type of division.
+
+ Note that @litchar{div} elements @bold{MUST NOT} directly contain text:
+ the contents of the
+ @litchar{div} must be wrapped in @litchar{p}, @litchar{ab}, @litchar{head} or
+ similar tags.
+
+ We should add more detail to this section as we get closer to marking @litchar{div}s.
+ @;How to mark sections not by Ricoeur?
 }
 
 @subsection{Footnotes & Endnotes}
 @deftag[note "http://www.tei-c.org/release/doc/tei-p5-doc/en/html/ref-note.html"
-        #:attributes ([place @elem{@tt{"foot} or @tt{end}}]
+        #:attributes ([place @elem{@tt{"foot"} or @tt{"end"}}]
                       [n @elem{the number or symbol for the footnote or endnote}]
                       [type @elem{use @tt{"transl} for translation notes}])
         #:eg (@elem[@litchar{<note place="foot" n="1">}
@@ -262,7 +279,7 @@ Like the @litchar{body} element, @litchar{front} and @litchar{back}
  embed the @litchar{<note>} itself in place.
 
  @italic{Adapted from @url["https://www.cdlib.org/groups/stwg/MS_BPG.html#fnote"]
- (but note that we encode endnotes differently)}
+  (but note that we encode endnotes differently)}
 }
 
 @subsection{Headings}
@@ -279,7 +296,7 @@ Like the @litchar{body} element, @litchar{front} and @litchar{back}
 
 @subsection{Paragraphs}
 @deftag[p "http://www.tei-c.org/release/doc/tei-p5-doc/en/html/ref-p.html"
-        ]{
+        #:eg (@litchar{<p>This is a <pb n="5"/> paragraph.</p>})]{
  Except when they can be computed automatically, encoding paragraphs is
- a fairly low priority for our project at this stage.
+ probably a fairly low priority for our project at this stage.
 }

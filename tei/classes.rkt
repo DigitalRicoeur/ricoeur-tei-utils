@@ -11,14 +11,14 @@
 
 (provide tag->element
          element<%>
-         TEI.2<%>
+         TEI<%>
          teiHeader<%>
          TEI-info<%>
          pb<%> 
          element-or-xexpr/c
          (contract-out
           [read-TEI
-           (->* {} {input-port?} (is-a?/c TEI.2<%>))]
+           (->* {} {input-port?} (is-a?/c TEI<%>))]
           ))
 
 (module+ private:term-search
@@ -118,7 +118,7 @@
       [(cons name raw-body)
        (values name null raw-body)]))
   (new (case name
-         [(TEI.2) TEI.2%]
+         [(TEI) TEI%]
          [(text) text%]
          [(body) body%]
          [(front) front%]
@@ -192,12 +192,12 @@
 (define TEI-info<%>
   (interface (get-title<%>)))
 
-(define TEI.2%
+(define TEI%
   (class* (guess-paragraphs-mixin
            (elements-only-mixin element%))
     ((interface (guess-paragraphs<%>)
        [guess-paragraphs (->m (recursive-contract
-                               (is-a?/c TEI.2%)))]
+                               (is-a?/c TEI%)))]
        #;[smoosh (->m (listof (or/c string?
                                   (recursive-contract
                                    (is-a?/c pb<%>)))))]
@@ -220,16 +220,12 @@
     (define/public (write-TEI [out (current-output-port)])
       (displayln @string-append{
  <?xml version="1.0" encoding="utf-8"?>
- <!DOCTYPE TEI.2 PUBLIC "-//TEI P4//DTD Main Document Type//EN" "tei2.dtd" [
- @"  "<!ENTITY % TEI.XML   "INCLUDE" >
- @"  "<!ENTITY % TEI.prose "INCLUDE" >
- @"  "<!ENTITY % TEI.linking "INCLUDE" >
- ]>}
+ <!DOCTYPE TEI SYSTEM "DR-TEI.dtd">}
                  out)
       (write-xexpr (to-xexpr)))))
 
-(define TEI.2<%>
-  (class->interface TEI.2%))
+(define TEI<%>
+  (class->interface TEI%))
 
 (define text%
   (class (guess-paragraphs-mixin

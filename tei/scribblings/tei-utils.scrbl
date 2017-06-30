@@ -30,7 +30,7 @@ working with TEI XML files, developed for Digital Ricœur.
 }
 
 @defproc[(read-TEI [in input-port? (current-input-port)])
-         (is-a?/c TEI.2<%>)]{
+         (is-a?/c TEI<%>)]{
  Produces a Racket object representing the TEI XML
  document read from @racket[in]. 
 }
@@ -82,11 +82,11 @@ working with TEI XML files, developed for Digital Ricœur.
 }
 
 
-@definterface[TEI.2<%> (element<%> TEI-info<%>)]{
+@definterface[TEI<%> (element<%> TEI-info<%>)]{
  This interface defines additional methods for the top-level
- @litchar{<TEI.2>}@tt{...}@litchar{</TEI.2>} element.
+ @litchar{<TEI>}@tt{...}@litchar{</TEI>} element.
 
- @defmethod[(guess-paragraphs) (is-a?/c TEI.2<%>)]{
+ @defmethod[(guess-paragraphs) (is-a?/c TEI<%>)]{
   Returns an object like @(this-obj), but having attempted to
   infer paragraph breaks in the text.
  }
@@ -100,7 +100,7 @@ working with TEI XML files, developed for Digital Ricœur.
             any]{
   Writes the XML representation of @(this-obj) to @racket[out].
 
-  Use @(method TEI.2<%> write-TEI) rather than 
+  Use @(method TEI<%> write-TEI) rather than 
   @racket[(write-xexpr (send #,(this-obj) #,(method element<%> to-xexpr))
                        out)] because @(method TEI.2<%> write-TEI)
   also writes an XML declaration and appropriate @tt{DOCTYPE} declaration.
