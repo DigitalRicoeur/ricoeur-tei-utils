@@ -107,7 +107,7 @@
 (define element<%>
   (class->interface element%))
 
-(define (tag->element tag)
+(define/contract (tag->element tag)
   (-> any-tei-xexpr/c (is-a?/c element<%>))
   (define-values {name attributes raw-body}
     (match tag
@@ -151,7 +151,8 @@
    (void (regexp-try-match #rx"^\uFEFF" p)))
 
 (define (read-TEI [in (current-input-port)])
-  ;TODO: enforce TEI.2<%>
+  ;TODO: enforce TEI<%>
+  ;TODO: better blame
   (discard-bom in)
   (tag->element
    (xml->xexpr
