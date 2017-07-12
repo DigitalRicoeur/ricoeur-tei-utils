@@ -32,13 +32,22 @@
                parent
                '(ok caution)))
 
+(define (red-text-bitmap txt)
+  (pict->bitmap (colorize (text txt '(bold . system)) "red")))
+
 (def
+  [missing-bitmap
+   (red-text-bitmap "MISSING")]
+  [no-ricoeur-xml:id-bitmap
+   (red-text-bitmap "No author element with xml:id=\"ricoeur\"")]
+  [none-bitmap
+   (red-text-bitmap "NONE")]
   [error-bitmap
-   (pict->bitmap (colorize (text "X" '(bold . modern)) "red"))]
+   (pict->bitmap (disk 20 #:color "red"))]
   [warning-bitmap
-   (pict->bitmap (colorize (text "?" '(bold . modern)) "orange"))]
+   (pict->bitmap (disk 20 #:color "yellow"))]
   [ok-bitmap
-   (pict->bitmap (colorize (text "√" '(bold . modern)) "green"))])
+   (pict->bitmap (disk 20 #:color "green"))])
 
 (define splash-frame%
   (class frame%
@@ -91,6 +100,10 @@
   (make-font #:family 'system
              #:weight 'bold))
 
+
+
+
+
 (define directory-frame%
   (class frame%
     (init-field dir)
@@ -98,33 +111,40 @@
                                      " - TEI Lint")]
                [alignment '(left top)])
     (inherit show)
-    (let ([row (new horizontal-pane% [parent this])])
+    (let ([row (new horizontal-pane% [parent this]
+                    [alignment '(left top)])])
       (new message%
            [parent row]
            [label (path->string dir)])
       (new button%
            [parent row]
            [label "Refresh"]
-           [callback (λ (b e) (refresh))]))
+           [callback (λ (b e) (refresh-directory))]))
     (define file-widgets
       (for/list ([pth (in-directory dir)]
                  #:when (xml-path? pth))
         (new file-widget%
              [pth pth]
              [dir dir]
+             [dir-frame this]
              [parent this])))
+    (define mb (new menu-bar% [parent this]))
+    (add-file-menu mb this)
     (show #t)
-    (define/private (refresh)
+    (define/public (refresh-directory)
       (show #f)
       (map (λ (w) (send w revoke))
            file-widgets)
       (new this% [dir dir]))))
 
 
+
+
+
 (define file-widget%
   (class horizontal-panel%
     (super-new)
-    (init-field dir pth)
+    (init-field dir pth dir-frame)
     (define val
       (let ([xmllint-out (open-output-string)])
         (cond
@@ -143,16 +163,9 @@
                file-frame%)
            [dir dir]
            [pth pth]
-           [val val]))
-    (new message%
-         [parent this]
-         [label (case (send frame get-color)
-                  [(green) ok-bitmap]
-                  [(red) error-bitmap]
-                  [(yellow) warning-bitmap])])
-    (new message%
-         [parent this]
-         [label (path->string pth)])
+           [val val]
+           [dir-frame dir-frame]
+           [widget this]))
     (define mouse-state #f)
     (define/override (on-subwindow-event r evt)
       (case (send evt get-event-type)
@@ -168,17 +181,54 @@
     (define/public (revoke)
       (send frame show #f))))
 
+
+
+
+(define (add-file-menu mb dir-frame)
+  (define m-file (new menu% [label "File"] [parent mb]))
+  (new menu-item%
+       [parent m-file]
+       [label "Open additional directory …"]
+       [callback (λ (i e)
+                   (let ([dir (get-xml-directory)])
+                     (when dir
+                       (new directory-frame% [dir dir]))))]
+       [shortcut #\O])
+  (new menu-item%
+       [parent m-file]
+       [label "Refresh"]
+       [callback (λ (i e)
+                   (send dir-frame refresh-directory))]
+       [shortcut #\R]))
+
+
+
 (define error-frame%
   (class frame%
-    (init-field dir pth val)
+    (init-field dir pth val widget dir-frame)
     (super-new [label (string-append (path->string pth)
                                      " - TEI Lint")]
                [alignment '(center top)]
                [width 400]
                [height 500])
     (new message%
-         [parent this]
+         [parent widget]
+         [label error-bitmap])
+    (new message%
+         [parent widget]
+         [font bold-system-font]
          [label (path->string pth)])
+    ;;;;;;;;;;;;;;;;;;;
+    (let ([row (new horizontal-pane%
+                    [parent this]
+                    [alignment '(left top)])])
+      (new message%
+           [parent row]
+           [label error-bitmap])
+      (new message%
+           [parent row]
+           [font bold-system-font]
+           [label (path->string pth)]))
     (new message%
          [parent this]
          [label (if (xmllint-error? val)
@@ -187,6 +237,7 @@
     (define e-c
       (new editor-canvas%
            [parent this]
+           [min-height 400]
            [style '(auto-hscroll auto-vscroll)]))
     (define para
       (new text% [auto-wrap #t]))
@@ -197,12 +248,26 @@
             [(exn:fail msg _) msg]))
     (send para lock #t)
     (send e-c set-editor para)
-    (define/public (get-color)
-      'red)))
+    ;;;;;;;;;;;;;;;;;;;
+    (define mb (new menu-bar% [parent this]))
+    (add-file-menu mb dir-frame)
+    (define m-edit (new menu% [label "Edit"] [parent mb]))
+    (append-editor-operation-menu-items m-edit #t)
+    #|END class error-frame%|#))
+
+
+
+
+
+
+
+
+
+
 
 (define file-frame%
   (class frame%
-    (init-field dir pth val)
+    (init-field dir pth val widget dir-frame)
     (super-new [label (string-append (path->string pth)
                                      " - TEI Lint")]
                [alignment '(left top)]
@@ -212,10 +277,18 @@
       #t)
     (define/public (get-color)
       (if all-ok? 'green 'yellow))
-    ;; Heading
-    (new message%
-         [parent this]
-         [label (path->string pth)])
+    (define status-message
+      (let* ([row (new horizontal-pane%
+                       [parent this]
+                       [alignment '(left top)])]
+             [status-message (new message%
+                                  [parent row]
+                                  [label ok-bitmap])])
+        (new message%
+             [parent row]
+             [font bold-system-font]
+             [label (path->string pth)])
+        status-message))
     ;; Title
     (let ([row (new horizontal-pane%
                     [parent this]
@@ -264,8 +337,7 @@
          (set! all-ok? #f)
          (new message%
               [parent row]
-              [font bold-system-font]
-              [label "MISSING"])]))
+              [label missing-bitmap])]))
     ;; "ricoeur" xml:id ??
     (unless (member "ricoeur"
                     (se-path*/list `(author #:xml:id)
@@ -273,10 +345,9 @@
       (set! all-ok? #f)
       (new message%
            [parent (new horizontal-pane%
-                    [parent this]
-                    [alignment '(left top)])]
-           [font bold-system-font]
-           [label "No author element with xml:id=\"ricoeur\""]))
+                        [parent this]
+                        [alignment '(left top)])]
+           [label no-ricoeur-xml:id-bitmap]))
     ;; pages
     (let ([row (new horizontal-pane%
                     [parent this]
@@ -291,13 +362,15 @@
            (set! all-ok? #f)
            (new message%
                 [parent row]
-                [font bold-system-font]
-                [label "NONE"])]
+                [label none-bitmap])]
           [else
-           (define col
-             (new vertical-pane%
+           (define e-c
+             (new editor-canvas%
                   [parent row]
-                  [alignment '(left top)]))
+                  [min-height 300]
+                  [style '(auto-hscroll auto-vscroll)]))
+           (define para
+             (new text% [auto-wrap #t]))
            (let analyze-pages ([pages pages]
                                [arabic-seen? #f])
              (cond
@@ -316,11 +389,11 @@
                                 (λ (p) (eq? 'none (send p get-kind)))))
                    (define len
                      (length nones))
-                   (new message%
-                        [parent col]
-                        [label (format "• ~a non-numbered page~a"
-                                       len
-                                       (if (= 1 len) "" "s"))])
+                   (send para
+                         insert
+                         (format "• ~a non-numbered page~a\n"
+                                 len
+                                 (if (= 1 len) "" "s")))
                    (analyze-pages more arabic-seen?)]
                   [(other)
                    (set! all-ok? #f)
@@ -329,13 +402,13 @@
                                 (λ (p) (eq? 'other (send p get-kind)))))
                    (define len
                      (length other))
-                   (new message%
-                        [parent col]
-                        [label (format "• ~a page~a with ~aunreadable number~a"
-                                       len
-                                       (if (= 1 len) "" "s")
-                                       (if (= 1 len) "an " "")
-                                       (if (= 1 len) "" "s"))])
+                   (send para
+                         insert
+                         (format "• ~a page~a with ~aunreadable number~a\n"
+                                 len
+                                 (if (= 1 len) "" "s")
+                                 (if (= 1 len) "an " "")
+                                 (if (= 1 len) "" "s")))
                    (analyze-pages more arabic-seen?)]
                   [(roman)
                    (define-values {roman more}
@@ -343,8 +416,8 @@
                                 (λ (p) (eq? 'roman (send p get-kind)))))
                    (handle-numeric-pages
                     roman
-                    col
-                    "• ~a page~a with Roman numerals from ~v to ~v")
+                    para
+                    "• ~a page~a with Roman numerals from ~v to ~v\n")
                    (analyze-pages more arabic-seen?)]
                   [(number)
                    (define-values {arabic more}
@@ -352,10 +425,36 @@
                                 (λ (p) (eq? 'number (send p get-kind)))))
                    (handle-numeric-pages
                     arabic
-                    col
-                    "• ~a page~a numbered from ~v to ~v")
-                   (analyze-pages more #t)])]))])))
-    (define/private (handle-numeric-pages pages parent format-str)
+                    para
+                    "• ~a page~a numbered from ~v to ~v\n")
+                   (analyze-pages more #t)])]))
+           (send para lock #t)
+           (send e-c set-editor para)])))
+    ;;;;;;;;;;;;;;;;;;;
+    (define mb (new menu-bar% [parent this]))
+    (add-file-menu mb dir-frame)
+    (define m-edit (new menu% [label "Edit"] [parent mb]))
+    (append-editor-operation-menu-items m-edit #t)
+    ;;;;;;;;;;;;;;;;;;;
+    (new message%
+         [parent widget]
+         [label (if all-ok? ok-bitmap warning-bitmap)])
+    (let ([col (new vertical-pane%
+                    [parent widget]
+                    [alignment '(left top)])])
+      (new message%
+           [parent col]
+           [font bold-system-font]
+           [label (send val get-title)])
+      (new message%
+           [parent col]
+           [label (path->string pth)]))
+    (unless all-ok?
+      (send status-message set-label warning-bitmap))
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;; Methods
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    (define/private (handle-numeric-pages pages ed format-str)
       (define groups
         (group-sequential-page-breaks pages))
       (unless (= 1 (length groups))
@@ -363,13 +462,11 @@
       (for ([grp (in-list groups)])
         (match-define (list count from to)
           grp)
-        (new message%
-             [parent parent]
-             [label (format format-str
-                            count
-                            (if (= 1 count) "" "s")
-                            from
-                            to)])))
+        (send ed insert (format format-str
+                                count
+                                (if (= 1 count) "" "s")
+                                from
+                                to))))
     (define/private (group-sequential-page-breaks pages)
       (def
         [init (car pages)]
