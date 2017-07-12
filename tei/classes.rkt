@@ -7,6 +7,7 @@
          data/maybe
          (rename-in data/functor
                     [map fmap])
+         gregor
          )
 
 (provide tag->element
@@ -79,6 +80,11 @@
              (if (string? child)
                  child
                  (send child smoosh)))))
+        (define/public (get-page-breaks)
+          (flatten
+           (for/list ([child (in-list body)]
+                      #:unless (string? child))
+             (send child get-page-breaks))))
         (public*
          [get-name (λ () name)]
          [get-attributes (λ () attributes)]
@@ -139,6 +145,7 @@
          [(authority) authority%]
          [(availability) availability%]
          [(bibl) bibl%]
+         [(date) date%]
          [else element%])
        [name name]
        [attributes attributes]
@@ -191,7 +198,9 @@
     [get-title (->m string?)]))
 
 (define TEI-info<%>
-  (interface (get-title<%>)))
+  (interface (get-title<%>)
+    [get-citation (->m string?)]
+    [get-publication-date (->m (maybe/c date?))]))
 
 (define TEI%
   (class* (guess-paragraphs-mixin
@@ -218,6 +227,10 @@
       teiHeader)
     (define/public (get-title)
       (send teiHeader get-title))
+    (define/public (get-citation)
+      (send teiHeader get-citation))
+    (define/public (get-publication-date)
+      (send teiHeader get-publication-date))
     (define/public (write-TEI [out (current-output-port)])
       (displayln @string-append{
  <?xml version="1.0" encoding="utf-8"?>
@@ -259,22 +272,27 @@
     (inherit-field attributes)
     (define n
       (fmap car (false->maybe (dict-ref attributes 'n #f))))
-    #|(define interp
+    (define-values {kind num}
       (match (from-just #f n)
-        [#f #f]
+        [#f
+         (values 'none nothing)]
         [(app string->number (? number? it))
-         (cons 'number it)]
+         (values 'number (just it))]
         [(app (curry exn->maybe exn:fail? roman->number)
               (just it))
-         (cons 'roman it)]
+         (values 'roman (just it))]
         [(? string? it)
-         (cons #f it)]))|#
+         (values 'other nothing)]))
     (define/public (get-page-string)
       n)
-    #|(define/public (interpret-number)
-      interp)|#
+    (define/public (get-kind)
+      kind)
+    (define/public (get-numeric)
+      num)
     (define/override (to-plain-text)
       "\f")
+    (define/override (get-page-breaks)
+      (list this))
     (define/override (smoosh)
       this)))
 
@@ -374,8 +392,14 @@
     (inspect #f)
     (super-new)
     (inherit-field body)
+    (match-define (list fileDesc)
+      body)
     (define/public (get-title)
-      (send (findf (is-a?/c fileDesc%) body) get-title))))
+      (send fileDesc get-title))
+    (define/public (get-citation)
+      (send fileDesc get-citation))
+    (define/public (get-publication-date)
+      (send fileDesc get-publication-date))))
 
 (define teiHeader<%>
   (class->interface teiHeader%))
@@ -385,8 +409,14 @@
     (inspect #f)
     (super-new)
     (inherit-field body)
+    (match-define (list titleStmt publicationStmt sourceDesc)
+      body)
     (define/public (get-title)
-      (send (findf (is-a?/c titleStmt%) body) get-title))))
+      (send titleStmt get-title))
+    (define/public (get-citation)
+      (send sourceDesc get-citation))
+    (define/public (get-publication-date)
+      (send sourceDesc get-publication-date))))
               
 
 (define titleStmt%
@@ -412,7 +442,14 @@
 (define sourceDesc%
   (class (elements-only-mixin element%)
     (inspect #f)
-    (super-new)))
+    (super-new)
+    (inherit-field body)
+    (match-define (list bibl)
+      body)
+    (define/public (get-citation)
+      (send bibl get-citation))
+    (define/public (get-publication-date)
+      (send bibl get-publication-date))))
 
 (define title%
   (class element%
@@ -442,24 +479,25 @@
 (define bibl%
   (class element%
     (inspect #f)
-    (super-new)))
+    (super-new)
+    (inherit to-plain-text)
+    (inherit-field body)
+    (define/public (get-citation)
+      (string-normalize-spaces (to-plain-text)))
+    (define maybe-date
+      (from-just nothing
+                 (fmap (λ (d) (send d get-publication-date))
+                       (false->maybe (findf (is-a?/c date%) body)))))
+    (define/public (get-publication-date)
+      maybe-date)))
 
-#|
-(with-output-to-file
-    "/Users/philip/code/ricoeur/texts/TEI/oneself_as_another-para.xml"
-  #:exists 'replace
-  (λ () 
-    (send (send
-            (call-with-input-file
-                "/Users/philip/code/ricoeur/texts/TEI/oneself_as_another.xml"
-              read-TEI)
-            guess-paragraphs)
-           write-TEI)))
-
-
-(displayln (send
-            (call-with-input-file
-                "/Users/philip/code/ricoeur/texts/TEI/oneself_as_another.xml"
-              read-TEI)
-            to-plain-text))
-|#
+(define date%
+  (class element%
+    (inspect #f)
+    (super-new)
+    (inherit-field attributes)
+    (define maybe-date
+      (fmap (compose1 iso8601->date car)
+            (false->maybe (dict-ref attributes 'when #f))))
+    (define/public (get-publication-date)
+      maybe-date)))

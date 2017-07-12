@@ -5,11 +5,14 @@
                       "philip@philipmcgrath.com")]
 @defmodule[ricoeur/tei]
 
-@(require (for-label racket
+@(require (for-label (except-in racket
+                                date
+                                date?)
                      xml
                      data/maybe
                      ricoeur/tei
                      ricoeur/tei/xmllint
+                     gregor
                      ))
 
 This manual documents utilities and Racket libraries for
@@ -69,6 +72,10 @@ working with TEI XML files, developed for Digital Ricœur.
   Returns the contents of @(this-obj), with child elements
   represented by objects implementing @racket[element<%>].
  }
+
+ @defmethod[(get-page-breaks) (listof (is-a?/c pb<%>))]{
+Returns all the page breaks recursively contained by @(this-obj), in order.
+ }
 }
 
 
@@ -78,6 +85,16 @@ working with TEI XML files, developed for Digital Ricœur.
 
  @defmethod[(get-title) string?]{
   Returns the title of the document.
+ }
+
+ @defmethod[(get-citation) string?]{
+Returns the human-readable citation for the original from
+which the document was prepared.
+ }
+
+ @defmethod[(get-publication-date) (maybe/c date?)]{
+Returns an optional value encapsulating the publication date of
+the orininal from which the document was prepared.
  }
 }
 
@@ -122,11 +139,14 @@ from the element's @litchar{n} attribute or @racket[nothing]
 if none was present.
  }
 
-@;{defmethod[(interpret-number) (or/c #f
-                                    (cons/c (or/c 'number 'roman) number?)
-                                    (cons/c #f string?))]{
-  Attempts to interpret the element's @litchar{n} attribute.
- }}
+@defmethod[(get-kind) (or/c 'none 'number 'roman 'other)]{
+  Returns a symbol repesenting the kind of page number
+ }
+
+@defmethod[(get-numeric) (maybe/c number?)]{
+  Returns an optional value representing the page number string converted
+  to a number, if possible
+ }
 }
 
 @section{Contracts}
