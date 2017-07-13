@@ -32,22 +32,77 @@
                parent
                '(ok caution)))
 
-(define (red-text-bitmap txt)
-  (pict->bitmap (colorize (text txt '(bold . system)) "red")))
+(define (pict->canvas% pict)
+  (def
+    [init-drawer (make-pict-drawer pict)]
+    [w (inexact->exact (ceiling (pict-width pict)))]
+    [h (inexact->exact (ceiling (pict-height pict)))])
+  (class canvas%
+    (init [style '(transparent)])
+    (super-new [style style]
+               [min-width w]
+               [min-height h]
+               [stretchable-width #f]
+               [stretchable-height #f])
+    (define drawer
+      init-drawer)
+    (inherit get-dc refresh-now)
+    (define/override (on-paint)
+      (drawer (get-dc) 0 0))
+    (define/public (replace-pict pict)
+      (set! drawer (make-pict-drawer pict))
+      (refresh-now))))
+
+(define (red-text-pict txt)
+  (colorize (text txt '(bold . system)) "red"))
+
+(define dot-canvas%
+  (let ([dot-pen (make-pen #:width 1)])
+  (class canvas%
+    (init-field [(init-color color)]
+                [size 20])
+    (super-new [style '(transparent)]
+               [min-width (add1 size)]
+               [min-height (add1 size)]
+               [stretchable-width #f]
+               [stretchable-height #f])
+    (inherit get-dc refresh-now)
+    (define my-brush
+      (color->brush init-color))
+    (define/private (color->brush color)
+      (make-brush #:color color))
+    (define/override (on-paint)
+      (let* ([dc (get-dc)]
+             [old-pen (send dc get-pen)]
+             [old-brush (send dc get-brush)])
+        (send dc set-pen dot-pen)
+        (send dc set-brush my-brush)
+        (send dc draw-ellipse 0 0 size size)
+        (send dc set-pen old-pen)
+        (send dc set-brush old-brush)))
+    (define/public (set-color c)
+      (set! my-brush (color->brush c))
+      (refresh-now)))))
 
 (def
-  [missing-bitmap
-   (red-text-bitmap "MISSING")]
-  [no-ricoeur-xml:id-bitmap
-   (red-text-bitmap "No author element with xml:id=\"ricoeur\"")]
-  [none-bitmap
-   (red-text-bitmap "NONE")]
-  [error-bitmap
-   (pict->bitmap (disk 20 #:color "red"))]
-  [warning-bitmap
-   (pict->bitmap (disk 20 #:color "yellow"))]
-  [ok-bitmap
-   (pict->bitmap (disk 20 #:color "green"))])
+  [missing-canvas%
+   (pict->canvas% (red-text-pict "MISSING"))]
+  [no-ricoeur-xml:id-canvas%
+   (pict->canvas% (red-text-pict "No author element with xml:id=\"ricoeur\""))]
+  [none-canvas%
+   (pict->canvas% (red-text-pict "NONE"))]
+  [error-canvas%
+   (class dot-canvas%
+     (super-new [color "red"]))]
+  [warning-canvas%
+   (class dot-canvas%
+     (super-new [color "yellow"]))]
+  [ok-canvas%
+   (class dot-canvas%
+     (super-new [color "green"]))])
+
+
+
 
 (define splash-frame%
   (class frame%
@@ -211,9 +266,7 @@
                [alignment '(center top)]
                [width 400]
                [height 500])
-    (new message%
-         [parent widget]
-         [label error-bitmap])
+    (new error-canvas% [parent widget])
     (new message%
          [parent widget]
          [font bold-system-font]
@@ -222,9 +275,7 @@
     (let ([row (new horizontal-pane%
                     [parent this]
                     [alignment '(left top)])])
-      (new message%
-           [parent row]
-           [label error-bitmap])
+      (new error-canvas% [parent row])
       (new message%
            [parent row]
            [font bold-system-font]
@@ -277,18 +328,17 @@
       #t)
     (define/public (get-color)
       (if all-ok? 'green 'yellow))
-    (define status-message
+    (define status-dot-canvas
       (let* ([row (new horizontal-pane%
                        [parent this]
                        [alignment '(left top)])]
-             [status-message (new message%
-                                  [parent row]
-                                  [label ok-bitmap])])
+             [status-dot-canvas (new ok-canvas%
+                                      [parent row])])
         (new message%
              [parent row]
              [font bold-system-font]
              [label (path->string pth)])
-        status-message))
+        status-dot-canvas))
     ;; Title
     (let ([row (new horizontal-pane%
                     [parent this]
@@ -335,19 +385,17 @@
               [label (~t dt "y")])]
         [_
          (set! all-ok? #f)
-         (new message%
-              [parent row]
-              [label missing-bitmap])]))
+         (new missing-canvas%
+              [parent row])]))
     ;; "ricoeur" xml:id ??
     (unless (member "ricoeur"
                     (se-path*/list `(author #:xml:id)
                                    (send val to-xexpr)))
       (set! all-ok? #f)
-      (new message%
+      (new no-ricoeur-xml:id-canvas%
            [parent (new horizontal-pane%
                         [parent this]
-                        [alignment '(left top)])]
-           [label no-ricoeur-xml:id-bitmap]))
+                        [alignment '(left top)])]))
     ;; pages
     (let ([row (new horizontal-pane%
                     [parent this]
@@ -360,9 +408,8 @@
         (cond
           [(null? pages)
            (set! all-ok? #f)
-           (new message%
-                [parent row]
-                [label none-bitmap])]
+           (new none-canvas%
+                [parent row])]
           [else
            (define e-c
              (new editor-canvas%
@@ -436,9 +483,10 @@
     (define m-edit (new menu% [label "Edit"] [parent mb]))
     (append-editor-operation-menu-items m-edit #t)
     ;;;;;;;;;;;;;;;;;;;
-    (new message%
-         [parent widget]
-         [label (if all-ok? ok-bitmap warning-bitmap)])
+    (new (if all-ok?
+             ok-canvas%
+             warning-canvas%)
+         [parent widget])
     (let ([col (new vertical-pane%
                     [parent widget]
                     [alignment '(left top)])])
@@ -450,7 +498,7 @@
            [parent col]
            [label (path->string pth)]))
     (unless all-ok?
-      (send status-message set-label warning-bitmap))
+      (send status-dot-canvas set-color "yellow"))
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;; Methods
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
