@@ -1,5 +1,5 @@
 setup:
-	git pull --ff-only
+	-git pull --ff-only
 	raco setup --doc-index ricoeur
 
 install:
