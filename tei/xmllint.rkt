@@ -22,8 +22,7 @@
   (find-executable-path "xmllint"))
 
 (unless xmllint
-  (log-warning "xmllint not found")
-  (displayln "xmllint not found" (current-error-port)))
+  (log-warning "xmllint not found"))
 
 (define (xmllint-available?)
   xmllint)

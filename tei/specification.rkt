@@ -1,24 +1,29 @@
 #lang scribble/lp2
 
-@title[#:version ""]{Requirements for Digital Ricoeur TEI Documents}
-@(require scribble/manual)
+@title[#:version ""]{Formal Specification}
+@(require (for-label racket/base))
+@(provide attr tag)
 
-Digital Ricoeur imposes requirements for the structure of TEI
+Digital Ricœur imposes requirements for the structure of TEI
 documents that are more stringent than merely being well-formed XML
 that is valid with respect to the @tt{DR-TEI.dtd} Document Type
 Declaration.
+The rest of this manual has introduced the structure of our documents
+and these project-specific requirements in an informal tutorial style.
+This section specifies these requirements in a precise, succinct
+form suitable for reference once you understand the basics.
 
-These additional requirements are specified below in
-a "literate programming" style, where the specifications of elements
+This specification is written in a "literate programming" style,
+where the prose specifications of elements
 are intermixed with the Racket code that enforces them,
 helping to ensure consistency between the two.
 For Racket purposes, the code in this document is combined
-into for a module as follows:
+into a module as follows:
 
 @chunk[<*>
        (require racket/unit
                 racket/contract
-                "signatures.rkt")
+                ricoeur/tei/signatures)
 
        (provide element-contracts@)
 
@@ -105,9 +110,9 @@ main title vs. subtitle, etc.
 The @deftag{title} element contains free-form text.
 
 The @deftag{author} element contains free-form text and may have
-an optional @attr{xml:id} attribute. @margin-note{As a special case,
- the ID @racket["ricoeur"] is reserved for use with Ricoeur across all
- documents.}
+an optional @attr{xml:id} attribute. As a special case,
+the ID @racket["ricoeur"] is reserved for use with Paul Ricœur across all
+documents.
 
 @margin-note{If a type of editor arrises that does not
  fit neatly into these categories, we should decide on a standared
@@ -215,7 +220,7 @@ a @tag{front} element, a @tag{body} element,
 and a @tag{back} element,
 but the @tag{front} and @tag{back} elements are optional.
 
-The @tag{body}, @tag{front}, and @tag{back} elements
+The @deftag{body}, @deftag{front}, and @deftag{back} elements
 may contain @tag{head}, 
 @tag{p}, @tag{pb}, @tag{ab}, and @tag{div} elements.
 
@@ -265,7 +270,7 @@ The @deftag{div} element may contain
 @tag{pb}, @tag{ab}, @tag{sp}, or nested @tag{div} elements.
 It must have a @attr{type} attribute with a value of
 @racket["chapter"], @racket["part"], @racket["section"],
-@racket["dedication"], @racket["contents"], @racket["intro"]
+@racket["dedication"], @racket["contents"], @racket["intro"],
 @racket["ack"] (for acknowledgements), or @racket["index"].
 If the division is numbered, it should have an
 @attr{n} attribute giving the page number
@@ -278,6 +283,8 @@ as given in the source (i.e. possibly as a Roman numeral).
 
 The @deftag{list} element may contain
 the @tag{head}, @tag{item}, and @tag{pb} elements.
+It may have a @attr{rend} attribute with a value of either
+@racket["numbered"] or @racket["bulleted"] (the default).
 
 The @deftag{sp} ("speech") element must have a valid @attr{who}
 attribute and may contain @tag{list}, @tag{p}, @tag{pb}, or @tag{ab}
@@ -313,7 +320,9 @@ elements.
           'list
           #:children `([0+ head]
                        [0+ item]
-                       [0+ pb])))
+                       [0+ pb])
+          #:attr-contracts
+          `([type ,(or/c "numbered" "bulleted")])))
 
        (define sp/c
          (make-element-contract

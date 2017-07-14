@@ -1,6 +1,6 @@
 #lang scribble/manual
 
-@title[#:version ""]{TEI Utilities}
+@title[#:version ""]{Digital Ricœur TEI Library}
 @author[(author+email @elem{Philip M@superscript{c}Grath}
                       "philip@philipmcgrath.com")]
 @defmodule[ricoeur/tei]
@@ -8,34 +8,26 @@
 @(require (for-label (except-in racket
                                 date
                                 date?)
+                     racket/unit
                      xml
                      data/maybe
                      ricoeur/tei
-                     ricoeur/tei/xmllint
+                     ricoeur/tei/signatures
                      gregor
                      ))
 
 This manual documents utilities and Racket libraries for
 working with TEI XML files, developed for Digital Ricœur.
 
-
-@defproc[(make-ricoeur-teiHeader
-          [#:title title string?]
-          [#:authors authors (non-empty-listof (tei-xexpr/c 'author))
-           '((author "Paul Ricoeur"))]
-          [#:editors editors (listof (tei-xexpr/c 'editor))]
-          [bibl-body string?] ...+)
-         (tei-xexpr/c 'teiHeader)]{
- Produces an x-expression for a @tt{teiHeader} element acording to
- the template for Digital Ricoeur. The @racket[bibl-body] strings
- (which may be convieniently given using the at-reader) are
- spliced into a @tt{bibl} element in the @tt{sourceDesc} element.
-}
-
 @defproc[(read-TEI [in input-port? (current-input-port)])
          (is-a?/c TEI<%>)]{
  Produces a Racket object representing the TEI XML
  document read from @racket[in]. 
+}
+
+@defproc[(xml-path? [pth path-string?]) any/c]{
+ Tests whether @racket[pth] is the path to an XML file, without
+ checking the validity of the file or even its existance.
 }
 
 @defproc[(tag->element [tag any-tei-xexpr/c])
@@ -145,7 +137,7 @@ if none was present.
 
 @defmethod[(get-numeric) (maybe/c number?)]{
   Returns an optional value representing the page number string converted
-  to a number, if possible
+  to a number, if possible 
  }
 }
 
@@ -154,13 +146,18 @@ if none was present.
 @defthing[any-tei-xexpr/c flat-contract?]{
  Similar to @racket[(and/c list? xexpr/c)], but
  rejects some (not all) x-expressions that would break TEI
- validity rules.
+ validity rules, including the additional requirements
+ imposed by Digital Ricœur.
 }
 
-@defproc[(tei-xexpr/c [name symbol?])
+@defproc[(tei-xexpr/c [name tei-element-name/c])
          flat-contract?]{
  Produces a contract similar to @racket[any-tei-xexpr/c], but
  which recognizes only tags named @racket[name].
+}
+
+@defthing[tei-element-name/c flat-contract?]{
+ A contract recognizing the names of valid Digital Ricœur TEI XML element.
 }
 
 @defthing[element-or-xexpr/c flat-contract?
@@ -175,12 +172,74 @@ if none was present.
  and non-tag x-expressions.
 }
 
+@subsection{Contract Implementation}
+@defmodule[ricoeur/tei/signatures]
+
+The bindings documented in this section are provided by
+@racketmodname[ricoeur/tei/signatures], but not by
+@racketmodname[ricoeur/tei/signatures].
+They are used in the implementation of contracts on TEI x-expressions.
+
+@defsignature[tei-xexpr-contracts^ ()]{
+ @signature-desc{
+  This signature specifies both the contract bindings ultimately
+  provided by @racketmodname[ricoeur/tei] and the binding
+  @sigelem[tei-xexpr-contracts^ make-element-contract] for specifying
+  the contracts on individual elements.
+  It is implemented by @racket[tei-xexpr-contracts@].
+ }
+  @defthing[tei-element-name/c flat-contract?]{
+  Used to implement @racket[tei-element-name/c].
+ }
+ @defproc[(tei-xexpr/c [name tei-element-name/c]) flat-contract?]{
+  Used to implement @racket[tei-xexpr/c].
+ }
+ @defthing[any-tei-xexpr/c flat-contract?]{
+  Used to implement @racket[any-tei-xexpr/c].
+ }
+ @defproc[(make-element-contract [name tei-element-name/c]
+                                 [#:children children
+                                  (listof (list/c (or/c 1 '1+ '0-1 '0+) tei-element-name/c))
+                                  '()]
+                                 [#:text? text? any/c #f]
+                                 [#:required-order required-order
+                                  (listof tei-element-name/c)
+                                  '()]
+                                 [#:attr-contracts attr-contracts
+                                  (listof (list/c symbol? flat-contract?))
+                                  '()]
+                                 [#:required-attrs required-attrs (listof symbol?) '()])
+          flat-contract?]{
+  Creates a contract recognizing a particular Digital Ricœur TEI XML element.
+  Used by units implementing @racket[element-contracts^].
+  @;TODO: Add more detail
+ }
+}
+
+@defthing[tei-xexpr-contracts@ unit?]{
+ A unit implementing @racket[tei-xexpr-contracts^].
+ It must be linked with an implementation of @racket[element-contracts^]
+ prior to invokation.
+}
+
+@defsignature[element-contracts^ ()]{
+@signature-desc{
+  This signature specifies contracts on individual Digital Ricœur TEI XML elements
+  using @sigelem[tei-xexpr-contracts^ make-element-contract].
+  The unit implementing this signature, @racket[element-contracts@], is
+  documented in "literate programming" style
+  under @secref["Formal_Specification"
+                #:doc '(lib "ricoeur/tei/scribblings/guidelines.scrbl")]
+  in @other-doc['(lib "ricoeur/tei/scribblings/guidelines.scrbl")].
+  It must be linked with @racket[tei-xexpr-contracts@] prior to invokation.
+}}
+
+
 @section{XML Validation}
 @defmodule[ricoeur/tei/xmllint
            #:no-declare]
 @(declare-exporting ricoeur/tei/xmllint
-                    ricoeur/tei
-                    )
+                    ricoeur/tei)
 
 
 The functions documented in this section are provided
@@ -189,8 +248,12 @@ by both @racketmodname[ricoeur/tei] and
 
 They depend on the 
 external command-line utility @tt{xmllint} (which is part
-of libxml2) to work. If @tt{xmllint} can not be found,
-a warning is displayed.
+of @tt{libxml2}) to work. If @tt{xmllint} can not be found,
+a warning is logged to @racket[(current-logger)].
+
+@defproc[(xmllint-available?) any/c]{
+ Detects whether @tt{xmllint} is available at runtime.
+}
 
 @defproc[(valid-xml-file? [#:quiet? quiet? any/c #t]
                           [pth path-string?] ...+)

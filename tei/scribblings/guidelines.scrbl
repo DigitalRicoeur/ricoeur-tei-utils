@@ -4,6 +4,7 @@
 
 @(require racket/runtime-path
           racket/list
+          (submod ricoeur/tei/specification doc)
           (for-syntax racket/base
                       syntax/parse
                       adjutor
@@ -11,20 +12,49 @@
           (for-label ricoeur/tei
                      ))
 
-@(define-runtime-path example-image
-   "screenshot.png")
+This manual specifies how to encode texts for Digital Ricœur.
 
-This document describes some basic guidelines for TEI tagging texts
-for Digital Ricœur. A foundational assumption is that we want to
+A foundational assumption is that we want to
 complete an initial encoding quickly by keeping the complexity of TEI
-tagging to a minimum, while still producing well-formed XML
-documents that will be valid per the TEI Document
-Type Definition.
-
+tagging process to a minimum, while still producing well-formed XML
+documents that conform to the TEI standards.
 Our initial priorities are marking pagebreaks
 and recording basic catalog information.
 
-@section{Prerequisites}
+To that end, we have defined a custom subset of TEI, which is codified
+in the @tt{DR-TEI.dtd} Document Type Definition (DTD).
+To ensure consistency and facilitate the development of tools,
+we also impose additional requirements beyond those specified by the DTD.
+These requirements are documented in this manual.
+
+We have implemented a number of tools to assist in preparing TEI XML documents:
+@(itemlist
+  @item{
+ The script @tt{encode-entities.rkt} in the @tt{texts} repository handles
+ escaping XML reserved characters, as discussed below under @secref["Prerequisites"].
+ Run it with the @tt{--help} flag for usage information.
+ }
+  @item{
+ In the @tt{TEI} directory of the @tt{texts} repository, the @tt{validate-all.rkt}
+ script checks the minimal validity of the prepared documents (using @tt{xmllint}
+ from @tt{libxml2} when available). It can also be invoked by running
+ @tt{make validate} in the root directory of the @tt{texts} repository.
+ }
+  @item{
+ Most comprehensively, the GUI program "XML Lint" performs all of the validation
+ done by the @tt{validate-all.rkt} script and also allerts the user to issues
+ with the documents that, while they do not make them invalid, are indicative of
+ potential subtle mistakes.
+ })
+
+@(table-of-contents)
+
+@section{Getting Started}
+
+This section explains the process of converting a raw text file
+to a TEI XML document that satisfies our project's requirements.
+
+@subsection{Prerequisites}
 
 We should always start from the highest-quality OCRed text files.
 
@@ -34,15 +64,19 @@ with @litchar{&lt;} and @litchar{&amp;}, respectively. This can be
 done automatically using the script @tt{encode-entities.rkt} in
 the @tt{texts} repository.
 
-@section{Getting Started: Minimal Template for Valid TEI Documents}
+@subsection{Minimal Template}
 
-The first step in preparing our corpus is converting the raw OCRed
-text files into valid and well-formed TEI XML files. (These should
+Once we have prepared a properly escaped text, we must add certain
+boilerplate to make it into a valid and well-formed TEI XML file.
+(In practice, we are also adding @tag{pb} tags at this stage.)
+This section describes a template for this step.
+
+The finished documents should 
 be saved with the extension @litchar{.xml}, rather than @litchar{.txt},
-which is for plain text.)
+which is for plain text.
+They should also be moved to the @tt{TEI} directory
+in the @tt{texts} repository.
 
-The following describes a recommended template for quickly converting
-our digitized texts into TEI XML format.
 In the template, the body of the text
 is enclosed in an "annonymous block",
 which is a container for text that does not
@@ -53,7 +87,7 @@ sections and paragraphs.
 In the common case that paragraphs are indicated
 by blank lines, we can automatically convert an annonymous block
 to a series of paragraph elements
-with a Racket script using @(method TEI.2<%> guess-paragraphs).
+with a Racket script using @(method TEI<%> guess-paragraphs).
 
 In the following example, syntax typeset like @litchar{this}
 should appear verbatim. Keywords typeset like @racketvarfont{this}
@@ -66,11 +100,11 @@ Whitespace is not significant.
   (verbatim
    @litchar{<?xml version="1.0" encoding="utf-8"?>}"\n"
    @litchar{<!DOCTYPE TEI SYSTEM "DR-TEI.dtd">}"\n"
-   @litchar{<TEI>}"\n"
+   @litchar{<TEI version="5.0" xmlns="http://www.tei-c.org/ns/1.0">}"\n"
    "  "@litchar{<teiHeader>}"\n"
    "    "@litchar{<fileDesc>}"\n"
    "      "@litchar{<titleStmt>}"\n"
-   "        "(elemref "catalog-info" @racketvarfont{catalog-info})"\n"
+   "        "(elemref "title-statement" @racketvarfont{title-statement})"\n"
    "      "@litchar{</titleStmt>}"\n"
    "      "@litchar{<publicationStmt>}"\n"
    "        "@litchar{<authority>Digital Ricoeur</authority>}"\n"
@@ -100,28 +134,44 @@ Whitespace is not significant.
              (list (list (elemtag it (racketvarfont (larger (larger it)))))))
     (apply nested #:style 'inset body)))
 
-@defkeyword["catalog-info"]{
- The @(elemref "catalog-info" @racketvarfont{catalog-info})
+@defkeyword["title-statement"]{
+ The @(elemref "title-statement" @racketvarfont{title-statement})
  should contain the following tags, which may appear in any order:
- @itemlist[@item[@litchar{<title>}@tt{the title of the work}@litchar{</title>}]
+ @itemlist[@item[@litchar{<title>}
+                 @elem{the title of the work}
+                 @litchar{</title>}]
            @item[@litchar{<author>}
-                 @tt{the author's name (usually @litchar{Paul Ricoeur})}
+                 @elem{the author's name}
                  @litchar{</author>}]
            @item[@litchar{<editor role="editor">}
-                 @tt{the name of an editor}
+                 @elem{the name of an editor}
                  @litchar{</editor>}]]
- The @tt{author} and @tt{editor} tags may be repeated as necessary,
- and the @tt{editor} tag should be ommited if it doesn't apply.
+ 
+ The @tag{author} and @tag{editor} tags may be repeated as necessary,
+ and the @tag{editor} tag should be ommited if it doesn't apply.
 
- The @tt{role} attribute of the @tt{editor} tag, in addition to
- @tt{"editor"}, might use values like @tt{"translator"},
- @tt{"compiler"}, or @tt{"preface"} (for the author of a preface).
+ The @tag{author} element representing Paul Ricœur should be
+ exactly as follows:
+ @(nested #:style 'inset
+          @litchar{<author xml:id="ricoeur">Paul Ricoeur</author>})
+
+ The @attr{role} attribute of the @tag{editor} tag, in addition to
+ @racket["editor"], might use values like @racket["translator"],
+ @racket["compiler"], or @racket["preface"] (for the author of a preface).
 }
 
 @defkeyword["source-citation"]{
  The @(elemref "source-citation" @racketvarfont{source-citation})
  should be free-form text specifying the source from which
- the digitized document was created
+ the digitized document was created — for example, as
+ drawn from the "Books in English" spreadsheet in our Google Drive folder.
+
+ The part of the citation that refers to the publication date should be
+ wrapped in a @tag{date} element, which must have a @attr{when} attribute
+ giving the date in a machine-readable format:
+ either @racket["YYYY-MM-DD"], @racket["YYYY-MM"], or @racket["YYYY"].
+ Note in particular that the month and day parts, when present, must always be two
+ digits long.
 }
 
 @defkeyword["main-text"]{
@@ -130,7 +180,7 @@ Whitespace is not significant.
  along with pagebreak tags.
 
  When prepairing the text, we should be careful to practice non-destructive
- editing. For example, while we aren't focusing on adding @litchar{note}
+ editing. For example, while we aren't focusing on adding @tag{note}
  tags at this stage, we should leave the numbers in place for footnotes and
  endnotes so that we can add them later. However, we should remove redundant
  "decorative" text (like the title of a book printed at the top of every page)
@@ -138,165 +188,189 @@ Whitespace is not significant.
  OCR errors if we see them.
 
  For more details about pagebreak tags, which are especially
- important for our initial goals, see @secref["Encoding_Page_Numbers"] 
+ important for our initial goals, see @secref["Encoding_Page_Numbers"]. 
 }
 
-The following screenshot illustrates a valid TEI XML file based on this template:
-
-@image[example-image #:scale 0.75]{
- The example document with XML syntax highlighting.
+@;{
+;                                                                  
+;                                                                  
+;                                                                  
+;                                                                  
+;                       ;;;    ;               ;                   
+;                     ;;       ;;              ;;                  
+;   ;; ;;;    ;;;   ;;;;;;; ;;;;;   ;; ;    ;;;;;   ;; ;      ;;;;;
+;   ;;;     ;;   ;    ;;       ;;   ;;; ;      ;;   ;;; ;    ;  ;  
+;   ;;      ;    ;    ;;       ;;   ;;  ;;     ;;   ;;  ;;  ;;  ;; 
+;   ;;     ;;;;;;;;   ;;       ;;   ;;  ;;     ;;   ;;  ;;   ;  ;  
+;   ;;      ;         ;;       ;;   ;;  ;;     ;;   ;;  ;;    ;;   
+;   ;;      ;;   ;    ;;       ;;   ;;  ;;     ;;   ;;  ;;  ;;     
+;   ;;        ;;;     ;;       ;;   ;;  ;;     ;;   ;;  ;;   ;;;;; 
+;                                                           ;    ;;
+;                                                          ;;    ; 
+;                                                            ;;;;  
+;                                                                  
 }
 
-@(define-syntax (deftag stx)
-   (syntax-parse stx
-     [(_ name:id (~describe #:opaque "reference url string" ref-url:str)
-         (~or (~optional (~seq (~and attributes? #:attributes)
-                               ([attr-name:id attr-desc:expr] ...+)))
-              (~optional (~seq (~and examples? #:eg) [example:expr ...+])))
-         ...
-         body:expr ...)
-      #`(begin (tabular
-                #:style 'boxed
-                #:sep @hspace[1]
-                #:column-properties '(top top)
-                (list (list @elem{Tag:} (litchar (symbol->string 'name)))
-                      #,@(list-when (attribute attributes?)
-                           (list #`(list @elem{Attributes:}
-                                         (tabular
-                                          #:sep @hspace[1]
-                                          #:column-properties '(top top)
-                                          (list (list (litchar (symbol->string 'attr-name))
-                                                      @elem{:}
-                                                      attr-desc) ...)))))
-                      (list @elem{Reference:} (url ref-url))
-                      #,@(list-when (attribute examples?)
-                           (list #`(list @elem{Examples:}
-                                         (tabular
-                                          (add-between (list (list example) ...)
-                                                       (list (linebreak)))))))
-                      ))
-               body ...)]))
+@section{Refining the Encoding}
 
-@section{Encoding Page Numbers}
+This section provides more details about specific tasks in the encoding
+process after the initial preparation of a valid and well-formed TEI XML
+document (which is described in @secref["Getting_Started"]).
 
-@deftag[pb "http://www.tei-c.org/release/doc/tei-p5-doc/en/html/ref-pb.html"
-        #:attributes ([n @elem{the page number}])
-        #:eg (@litchar{<pb n="i"/>}
-               @litchar{<pb n="42"></pb>}
-               @litchar{<pb/>})]{
- The beginning of every new page (including the first page) must be marked by
- a @tt{pb} element. Unless the page is not assigned a number in the scanned
- original, the element should include the @litchar{n} attribute to denote the
- page number (perhaps as a Roman numeral).
+They are loosely organized by the order
+in which an encoder would likely want to perform them.
 
- A @tt{pb} element should never appear between @tt{div} elements: instead,
- encode such pagebreaks at the very begining of the subsequent @tt{div} element.
+@subsection{Encoding Page Numbers}
 
- @italic{Adapted from @(url "https://www.cdlib.org/groups/stwg/MS_BPG.html#pb")}
-}
-
-
-
-                                                 
-@;                                                  
-@;       ;;;          ;;                            
-@;     ;;             ;;                            
-@;   ;;;;;;; ;;  ;; ;;;;;;;  ;;  ;;  ;; ;;;    ;;;  
-@;     ;;    ;;  ;;   ;;     ;;  ;;  ;;;     ;;   ; 
-@;     ;;    ;;  ;;   ;;     ;;  ;;  ;;      ;    ; 
-@;     ;;    ;;  ;;   ;;     ;;  ;;  ;;     ;;;;;;;;
-@;     ;;    ;;  ;;   ;;     ;;  ;;  ;;      ;      
-@;     ;;     ; ;;;    ;      ; ;;;  ;;      ;;   ; 
-@;     ;;      ; ;;     ;;;    ; ;;  ;;        ;;;  
-@;                                                  
-                                           
-
-@section{Future Extensions: Additional Useful Tags}
-
-Our initial focus is on creating valid TEI XML documents and encoding
-page breaks. However, there are several additional TEI elements that
-will be useful to our project in the future: some of these are documented in
-this section. More details will be added as we draw closer to completing
-the initial round of encoding.
+The beginning of every new page (including the first page) must be marked by
+a @tag{pb} element. Unless the page is not assigned a number in the scanned
+original, the element should include the @attr{n} attribute to denote the
+page number (perhaps as a Roman numeral).
 
 @subsection{Front- and Back-matter}
-@deftag[front "http://www.tei-c.org/release/doc/tei-p5-doc/en/html/ref-front.html"]
-@deftag[body "http://www.tei-c.org/release/doc/tei-p5-doc/en/html/ref-body.html"]
-@deftag[back "http://www.tei-c.org/release/doc/tei-p5-doc/en/html/ref-back.html"]
 
-While our template initially uses only the @litchar{body} element,
-the enclosing @litchar{text} element can also contain a @litchar{front} element
+While our template initially uses only the @tag{body} element,
+the enclosing @tag{text} element can also contain a @tag{front} element
 — which should contain any front-matter (such as "abstracts, title page, prefaces,
-dedications, etc.") and should come before the @litchar{body} —
-and a @litchar{back} element — which contains back-matter, such as indeces or
-appendices, and should come after the @litchar{body}.
+dedications, etc.") and should come before the @tag{body} —
+and a @tag{back} element — which contains back-matter, such as indeces or
+appendices, and should come after the @tag{body}.
 
-Like the @litchar{body} element, @litchar{front} and @litchar{back}
+Like the @tag{body} element, @tag{front} and @tag{back}
 @bold{MUST NOT} contrain text directly: they should contain elements like
-@litchar{ab} or @litchar{div}.
+@tag{ab} or @tag{div}.
+If you are working from the recomended minimal template
+described in @secref["Getting_Started"], you will need to splic the @tag{ab}
+element into multiple @tag{ab} elements accordingly.
 
 @subsection{Chapters & Other Sections}
-@deftag[div "http://www.tei-c.org/release/doc/tei-p5-doc/en/html/ref-div.html"
-        #:attributes ([type @elem{@tt{"chapter"}, @tt{"part"}, @tt{"section"},
-                                @tt{"dedication"}, @tt{"contents"},
-                                @tt{"ack"} (for acknowledgements), @tt{"index"},
-                                and other specialised values}]
-                      [n @elem{the chapter number, if applicable}])
-        #:eg ((verbatim
-               @litchar{<div type="chapter" n="1">}(linebreak)
-               "  "@elem{Chapter text goes here.}(linebreak)
-               @litchar{</div>}))]{
- Once we have finished tagging pagebreaks, marking large-scale structural divisions
- (like chapters or sections) will likely be a next step. These divisions are
- marked with @litchar{div} tags, which have a @litchar{type} attribute that has
- one of a fixed list of values to denote the type of division.
+ 
+Once we have tagges the front- and back-matter,
+the next step is marking large-scale structural divisions
+(like chapters or sections).
 
- Note that @litchar{div} elements @bold{MUST NOT} directly contain text:
- the contents of the
- @litchar{div} must be wrapped in @litchar{p}, @litchar{ab}, @litchar{head} or
- similar tags.
+These divisions are
+marked with @tag{div} tags, which have a @attr{type} attribute that has
+one of a fixed list of values to denote the type of division.
+(See @secref["Structural_Elements"] under @secref["Formal_Specification"]
+for the complete list of allowable @attr{type} values.) If the division
+is numbered in the text, the number should be given in an @attr{n} attribute.
 
- We should add more detail to this section as we get closer to marking @litchar{div}s.
- @;How to mark sections not by Ricoeur?
-}
+Note that @litchar{div} elements @bold{MUST NOT} directly contain text:
+the contents of the
+@litchar{div} must be wrapped in @litchar{p}, @litchar{ab}, @litchar{head} or
+similar tags.
+
+A few special @attr{type}s of @tag{div} are a particular priority for encoding,
+as they can improve our search feature:
+@(itemlist
+  @item{@racket["contents"] (for the table of contents)}
+  @item{@racket["intro"] (for an introduction)}
+  @item{@racket["index"]}
+  @item{@racket["dedication"]}
+  @item{@racket["ack"] (for acknowledgements)})
+
+@subsubsection{Sections Not by Ricœur}
+
+Some works contain sections that are not written by Paul Ricœur.
+Marking these sections as such is a particular priority, as they
+should be excluded from search results.
+
+Some preparation is needed to encode authorship in a machine-readable
+manner. For each author or editor who needs to be identified, you
+must add an @attr{xml:id} attribute to the corresponding
+@tag{author} or @tag{editor} element in the @tag{titleStmt}.
+The value for this attribute must be unique across the entire document:
+often, the last name is a good choice. Note that the value 
+@racket["ricoeur"] is reserved across all documents for the 
+@tag{author} element representing Paul Ricœur.
+
+Once these identifiers have been assigned, you can mark a @tag{div}
+element as being by a particular author/editor by adding a  
+@attr{resp} attribute. The value for the @attr{resp} attribute
+must point to the corresponding identifier by prefixing it with the
+character @tt{#}. For example, if you created an author with
+@tt{xml:id="smith"}, you would write @tt{resp="#smith"}.
+
+Any @tag{div} elements that do not have a @attr{resp} attribute are
+assumed to be by Paul Ricœur. In addition, there is no need to add
+a @attr{resp} attribute for @tag{div} elements with a @attr{type} of
+@racket["contents"] or @racket["index"].
+
+A few documents, such as "Tragic Wisdom and Beyond", take the form
+of an extended dialog between Paul Ricœur and some other party.
+The speakers in these documents are encoded through a special process.
+Rather than adding a @attr{resp} attribute to the @tag{div} elements,
+each passage where a distinct individual is speaking should be enclosed
+in a @tag{sp} element. This element must have a @attr{who} attribute
+that points to the speaker as described above. (The @attr{who} attribute
+is required even when the speaker is Paul Ricœur.) Note that, like the
+@tag{div} element, the @tag{sp} element must not directly contain text.
+Because the information is contained in the @attr{who} attribute,
+the notation of the speaker in the text itself can be removed.
 
 @subsection{Footnotes & Endnotes}
-@deftag[note "http://www.tei-c.org/release/doc/tei-p5-doc/en/html/ref-note.html"
-        #:attributes ([place @elem{@tt{"foot"} or @tt{"end"}}]
-                      [n @elem{the number or symbol for the footnote or endnote}]
-                      [type @elem{use @tt{"transl} for translation notes}])
-        #:eg (@elem[@litchar{<note place="foot" n="1">}
-                    @tt{We explain below why we use the uncommon term older logical writings.}
-                    @litchar{</note>}]
-               @elem[@litchar{<note place="end">}
-                     @tt{See Bachelard's Poetics of Space, Beacon Press, Boston (1969),
-                              p. xxi; "retentissement" in French.}
-                     @litchar{</note>}])]{
- Footnotes (those references, notes, and citations appearing at the bottom of the page)
- and endnotes (those which appear at the end of a book or article)
- must be encoded where they are referenced.
- In other words, at the location of the note reference in the text,
- embed the @litchar{<note>} itself in place.
 
- @italic{Adapted from @url["https://www.cdlib.org/groups/stwg/MS_BPG.html#fnote"]
-  (but note that we encode endnotes differently)}
-}
+Footnotes (those references, notes, and citations appearing at the bottom of the page)
+and endnotes (those which appear at the end of a book or article)
+are encoded using the @tag{note} element.
+It must have a @attr{place} attribute with a value of either @racket["foot"] or
+@racket["end"]. It may have a @attr{n} attribute giving the symbol used
+to reference the note in the original.
 
-@subsection{Headings}
-@deftag[head "http://www.tei-c.org/release/doc/tei-p5-doc/en/html/ref-head.html"
-        #:eg ((verbatim
-               @litchar{<div type="chapter" n="1">}(linebreak)
-               "  "@litchar{<pb n="1"/>}(linebreak)
-               "  "@litchar{<head>The Question of Selfhood</head>}(linebreak)
-               "  "@tt{...}(linebreak)
-               @litchar{</div>}))]{
- Headings (such as chapter titles) should ideally be encoded with
- @litchar{head} elements, not @litchar{p} elements.                                                   
-}
+Notes must be encoded where they are referenced.
+In other words, at the location of the note reference in the text,
+embed the @tag{note} element itself in place.
 
-@subsection{Paragraphs}
-@deftag[p "http://www.tei-c.org/release/doc/tei-p5-doc/en/html/ref-p.html"
-        #:eg (@litchar{<p>This is a <pb n="5"/> paragraph.</p>})]{
- Except when they can be computed automatically, encoding paragraphs is
- probably a fairly low priority for our project at this stage.
-}
+Translation notes should have a @attr{type} attribute with a value of @racket["transl"].
+
+Any note which was added by someone other than Paul Ricœur (such as an editor or
+translator) must have a @attr{resp} attribute with an appropriate value as
+described under @secref["Sections_Not_by_Ric_ur"] above.
+ 
+Examples:
+@(nested
+  #:style 'inset
+  @para[@litchar{<note place="foot" n="1">}
+             @tt{We explain below why we use the uncommon term older logical writings.}
+             @litchar{</note>}]
+ @para[@litchar{<note place="end" n="*">}
+       @tt{See Bachelard's Poetics of Space, Beacon Press, Boston (1969),
+         p. xxi; "retentissement" in French.}
+       @litchar{</note>}])
+
+
+@italic{Adapted from @url["https://www.cdlib.org/groups/stwg/MS_BPG.html#fnote"]
+ (but note that we encode endnotes differently)}
+
+@subsection{Paragraphs, Headings, and Lists}
+
+Except when they can be computed automatically, encoding paragraphs is
+probably a fairly low priority for our project at this stage. Ultimately,
+however, each paragraph should be wrapped in a @tag{p} element.
+Headings (such as chapter titles) should ideally be encoded with
+@tag{head} elements, not @tag{p} elements. 
+
+Lists are encoded specially. The list as a whole is wrapped in a @tag{list}
+element. If it is a numbered list, it should have a @attr{rend} attribute
+with a value of @racket["numbered"]. Individual items on the list are
+wrapped with @tag{item} elements.
+
+Example:
+@(nested
+  #:style 'inset
+  (verbatim
+   @tt{<div type="chapter" n="1">}(linebreak)
+   "  "@tt{<pb n="1"/>}(linebreak)
+   "  "@tt{<head>The Question of Selfhood</head>}(linebreak)
+   "  "@tt{<p>This is a <pb n="2"/> paragraph.</p>}(linebreak)
+   "  "@elem{…}(linebreak)
+   @tt{</div>}))
+
+
+
+
+
+
+
+@include-section[(submod ricoeur/tei/specification doc)]

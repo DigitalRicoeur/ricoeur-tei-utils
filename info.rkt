@@ -25,7 +25,7 @@
                        ("Digital Ricœur" 0)
                        )
                       ("tei/scribblings/guidelines.scrbl"
-                       ()
+                       (multi-page)
                        ("Digital Ricœur" 0)
                        )))
 (define raco-commands '(("tei-to-plain-text"

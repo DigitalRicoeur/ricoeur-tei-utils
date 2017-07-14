@@ -1,0 +1,17 @@
+*~
+\#*
+.\#*
+.DS_Store
+compiled/
+/doc/
+*.html
+*.css
+*.js
+*.pdf
+*.aux
+*.log
+*.out
+*.synctex.gz
+*.tex
+*.toc
+*IGNORE*

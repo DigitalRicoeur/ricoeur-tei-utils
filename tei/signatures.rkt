@@ -20,6 +20,7 @@
   ((contracted
     [tei-element-name/c flat-contract?]
     [tei-xexpr/c (-> tei-element-name/c flat-contract?)]
+    [any-tei-xexpr/c flat-contract?]
     [make-element-contract
      (->* {tei-element-name/c}
           {#:children (listof (list/c (or/c 1 '1+ '0-1 '0+)
@@ -28,8 +29,8 @@
            #:required-order (listof tei-element-name/c)
            #:attr-contracts (listof (list/c symbol? flat-contract?))
            #:required-attrs (listof symbol?)}
-          any/c)]
-    [any-tei-xexpr/c flat-contract?])))
+          flat-contract?)]
+    )))
 
 (define-signature element-contracts^ 
   (TEI/c
