@@ -171,13 +171,13 @@
     (define file-snips
       (for/list ([pth (in-directory dir)]
                  #:when (xml-path? pth))
-        (define it
-          (new file-snip%
-               [pth pth]
-               [dir dir]
-               [dir-frame this]))
-        (send ed insert it)
-        it))
+        (new file-snip%
+             [pth pth]
+             [dir dir]
+             [dir-frame this])))
+    (for ([snip (in-list (sort file-snips
+                               file-snip-more-urgent?))])
+      (send ed insert snip))
     (send ed lock #t)
     (send ed hide-caret #t)
     (define mb (new menu-bar% [parent this]))
@@ -207,6 +207,12 @@
 ;                           ;;     
 ;                           ;;     
 ;                                  
+
+(define (file-snip-more-urgent? a b)
+  (case (send a get-status)
+    [(ok) #f]
+    [(error) (not (eq? 'error (send b get-status)))]
+    [(warning) (eq? 'ok (send b get-status))]))
 
 (define file-snip%
   (class snip%
@@ -350,6 +356,8 @@
            [frame frame]
            [status status]
            [maybe-title maybe-title]))
+    (define/public (get-status)
+      status)
     (define/public (revoke)
       (send frame show #f))))
 
