@@ -7,82 +7,11 @@
          gregor
          adjutor
          pict
+         "lib.rkt"
          )
 
 (module+ main
   (void (new splash-frame%)))
-
-(define-runtime-path photo-path
-  "photo.png")
-
-(define photo-bitmap
-  (call-with-input-file photo-path
-    read-bitmap))
-
-(define (get-xml-directory [parent #f])
-  (let ([pth (get-directory "Choose a directory containing TEI XML files."
-                            parent)])
-    (and pth
-         (directory-exists? pth)
-         pth)))
-
-(define (show-xmllint-warning [parent #f])
-  (message-box "xmllint Not Found"
-               "xmllint Not Found\n\nThe program xmllint was not found. Please install libxml2 for full validation."
-               parent
-               '(ok caution)))
-
-(define (pict->canvas% pict)
-  (def
-    [init-drawer (make-pict-drawer pict)]
-    [w (inexact->exact (ceiling (pict-width pict)))]
-    [h (inexact->exact (ceiling (pict-height pict)))])
-  (class canvas%
-    (init [style '(transparent)])
-    (super-new [style style]
-               [min-width w]
-               [min-height h]
-               [stretchable-width #f]
-               [stretchable-height #f])
-    (define drawer
-      init-drawer)
-    (inherit get-dc refresh-now)
-    (define/override (on-paint)
-      (drawer (get-dc) 0 0))
-    (define/public (replace-pict pict)
-      (set! drawer (make-pict-drawer pict))
-      (refresh-now))))
-
-(define (red-text-pict txt)
-  (colorize (text txt '(bold . system)) "red"))
-
-(define dot-canvas%
-  (let ([dot-pen (make-pen #:width 1)])
-  (class canvas%
-    (init-field [(init-color color)]
-                [size 20])
-    (super-new [style '(transparent)]
-               [min-width (add1 size)]
-               [min-height (add1 size)]
-               [stretchable-width #f]
-               [stretchable-height #f])
-    (inherit get-dc refresh-now)
-    (define my-brush
-      (color->brush init-color))
-    (define/private (color->brush color)
-      (make-brush #:color color))
-    (define/override (on-paint)
-      (let* ([dc (get-dc)]
-             [old-pen (send dc get-pen)]
-             [old-brush (send dc get-brush)])
-        (send dc set-pen dot-pen)
-        (send dc set-brush my-brush)
-        (send dc draw-ellipse 0 0 size size)
-        (send dc set-pen old-pen)
-        (send dc set-brush old-brush)))
-    (define/public (set-color c)
-      (set! my-brush (color->brush c))
-      (refresh-now)))))
 
 (def
   [missing-canvas%
@@ -102,7 +31,23 @@
      (super-new [color "green"]))])
 
 
-
+;                                                  
+;                                                  
+;                                                  
+;                                                  
+;                   ;;;;                    ;;     
+;                     ;;                    ;;     
+;     ;;    ; ;;      ;;      ;;      ;;    ;; ;   
+;   ;;  ;   ;;  ;     ;;     ;  ;   ;;  ;   ;;; ;  
+;    ;      ;;  ;     ;;        ;;   ;      ;;  ;; 
+;     ;;    ;;  ;;    ;;      ;;;;    ;;    ;;  ;; 
+;       ;;  ;;  ;     ;;     ;  ;;      ;;  ;;  ;; 
+;   ;   ;   ;;  ;      ;    ;;  ;;  ;   ;   ;;  ;; 
+;    ;;;    ;;;;        ;;   ;;; ;   ;;;    ;;  ;; 
+;           ;;                                     
+;           ;;                                     
+;           ;;                                     
+;                                                  
 
 (define splash-frame%
   (class frame%
@@ -149,14 +94,60 @@
           (show #f)
           (new directory-frame% [dir dir]))))))
 
-(struct xmllint-error (str))
 
-(define bold-system-font
-  (make-font #:family 'system
-             #:weight 'bold))
+;                                                                  
+;                                                                  
+;                                                                  
+;                                                                  
+;                                           ;;                     
+;                                           ;;                     
+;  ; ;; ;;    ;;;   ;; ;    ;;  ;;          ;;;;      ;;    ;; ;;; 
+;  ;; ;; ;  ;;   ;  ;;; ;   ;;  ;;          ;;  ;    ;  ;   ;;;    
+;  ;; ;; ;; ;    ;  ;;  ;;  ;;  ;;          ;;  ;       ;;  ;;     
+;  ;; ;; ;;;;;;;;;; ;;  ;;  ;;  ;;          ;;  ;;    ;;;;  ;;     
+;  ;; ;; ;; ;       ;;  ;;  ;;  ;;          ;;  ;    ;  ;;  ;;     
+;  ;; ;; ;; ;;   ;  ;;  ;;   ; ;;;          ;;  ;   ;;  ;;  ;;     
+;  ;; ;; ;;   ;;;   ;;  ;;    ; ;;          ; ;;     ;;; ;  ;;     
+;                                                                  
+;                                                                  
+;                                                                  
+;                                                                  
 
 
+(define (add-file-menu mb dir-frame)
+  (define m-file (new menu% [label "File"] [parent mb]))
+  (new menu-item%
+       [parent m-file]
+       [label "Open additional directory …"]
+       [callback (λ (i e)
+                   (let ([dir (get-xml-directory)])
+                     (when dir
+                       (new directory-frame% [dir dir]))))]
+       [shortcut #\O])
+  (new menu-item%
+       [parent m-file]
+       [label "Refresh"]
+       [callback (λ (i e)
+                   (send dir-frame refresh-directory))]
+       [shortcut #\R]))
 
+;                                                                          
+;                                                                          
+;                                                                          
+;                                                                          
+;       ;;     ;                             ;;                            
+;       ;;     ;;                            ;;                            
+;    ;;;;;  ;;;;;   ;; ;;;    ;;;      ;;; ;;;;;;;   ;;;    ;; ;;; ;     ; 
+;   ;   ;;     ;;   ;;;     ;;   ;   ;;   ;  ;;     ;   ;   ;;;     ;   ;  
+;   ;   ;;     ;;   ;;      ;    ;   ;       ;;     ;   ;   ;;      ;   ;  
+;  ;;   ;;     ;;   ;;     ;;;;;;;; ;;       ;;    ;;   ;;  ;;       ;  ;  
+;   ;   ;;     ;;   ;;      ;        ;       ;;     ;   ;   ;;       ; ;   
+;   ;   ;;     ;;   ;;      ;;   ;   ;;   ;   ;     ;   ;   ;;       ; ;   
+;    ;;; ;     ;;   ;;        ;;;      ;;;     ;;;   ;;;    ;;        ;    
+;                                                                     ;    
+;                                                                    ;     
+;                                                                  ;;      
+;                                                                          
 
 
 (define directory-frame%
@@ -194,6 +185,24 @@
 
 
 
+
+;                                                  
+;                                                  
+;                                                  
+;                                                  
+;              ;        ;;                   ;;    
+;              ;;       ;;                   ;;    
+;  ;      ; ;;;;;    ;;;;;    ;;;;;   ;;;  ;;;;;;; 
+;  ;   ;  ;    ;;   ;   ;;   ;  ;   ;;   ;   ;;    
+;   ; ;; ;     ;;   ;   ;;  ;;  ;;  ;    ;   ;;    
+;   ; ;; ;     ;;  ;;   ;;   ;  ;  ;;;;;;;;  ;;    
+;   ; ; ;;     ;;   ;   ;;    ;;    ;        ;;    
+;   ;;  ;;     ;;   ;   ;;  ;;      ;;   ;    ;    
+;    ;  ;      ;;    ;;; ;   ;;;;;    ;;;      ;;; 
+;                           ;    ;;                
+;                          ;;    ;                 
+;                            ;;;;                  
+;                                                  
 
 
 (define file-widget%
@@ -236,27 +245,23 @@
     (define/public (revoke)
       (send frame show #f))))
 
-
-
-
-(define (add-file-menu mb dir-frame)
-  (define m-file (new menu% [label "File"] [parent mb]))
-  (new menu-item%
-       [parent m-file]
-       [label "Open additional directory …"]
-       [callback (λ (i e)
-                   (let ([dir (get-xml-directory)])
-                     (when dir
-                       (new directory-frame% [dir dir]))))]
-       [shortcut #\O])
-  (new menu-item%
-       [parent m-file]
-       [label "Refresh"]
-       [callback (λ (i e)
-                   (send dir-frame refresh-directory))]
-       [shortcut #\R]))
-
-
+;                                          
+;                                          
+;                                          
+;                                          
+;                                          
+;                                          
+;     ;;;   ;; ;;;  ;; ;;;   ;;;    ;; ;;; 
+;   ;;   ;  ;;;     ;;;     ;   ;   ;;;    
+;   ;    ;  ;;      ;;      ;   ;   ;;     
+;  ;;;;;;;; ;;      ;;     ;;   ;;  ;;     
+;   ;       ;;      ;;      ;   ;   ;;     
+;   ;;   ;  ;;      ;;      ;   ;   ;;     
+;     ;;;   ;;      ;;       ;;;    ;;     
+;                                          
+;                                          
+;                                          
+;                                          
 
 (define error-frame%
   (class frame%
@@ -306,15 +311,23 @@
     (append-editor-operation-menu-items m-edit #t)
     #|END class error-frame%|#))
 
-
-
-
-
-
-
-
-
-
+;                                  
+;                                  
+;                                  
+;                                  
+;       ;;;    ;    ;;;;           
+;     ;;       ;;     ;;           
+;   ;;;;;;; ;;;;;     ;;      ;;;  
+;     ;;       ;;     ;;    ;;   ; 
+;     ;;       ;;     ;;    ;    ; 
+;     ;;       ;;     ;;   ;;;;;;;;
+;     ;;       ;;     ;;    ;      
+;     ;;       ;;      ;    ;;   ; 
+;     ;;       ;;       ;;    ;;;  
+;                                  
+;                                  
+;                                  
+;                                  
 
 (define file-frame%
   (class frame%
@@ -547,14 +560,3 @@
                        (add1 (from-just! (send next get-numeric)))
                        (cdr pages)))])))
     #|END class file-frame%|#))
-
-
-
-
-
-
-
-
-
-
-
