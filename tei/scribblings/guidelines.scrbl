@@ -27,12 +27,17 @@ To ensure consistency and facilitate the development of tools,
 we also impose additional requirements beyond those specified by the DTD.
 These requirements are documented in this manual.
 
+@margin-note{
+ For additional documentation pertaining only to the requirements specified
+ by the DTD, see @url{https://manuals.digitalricoeur.org/DR-TEI_doc.html}.
+}
+
 We have implemented a number of tools to assist in preparing TEI XML documents:
 @(itemlist
   @item{
  The script @tt{encode-entities.rkt} in the @tt{texts} repository handles
  escaping XML reserved characters, as discussed below under @secref["Prerequisites"].
- Run it with the @tt{--help} flag for usage information.
+ Run it with the @(elem #:style 'tt @literal{--help}) flag for usage information.
  }
   @item{
  In the @tt{TEI} directory of the @tt{texts} repository, the @tt{validate-all.rkt}
