@@ -19,16 +19,7 @@
   [no-ricoeur-xml:id-canvas%
    (pict->canvas% (red-text-pict "No author element with xml:id=\"ricoeur\""))]
   [none-canvas%
-   (pict->canvas% (red-text-pict "NONE"))]
-  [error-canvas%
-   (class dot-canvas%
-     (super-new [color "red"]))]
-  [warning-canvas%
-   (class dot-canvas%
-     (super-new [color "yellow"]))]
-  [ok-canvas%
-   (class dot-canvas%
-     (super-new [color "green"]))])
+   (pict->canvas% (red-text-pict "NONE"))])
 
 
 ;                                                  
@@ -155,10 +146,14 @@
     (init-field dir)
     (super-new [label (string-append (path->string dir)
                                      " - TEI Lint")]
+               [width 800]
+               [height 600]
                [alignment '(left top)])
     (inherit show)
-    (let ([row (new horizontal-pane% [parent this]
-                    [alignment '(left top)])])
+    (let ([row (new horizontal-pane%
+                    [parent this]
+                    [stretchable-height #f]
+                    [alignment '(left center)])])
       (new message%
            [parent row]
            [label (path->string dir)])
@@ -166,72 +161,176 @@
            [parent row]
            [label "Refresh"]
            [callback (λ (b e) (refresh-directory))]))
-    (define file-widgets
+    (define e-c
+      (new editor-canvas%
+           [style '(transparent auto-hscroll auto-vscroll)]
+           [parent this]))
+    (define ed
+      (new text%))
+    (send e-c set-editor ed)
+    (define file-snips
       (for/list ([pth (in-directory dir)]
                  #:when (xml-path? pth))
-        (new file-widget%
-             [pth pth]
-             [dir dir]
-             [dir-frame this]
-             [parent this])))
+        (define it
+          (new file-snip%
+               [pth pth]
+               [dir dir]
+               [dir-frame this]))
+        (send ed insert it)
+        it))
+    (send ed lock #t)
+    (send ed hide-caret #t)
     (define mb (new menu-bar% [parent this]))
     (add-file-menu mb this)
     (show #t)
     (define/public (refresh-directory)
       (show #f)
       (map (λ (w) (send w revoke))
-           file-widgets)
+           file-snips)
       (new this% [dir dir]))))
 
 
+;                                  
+;                                  
+;                                  
+;                                  
+;                      ;           
+;                      ;;          
+;     ;;    ;; ;    ;;;;;   ; ;;   
+;   ;;  ;   ;;; ;      ;;   ;;  ;  
+;    ;      ;;  ;;     ;;   ;;  ;  
+;     ;;    ;;  ;;     ;;   ;;  ;; 
+;       ;;  ;;  ;;     ;;   ;;  ;  
+;   ;   ;   ;;  ;;     ;;   ;;  ;  
+;    ;;;    ;;  ;;     ;;   ;;;;   
+;                           ;;     
+;                           ;;     
+;                           ;;     
+;                                  
 
-
-;                                                  
-;                                                  
-;                                                  
-;                                                  
-;              ;        ;;                   ;;    
-;              ;;       ;;                   ;;    
-;  ;      ; ;;;;;    ;;;;;    ;;;;;   ;;;  ;;;;;;; 
-;  ;   ;  ;    ;;   ;   ;;   ;  ;   ;;   ;   ;;    
-;   ; ;; ;     ;;   ;   ;;  ;;  ;;  ;    ;   ;;    
-;   ; ;; ;     ;;  ;;   ;;   ;  ;  ;;;;;;;;  ;;    
-;   ; ; ;;     ;;   ;   ;;    ;;    ;        ;;    
-;   ;;  ;;     ;;   ;   ;;  ;;      ;;   ;    ;    
-;    ;  ;      ;;    ;;; ;   ;;;;;    ;;;      ;;; 
-;                           ;    ;;                
-;                          ;;    ;                 
-;                            ;;;;                  
-;                                                  
-
-
-(define file-widget%
-  (class horizontal-panel%
+(define file-snip%
+  (class snip%
     (super-new)
-    (init-field dir pth dir-frame)
-    (define val
-      (let ([xmllint-out (open-output-string)])
-        (cond
-          [(not (parameterize ([current-output-port xmllint-out]
-                               [current-error-port xmllint-out])
-                  (valid-xml-file? #:quiet? #f pth)))
-           (xmllint-error (get-output-string xmllint-out))]
-          [else
-           (with-handlers ([exn:fail? values])
-             (call-with-input-file pth
-               read-TEI))])))
-    (define frame
-      (new (if (or (xmllint-error? val)
-                   (exn? val))
-               error-frame%
-               file-frame%)
-           [dir dir]
-           [pth pth]
-           [val val]
-           [dir-frame dir-frame]
-           [widget this]))
+    (inherit get-flags
+             set-flags)
+    (init-field dir
+                pth
+                dir-frame
+                [val
+                 (let ([xmllint-out (open-output-string)])
+                   (cond
+                     [(not (parameterize ([current-output-port xmllint-out]
+                                          [current-error-port xmllint-out])
+                             (valid-xml-file? #:quiet? #f pth)))
+                      (xmllint-error (get-output-string xmllint-out))]
+                     [else
+                      (with-handlers ([exn:fail? values])
+                        (call-with-input-file pth
+                          read-TEI))]))]
+                [frame
+                 (new (if (or (xmllint-error? val)
+                              (exn? val))
+                          error-frame%
+                          file-frame%)
+                      [dir dir]
+                      [pth pth]
+                      [val val]
+                      [dir-frame dir-frame]
+                      [widget this])]
+                [status (send frame get-status)]
+                [maybe-title (send frame get-title)])
+    (set-flags (list* 'handles-events
+                      'handles-all-mouse-events
+                      'hard-newline
+                      (get-flags)))
+    (define pth-str (path->string pth))
+    (define padding 1.0)
+    (define line-padding 1.0)
+    (define gutter (/ STATUS_DOT_SIZE 2))
+    (define extent-cache (make-hasheq))
+    (define/override (size-cache-invalid)
+      (hash-clear! extent-cache))
+    (define/private (lookup-width dc)
+      (hash-ref extent-cache
+                'w
+                (λ ()
+                  (populate-extent-cache! dc)
+                  (lookup-width dc))))
+    (define/private (lookup-height dc)
+      (hash-ref extent-cache
+                'h
+                (λ ()
+                  (populate-extent-cache! dc)
+                  (lookup-height dc))))
+    (define/private (lookup-line1-height dc)
+      (hash-ref extent-cache
+                'line1-h
+                (λ ()
+                  (populate-extent-cache! dc)
+                  (lookup-line1-height dc))))
+    (define/private (populate-extent-cache! dc)
+      (match maybe-title
+        [(nothing)
+         (define-values {pth-w pth-h desc vspace}
+           (send dc get-text-extent pth-str bold-system-font #t))
+         (hash-set! extent-cache 'line1-h pth-h)
+         (hash-set! extent-cache
+                    'w
+                    (+ (* 2 padding) STATUS_DOT_SIZE gutter pth-w))
+         (hash-set! extent-cache
+                    'h
+                    (+ (* 2 padding) (max STATUS_DOT_SIZE pth-h)))]
+        [(just title)
+         (define-values {pth-w pth-h desc vspace}
+           (send dc get-text-extent pth-str normal-control-font #t))
+         (define-values {title-w title-h title-desc title-vspace}
+           (send dc get-text-extent title bold-system-font #t))
+         (hash-set! extent-cache 'line1-h title-h)
+         (hash-set! extent-cache
+                    'w
+                    (+ (* 2 padding) STATUS_DOT_SIZE gutter (max pth-w title-w)))
+         (hash-set! extent-cache
+                    'h
+                    (+ (* 2 padding) (max STATUS_DOT_SIZE
+                                          (+ pth-h title-h line-padding))))]))
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    (define/override (draw dc x y left top right bottom dx dy draw-caret)
+      (draw-status-dot dc status (+ x padding) (+ y padding))
+      (define old-font
+        (send dc get-font))
+      (define text-x
+        (+ x padding STATUS_DOT_SIZE gutter))
+      (match maybe-title
+        [(nothing)
+         (send dc set-font bold-system-font)
+         (send dc draw-text pth-str text-x (+ y padding))]
+        [(just title)
+         (send dc set-font bold-system-font)
+         (send dc draw-text title text-x (+ y padding))
+         (send dc set-font normal-control-font)
+         (send dc draw-text pth-str text-x (+ y
+                                              padding
+                                              (lookup-line1-height dc)
+                                              line-padding))])
+      (send dc set-font old-font))
+    (define/override (get-extent dc x y	 	 	 	 
+                                 [w #f]
+                                 [h #f]
+                                 [descent #f]
+                                 [space #f]
+                                 [lspace #f]
+                                 [rspace #f])
+      (define-syntax-rule (maybe-set-boxes! [b v] ...)
+        (begin (when b (set-box! b v)) ...))
+      (maybe-set-boxes!
+       [w (lookup-width dc)]
+       [h (lookup-height dc)]
+       [descent padding]
+       [space padding]
+       [lspace padding]
+       [rspace padding]))
     (define mouse-state #f)
-    (define/override (on-subwindow-event r evt)
+    (define/override (on-event dc x y ed-x ed-y evt)
       (case (send evt get-event-type)
         [(left-down)
          (set! mouse-state 'left-down)]
@@ -241,7 +340,16 @@
          (set! mouse-state #f)]
         [else
          (set! mouse-state #f)
-         (super on-subwindow-event r evt)]))
+         (super on-event dc x y ed-x ed-y evt)]))
+    (define/override (copy)
+      (new this%
+           [dir dir]
+           [pth pth]
+           [dir-frame dir-frame]
+           [val val]
+           [frame frame]
+           [status status]
+           [maybe-title maybe-title]))
     (define/public (revoke)
       (send frame show #f))))
 
@@ -264,23 +372,19 @@
 ;                                          
 
 (define error-frame%
-  (class frame%
+  (class* frame% [TEI-frame<%>]
     (init-field dir pth val widget dir-frame)
     (super-new [label (string-append (path->string pth)
                                      " - TEI Lint")]
                [alignment '(center top)]
                [width 400]
                [height 500])
-    (new error-canvas% [parent widget])
-    (new message%
-         [parent widget]
-         [font bold-system-font]
-         [label (path->string pth)])
-    ;;;;;;;;;;;;;;;;;;;
     (let ([row (new horizontal-pane%
                     [parent this]
-                    [alignment '(left top)])])
-      (new error-canvas% [parent row])
+                    [alignment '(left center)])])
+      (new status-canvas%
+           [status 'error]
+           [parent row])
       (new message%
            [parent row]
            [font bold-system-font]
@@ -309,6 +413,11 @@
     (add-file-menu mb dir-frame)
     (define m-edit (new menu% [label "Edit"] [parent mb]))
     (append-editor-operation-menu-items m-edit #t)
+    ;;;;;;;;;;;;;;;;;;;
+    (define/public (get-status)
+      'error)
+    (define/public (get-title)
+      nothing)
     #|END class error-frame%|#))
 
 ;                                  
@@ -330,7 +439,7 @@
 ;                                  
 
 (define file-frame%
-  (class frame%
+  (class* frame% [TEI-frame<%>]
     (init-field dir pth val widget dir-frame)
     (super-new [label (string-append (path->string pth)
                                      " - TEI Lint")]
@@ -339,14 +448,19 @@
                [height 500])
     (define all-ok?
       #t)
-    (define/public (get-color)
-      (if all-ok? 'green 'yellow))
+    (define/public (get-status)
+      (if all-ok? 'ok 'warning))
+    (define title
+      (send val get-title))
+    (define/public (get-title)
+      (just title))
     (define status-dot-canvas
       (let* ([row (new horizontal-pane%
                        [parent this]
-                       [alignment '(left top)])]
-             [status-dot-canvas (new ok-canvas%
-                                      [parent row])])
+                       [alignment '(left center)])]
+             [status-dot-canvas (new status-canvas%
+                                     [status 'ok]
+                                     [parent row])])
         (new message%
              [parent row]
              [font bold-system-font]
@@ -362,7 +476,7 @@
            [label "Title:"])
       (new message%
            [parent row]
-           [label (send val get-title)]))
+           [label title]))
     ;; Citation
     (let ([row (new horizontal-pane%
                     [parent this]
@@ -496,22 +610,8 @@
     (define m-edit (new menu% [label "Edit"] [parent mb]))
     (append-editor-operation-menu-items m-edit #t)
     ;;;;;;;;;;;;;;;;;;;
-    (new (if all-ok?
-             ok-canvas%
-             warning-canvas%)
-         [parent widget])
-    (let ([col (new vertical-pane%
-                    [parent widget]
-                    [alignment '(left top)])])
-      (new message%
-           [parent col]
-           [font bold-system-font]
-           [label (send val get-title)])
-      (new message%
-           [parent col]
-           [label (path->string pth)]))
     (unless all-ok?
-      (send status-dot-canvas set-color "yellow"))
+      (send status-dot-canvas set-status 'warning))
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;; Methods
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
