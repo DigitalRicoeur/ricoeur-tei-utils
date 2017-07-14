@@ -46,7 +46,7 @@ We have implemented a number of tools to assist in preparing TEI XML documents:
  @tt{make validate} in the root directory of the @tt{texts} repository.
  }
   @item{
- Most comprehensively, the GUI program "XML Lint" performs all of the validation
+ Most comprehensively, the GUI program "TEI Lint" performs all of the validation
  done by the @tt{validate-all.rkt} script and also allerts the user to issues
  with the documents that, while they do not make them invalid, are indicative of
  potential subtle mistakes.
