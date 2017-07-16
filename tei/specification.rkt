@@ -73,7 +73,7 @@ It must have the attributes
                              [xmlns "http://www.tei-c.org/ns/1.0"])
           #:required-attrs `(version xmlns)))]
 
-@subsection{The @tag{teiHeader} Element}
+@subsection{The teiHeader Element}
 
 The @deftag{teiHeader} element contains only
 the @tag{fileDesc} element.
@@ -213,7 +213,7 @@ and day, if present, must allways be two digits
           #:attr-contracts `([when #px"^(\\d\\d\\d\\d)(-\\d\\d)?(-\\d\\d)?$"])
           #:required-attrs '(when)))]
 
-@subsection{The @tag{text} Element}
+@subsection{The text Element}
 
 The @deftag{text} element may contain only (in order) 
 a @tag{front} element, a @tag{body} element,
