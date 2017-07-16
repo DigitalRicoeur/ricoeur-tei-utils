@@ -23,6 +23,8 @@ and recording basic catalog information.
 
 To that end, we have defined a custom subset of TEI, which is codified
 in the @tt{DR-TEI.dtd} Document Type Definition (DTD).
+(A DTD is a formal, computer-checkable specification of the structure of
+an XML document.)
 To ensure consistency and facilitate the development of tools,
 we also impose additional requirements beyond those specified by the DTD.
 These requirements are documented in this manual.
@@ -38,16 +40,18 @@ We have implemented a number of tools to assist in preparing TEI XML documents:
  The script @tt{encode-entities.rkt} in the @tt{texts} repository handles
  escaping XML reserved characters, as discussed below under @secref["Prerequisites"].
  Run it with the @(elem #:style 'tt @literal{--help}) flag for usage information.
- }
+}
   @item{
  In the @tt{TEI} directory of the @tt{texts} repository, the @tt{validate-all.rkt}
- script checks the minimal validity of the prepared documents (using @tt{xmllint}
- from @tt{libxml2} when available). It can also be invoked by running
+ script checks the validity of the prepared documents (using @tt{xmllint}
+ from @tt{libxml2} when available) both in terms of the DTD and
+ with respect to our more stringent project-specific requirements.
+ It can also be invoked by running
  @tt{make validate} in the root directory of the @tt{texts} repository.
- }
+}
   @item{
  Most comprehensively, the GUI program "TEI Lint" performs all of the validation
- done by the @tt{validate-all.rkt} script and also allerts the user to issues
+ done by the @tt{validate-all.rkt} script and also alerts the user to issues
  with the documents that, while they do not make them invalid, are indicative of
  potential subtle mistakes.
  })
@@ -83,8 +87,10 @@ They should also be moved to the @tt{TEI} directory
 in the @tt{texts} repository.
 
 In the template, the body of the text
-is enclosed in an "annonymous block",
-which is a container for text that does not
+is enclosed in an @tag{ab} ("anonymous block") element,
+which is a container for marked-up text
+(including pagebreaks marked with @tag{pb} elements)
+that does not
 specify any semantic meaning. This is a compromise, allowing us to achieve
 a valid initial TEI encoding without spending the time to manually mark
 sections and paragraphs.
@@ -98,7 +104,7 @@ In the following example, syntax typeset like @litchar{this}
 should appear verbatim. Keywords typeset like @racketvarfont{this}
 indicate sections that should be filled in with a specific
 type of content, which is explained below the example.
-Whitespace is not significant.
+Whitespace (including indentation) is not significant.
 
 @(filebox
   "example.xml"
@@ -197,23 +203,23 @@ Whitespace is not significant.
 }
 
 @;{
-;                                                                  
-;                                                                  
-;                                                                  
-;                                                                  
-;                       ;;;    ;               ;                   
-;                     ;;       ;;              ;;                  
-;   ;; ;;;    ;;;   ;;;;;;; ;;;;;   ;; ;    ;;;;;   ;; ;      ;;;;;
-;   ;;;     ;;   ;    ;;       ;;   ;;; ;      ;;   ;;; ;    ;  ;  
-;   ;;      ;    ;    ;;       ;;   ;;  ;;     ;;   ;;  ;;  ;;  ;; 
-;   ;;     ;;;;;;;;   ;;       ;;   ;;  ;;     ;;   ;;  ;;   ;  ;  
-;   ;;      ;         ;;       ;;   ;;  ;;     ;;   ;;  ;;    ;;   
-;   ;;      ;;   ;    ;;       ;;   ;;  ;;     ;;   ;;  ;;  ;;     
-;   ;;        ;;;     ;;       ;;   ;;  ;;     ;;   ;;  ;;   ;;;;; 
-;                                                           ;    ;;
-;                                                          ;;    ; 
-;                                                            ;;;;  
-;                                                                  
+ ;                                                                  
+ ;                                                                  
+ ;                                                                  
+ ;                                                                  
+ ;                       ;;;    ;               ;                   
+ ;                     ;;       ;;              ;;                  
+ ;   ;; ;;;    ;;;   ;;;;;;; ;;;;;   ;; ;    ;;;;;   ;; ;      ;;;;;
+ ;   ;;;     ;;   ;    ;;       ;;   ;;; ;      ;;   ;;; ;    ;  ;  
+ ;   ;;      ;    ;    ;;       ;;   ;;  ;;     ;;   ;;  ;;  ;;  ;; 
+ ;   ;;     ;;;;;;;;   ;;       ;;   ;;  ;;     ;;   ;;  ;;   ;  ;  
+ ;   ;;      ;         ;;       ;;   ;;  ;;     ;;   ;;  ;;    ;;   
+ ;   ;;      ;;   ;    ;;       ;;   ;;  ;;     ;;   ;;  ;;  ;;     
+ ;   ;;        ;;;     ;;       ;;   ;;  ;;     ;;   ;;  ;;   ;;;;; 
+ ;                                                           ;    ;;
+ ;                                                          ;;    ; 
+ ;                                                            ;;;;  
+ ;                                                                  
 }
 
 @section{Refining the Encoding}
@@ -234,29 +240,70 @@ page number (perhaps as a Roman numeral).
 
 @subsection{Front- and Back-matter}
 
-While our template initially uses only the @tag{body} element,
-the enclosing @tag{text} element can also contain a @tag{front} element
-— which should contain any front-matter (such as "abstracts, title page, prefaces,
-dedications, etc.") and should come before the @tag{body} —
-and a @tag{back} element — which contains back-matter, such as indeces or
-appendices, and should come after the @tag{body}.
+The minimal template described in @secref["Getting_Started"] initially
+wraps the entire text of the document in a single @tag{ab} element in
+the @tag{body} element of the @tag{text} element.
+However, TEI also provides elements for marking front-matter
+(such as "abstracts, title page, prefaces, dedications, etc.") and
+back-matter (such as indices or appendices).
+
+When front-matter is present, it should be placed in a @tag{front} element
+immedidiately before the @tag{body} element inside the @tag{text} element.
+Likewise, when back-matter is present, it should be placed in a @tag{back}
+element immediately after the @tag{body} element inside the @tag{text} element.
 
 Like the @tag{body} element, @tag{front} and @tag{back}
-@bold{MUST NOT} contrain text directly: they should contain elements like
+@bold{MUST NOT} contain text directly: they should contain elements like
 @tag{ab} or @tag{div}.
-If you are working from the recomended minimal template
-described in @secref["Getting_Started"], you will need to splic the @tag{ab}
-element into multiple @tag{ab} elements accordingly.
+
+If you are working from the recomended minimal template,
+you will need to split the @tag{ab}
+element into multiple @tag{ab} elements accordingly. For example,
+from a document with the @tag{text} element structured like this:
+@(nested
+  #:style 'inset
+  (verbatim
+   @litchar{<text>}"\n"
+   "  "@litchar{<body>}"\n"
+   "    "@litchar{<ab>}"\n"
+   "      "@elem{All of the text here}"\n"
+   "    "@litchar{</ab>}"\n"
+   "  "@litchar{</body>}"\n"
+   @litchar{</text>}))
+
+You might produce a new @tag{text} element like this:
+
+@(nested
+  #:style 'inset
+  (verbatim
+   @litchar{<text>}"\n"
+   "  "@litchar{<front>}"\n"
+   "    "@litchar{<ab>}"\n"
+   "      "@elem{Front-matter goes here}"\n"
+   "    "@litchar{</ab>}"\n"
+   "  "@litchar{</front>}"\n"
+   "  "@litchar{<body>}"\n"
+   "    "@litchar{<ab>}"\n"
+   "      "@elem{The main body goes here}"\n"
+   "    "@litchar{</ab>}"\n"
+   "  "@litchar{</body>}"\n"
+   "  "@litchar{<back>}"\n"
+   "    "@litchar{<ab>}"\n"
+   "      "@elem{Back-matter goes here}"\n"
+   "    "@litchar{</ab>}"\n"
+   "  "@litchar{</back>}"\n"
+   @litchar{</text>}))
 
 @subsection{Chapters & Other Sections}
  
-Once we have tagges the front- and back-matter,
+Once we have tagged the front- and back-matter,
 the next step is marking large-scale structural divisions
 (like chapters or sections).
 
 These divisions are
 marked with @tag{div} tags, which have a @attr{type} attribute that has
-one of a fixed list of values to denote the type of division.
+one of a fixed list of values to denote the type of division,
+such as @racket["chapter"] or @racket["section"].
 (See @secref["Structural_Elements"] under @secref["Formal_Specification"]
 for the complete list of allowable @attr{type} values.) If the division
 is numbered in the text, the number should be given in an @attr{n} attribute.
@@ -274,6 +321,36 @@ as they can improve our search feature:
   @item{@racket["index"]}
   @item{@racket["dedication"]}
   @item{@racket["ack"] (for acknowledgements)})
+
+As an example, if by following the steps above you have produced a @tag{body}
+element like this:
+
+@(nested
+  #:style 'inset
+  (verbatim
+   @litchar{<body>}"\n"
+   "  "@litchar{<ab>}"\n"
+   "    "@elem{Content from two chapters}"\n"
+   "  "@litchar{</ab>}"\n"
+   @litchar{</body>}))
+
+You might encode the chapters like this:
+
+@(nested
+  #:style 'inset
+  (verbatim
+   @litchar{<body>}"\n"
+   "  "@litchar{<div type="chapter" n="1">}"\n"
+   "    "@litchar{<ab>}"\n"
+   "      "@elem{Content from chapter one}"\n"
+   "    "@litchar{</ab>}"\n"
+   "  "@litchar{</div>}"\n"
+   "  "@litchar{<div type="chapter" n="2">}"\n"
+   "    "@litchar{<ab>}"\n"
+   "      "@elem{Content from chapter two}"\n"
+   "    "@litchar{</ab>}"\n"
+   "  "@litchar{</div>}"\n"
+   @litchar{</body>}))
 
 @subsubsection{Sections Not by Ricœur}
 
@@ -303,11 +380,11 @@ a @attr{resp} attribute for @tag{div} elements with a @attr{type} of
 @racket["contents"] or @racket["index"].
 
 A few documents, such as "Tragic Wisdom and Beyond", take the form
-of an extended dialog between Paul Ricœur and some other party.
+of an extended dialogue between Paul Ricœur and some other party.
 The speakers in these documents are encoded through a special process.
 Rather than adding a @attr{resp} attribute to the @tag{div} elements,
 each passage where a distinct individual is speaking should be enclosed
-in a @tag{sp} element. This element must have a @attr{who} attribute
+in a @tag{sp} ("speech") element. This element must have a @attr{who} attribute
 that points to the speaker as described above. (The @attr{who} attribute
 is required even when the speaker is Paul Ricœur.) Note that, like the
 @tag{div} element, the @tag{sp} element must not directly contain text.
@@ -337,12 +414,12 @@ Examples:
 @(nested
   #:style 'inset
   @para[@litchar{<note place="foot" n="1">}
-             @tt{We explain below why we use the uncommon term older logical writings.}
-             @litchar{</note>}]
- @para[@litchar{<note place="end" n="*">}
-       @tt{See Bachelard's Poetics of Space, Beacon Press, Boston (1969),
+        @tt{We explain below why we use the uncommon term older logical writings.}
+        @litchar{</note>}]
+  @para[@litchar{<note place="end" n="*">}
+        @tt{See Bachelard's Poetics of Space, Beacon Press, Boston (1969),
          p. xxi; "retentissement" in French.}
-       @litchar{</note>}])
+        @litchar{</note>}])
 
 
 @italic{Adapted from @url["https://www.cdlib.org/groups/stwg/MS_BPG.html#fnote"]
