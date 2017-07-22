@@ -21,7 +21,7 @@
 (define version "0.0")
 (define pkg-authors '(philip))
 (define scribblings '(("tei/scribblings/tei-utils.scrbl"
-                       ()
+                       (multi-page)
                        ("Digital Ricœur" 0)
                        )
                       ("tei/scribblings/guidelines.scrbl"

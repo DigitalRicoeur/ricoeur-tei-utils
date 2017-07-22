@@ -2,6 +2,7 @@
 
 (require xml 
          ricoeur/tei/xml-entity-utils
+         ricoeur/tei/tei-xexpr-contracts
          data/maybe
          gregor
          adjutor
@@ -79,7 +80,7 @@
                      [attributes (listof (list/c symbol? string?))]
                      [body (listof element-or-xexpr/c)]))
       (class* object% ((interface (element<%>)
-                         [to-xexpr (->m xexpr/c)]
+                         [to-xexpr (->m any-tei-xexpr/c)]
                          [to-plain-text (->m string?)]
                          [get-name (->m symbol?)]
                          [get-attributes (->m (listof (list/c symbol? string?)))]
