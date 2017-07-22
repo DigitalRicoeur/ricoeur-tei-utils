@@ -17,7 +17,7 @@
                      ))
 
 This manual documents utilities and Racket libraries for
-working with TEI XML files, developed for Digital Ricœur.
+working with TEI XML files developed for Digital Ricœur.
 
 @defproc[(read-TEI [in input-port? (current-input-port)])
          (is-a?/c TEI<%>)]{
@@ -36,11 +36,21 @@ working with TEI XML files, developed for Digital Ricœur.
  to a Racket object.
 }
 
+@section{General Interfaces}
+
+The interfaces represented in this section contain methods
+implemented by broad categories of TEI elements.
+
 @definterface[element<%> ()]{
  TEI elements are represented by Racket objects implementing
  the @racket[element<%>] interface.
 
- @defmethod[(to-xexpr) xexpr/x]{
+ @margin-note{The @racket[element<%>] interface and derived
+  interfaces contain additional private methods to preserve
+  certain invarialts, and thus may only be implemented by
+  the objects provided from @racketmodname[ricoeur/tei].}
+
+ @defmethod[(to-xexpr) xexpr/c]{
   Returns the x-expression representation of @(this-obj).
  }
 
@@ -65,40 +75,138 @@ working with TEI XML files, developed for Digital Ricœur.
   represented by objects implementing @racket[element<%>].
  }
 
- @defmethod[(get-page-breaks) (listof (is-a?/c pb<%>))]{
-Returns all the page breaks recursively contained by @(this-obj), in order.
+}
+
+@defproc[(tei-element? [v any/c]) any/c]{
+A predicate recognizing Racket objects that implement the
+@racket[element<%>] interface.
+}
+
+@defthing[element-or-xexpr/c flat-contract?
+          #:value (or/c (is-a?/c element<%>)
+                        string?
+                        symbol?
+                        valid-char?
+                        cdata?
+                        comment?
+                        p-i?)]{
+ A contract recognizing objects implementing @racket[element<%>]
+ and non-tag x-expressions.
+}
+
+@definterface[elements-only<%> (element<%>)]{
+Elements implementing this interface may not contain textual
+data directly.
+
+@defmethod[#:mode extend
+           (get-body) (listof (or/c (is-a?/c element<%>)
+                                    comment?
+                                    p-i?))]{
+  Like @(xmethod element<%> get-body), but the returned list may
+  not contain strings, symbols, characters, or @racket[cdata].
+ }
+
+ @defmethod[(get-body/elements-only) (listof (is-a?/c element<%>))]{
+  Like @(method elements-only<%> get-body), but the resulting list
+  contains only the child elements: that is, it will not contain
+  comments or processing instructions.
+ }
+}
+
+         
+@definterface[TEI-body<%> (element<%>)]{
+This interface is implemented by elements containing (all or part of)
+the body of the document. In most cases, these methods should be invoked
+on the top-level object implementing @racket[TEI<%>].
+
+@defmethod[(get-page-breaks) (listof (is-a?/c pb<%>))]{
+Returns a list of objects representing the page-break elements
+recursively contained by @(this-obj)
+ }
+
+@defmethod[(smoosh) (listof (or/c string? (is-a?/c pb<%>)))]{
+  @bold{This method should be considered private.} While it
+  is documented here for completeness, it is inextricably tied
+  to the specific implementation of the search feature and is
+  subject to change, especially a wider result contract.
+
+  In the basic case, @(method TEI-body<%> smoosh) returns a flattened
+  list of the textual content of the recursive children of @(this-obj),
+  plus page-break elements. However, the implementation is specialized
+  by particular elements to omit content that is not of interest for the
+  search feature.
  }
 }
 
 
-@definterface[TEI-info<%> (element<%>)]{
- This interface defines methods for accessing the catalog
- information about a TEI document
+@definterface[guess-paragraphs<%> (TEI-body<%>)]{
+ Extends @racket[TEI-body<%>] with a method for automatically
+ converting child "anonymous block" elements (see @racket[ab<%>])
+ to paragraphs. In most cases, this method should be invoked
+ on the top-level object implementing @racket[TEI<%>].
 
+ @defmethod[(guess-paragraphs [#:mode mode (or/c 'blank-lines 'line-breaks) 'blank-lines])
+            (is-a?/c (object-interface #,(this-obj)))]{
+  Returns an object like @(this-obj), but with any recursively conained
+  "anonymous block" elements (see @racket[ab<%>]) replaced by
+  paragraph and page-break elements (see @racket[p<%>] and @racket[pb<%>]).
+  Children of the "anonymous block" elements are preserved.
+
+  When mode is @racket['blank-lines] (the default),
+  @(method guess-paragraphs<%> guess-paragraphs) assumes a blank line between
+  blocks of text is used to indicate a paragraph; otherwise, it assumes
+  every line-break begins a new paragraph. In both cases, entirely empty
+  paragraphs are ommited, and freestanding page-breaks are allowed.
+
+  Using @(method guess-paragraphs<%> guess-paragraphs) does not eliminate
+  the need for manual review: for example, it will identify as "paragraphs"
+  segments of text that should be represented as headings, list items, or
+  footnotes. However, it saves a great deal of time for the common cases.
+ }
+}
+
+@defproc[(guess-paragraphs? [v any/c]) any/c]{
+ A predicate recognizing Racket objects that implement the
+ @racket[guess-paragraphs<%>] interface
+}
+
+@definterface[TEI-info<%> ()]{
+ An interface implemented by objects encapsulating information about a
+ TEI XML document, notably objects implementing @racket[TEI<%>]
+ @racket[teiHeader<%>].
+
+ @margin-note{Unlike other interfaces in this section, @racket[TEI-info<%>]
+  is not derived from @racket[element<%>], so it may be freely implemented
+  by client modules. However, additional required methods may be added
+  to @racket[TEI-info<%>] without warning.}
+ 
  @defmethod[(get-title) string?]{
-  Returns the title of the document.
+  Returns the title of the document, including subtitles.
  }
-
- @defmethod[(get-citation) string?]{
-Returns the human-readable citation for the original from
-which the document was prepared.
+@defmethod[(get-publication-date) (maybe/c date?)]{
+  Returns the publication date of the work, if available
  }
-
- @defmethod[(get-publication-date) (maybe/c date?)]{
-Returns an optional value encapsulating the publication date of
-the orininal from which the document was prepared.
+@defmethod[(get-citation) string?]{
+  Returns the human-readable citation for the work
  }
 }
 
 
-@definterface[TEI<%> (element<%> TEI-info<%>)]{
- This interface defines additional methods for the top-level
- @litchar{<TEI>}@tt{...}@litchar{</TEI>} element.
 
- @defmethod[(guess-paragraphs) (is-a?/c TEI<%>)]{
-  Returns an object like @(this-obj), but having attempted to
-  infer paragraph breaks in the text.
- }
+@section{Element-specific Interfaces}
+
+The interfaces in this section identify objects that correspond to
+specific TEI elements. Some add additional element-specific methods;
+the others serve merely to identify elements convieniently.
+
+@definterface[TEI<%> (element<%>
+                      TEI-info<%>
+                      TEI-body<%>
+                      guess-paragraphs<%>
+                      elements-only<%>)]{
+ The object representing the top-level
+ @litchar{<TEI>}@tt{...}@litchar{</TEI>} element implements this
+ interface.
 
  @defmethod[(get-teiHeader) (is-a?/c teiHeader<%>)]{
   Returns an object representing the @tt{teiHeader} element
@@ -115,7 +223,6 @@ the orininal from which the document was prepared.
   also writes an XML declaration and appropriate @tt{DOCTYPE} declaration.
  }
 }
-
 
 @definterface[teiHeader<%> (TEI-info<%>)]{
 This interface identifies objects representing
@@ -141,7 +248,23 @@ if none was present.
  }
 }
 
-@section{Contracts}
+@definterface[p<%> (TEI-body<%>)]{
+An interface identifying paragraph elements.
+}
+
+@definterface[ab<%> (TEI-body<%>)]{
+An interface identifying "anonymous block" elements.
+
+@defmethod[(do-guess-paragraphs [#:mode mode (or/c 'blank-lines 'line-breaks)
+                                 'blank-lines])
+           (listof (or/c (is-a?/c pb<%>)
+                         (is-a?/c p<%>)))]{
+  Used to implement @(xmethod guess-paragraphs<%> guess-paragraphs)
+ }
+}
+
+
+@section{X-Expression Contracts}
 
 @defthing[any-tei-xexpr/c flat-contract?]{
  Similar to @racket[(and/c list? xexpr/c)], but
@@ -158,18 +281,6 @@ if none was present.
 
 @defthing[tei-element-name/c flat-contract?]{
  A contract recognizing the names of valid Digital Ricœur TEI XML element.
-}
-
-@defthing[element-or-xexpr/c flat-contract?
-          #:value (or/c (is-a?/c element<%>)
-                        string?
-                        symbol?
-                        valid-char?
-                        cdata?
-                        comment?
-                        p-i?)]{
- A contract recognizing objects implementing @racket[element<%>]
- and non-tag x-expressions.
 }
 
 @subsection{Contract Implementation}
