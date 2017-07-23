@@ -5,6 +5,7 @@
          ricoeur/tei/interfaces
          ricoeur/tei/classes
          data/maybe
+         data/order
          gregor
          )
 
@@ -79,25 +80,22 @@
              (or (object-name in) in)
              #f)))
    
-   
-(define maybe-date<? 
-  (match-lambda** 
-      [{(nothing) (nothing)}
-       #f]
-    [{(nothing) (just _)}
-     #t]
-    [{(just _) (nothing)}
-     #f]
-    [{(just a) (just b)}
-     (date<? a b)]))
+
+(define maybe-date-order
+  (order 'maybe-date-order
+         (maybe/c date?)
+         (match-lambda** 
+             [{(nothing) (nothing)}
+              '=]
+           [{(nothing) (just _)}
+            '<]
+           [{(just _) (nothing)}
+            '>]
+           [{(just a) (just b)}
+            (date-order a b)])))
+
+(define (maybe-date<? a b)
+  (eq? '< (maybe-date-order a b)))
              
-(define maybe-date>? 
-  (match-lambda** 
-      [{(nothing) (nothing)}
-       #f]
-    [{(nothing) (just _)}
-     #f]
-    [{(just _) (nothing)}
-     #t]
-    [{(just a) (just b)}
-     (date>? a b)]))         
+(define (maybe-date>? a b)
+  (eq? '> (maybe-date-order a b)))
