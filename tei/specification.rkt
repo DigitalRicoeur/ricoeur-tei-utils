@@ -157,7 +157,8 @@ of @racket["editor"].
                                           "preface")])))]
 
 @subsection{The Publication Statement}
-The @deftag{publicationStmt} should be exactly as follows:
+The @deftag{publicationStmt}, which contains the @deftag{authority}
+and @deftag{availability} elements, should be exactly as follows:
 @(nested #:style 'inset
          (verbatim
           @tt{<publicationStmt>}"\n"
