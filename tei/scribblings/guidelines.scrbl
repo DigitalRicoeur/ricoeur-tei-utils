@@ -98,7 +98,7 @@ sections and paragraphs.
 In the common case that paragraphs are indicated
 by blank lines, we can automatically convert an annonymous block
 to a series of paragraph elements
-with a Racket script using @(method TEI<%> guess-paragraphs).
+with a Racket script using @(method guess-paragraphs<%> guess-paragraphs).
 
 In the following example, syntax typeset like @litchar{this}
 should appear verbatim. Keywords typeset like @racketvarfont{this}

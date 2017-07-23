@@ -4,12 +4,18 @@
          ricoeur/tei/tei-xexpr-contracts
          ricoeur/tei/interfaces
          ricoeur/tei/classes
+         data/maybe
+         gregor
          )
 
 (provide tag->element
          (contract-out
           [read-TEI
            (->* {} {input-port?} (is-a?/c TEI<%>))]
+          [maybe-date<?
+           (-> (maybe/c date?) (maybe/c date?) any/c)]
+          [maybe-date>?
+           (-> (maybe/c date?) (maybe/c date?) any/c)]
           ))
 
 (define/contract (tag->element tag)
@@ -74,7 +80,24 @@
              #f)))
    
    
-   
-              
+(define maybe-date<? 
+  (match-lambda** 
+      [{(nothing) (nothing)}
+       #f]
+    [{(nothing) (just _)}
+     #t]
+    [{(just _) (nothing)}
+     #f]
+    [{(just a) (just b)}
+     (date<? a b)]))
              
-             
+(define maybe-date>? 
+  (match-lambda** 
+      [{(nothing) (nothing)}
+       #f]
+    [{(nothing) (just _)}
+     #f]
+    [{(just _) (nothing)}
+     #t]
+    [{(just a) (just b)}
+     (date>? a b)]))         

@@ -36,6 +36,17 @@ which form a thin layer of abstraction over plain x-expressions.
  to a Racket object.
 }
 
+@deftogether[
+ (@defproc[(maybe-date<? [a (maybe/c date?)]
+                         [b (maybe/c date?)])
+           any/c]
+   @defproc[(maybe-date>? [a (maybe/c date?)]
+                         [b (maybe/c date?)])
+           any/c])]{
+Comparison functions on optional date values, such as the
+results of @(xmethod TEI-info<%> get-publication-date).
+}
+
 @section{General Interfaces}
 
 The interfaces represented in this section contain methods
