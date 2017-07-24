@@ -34,11 +34,17 @@ documents should conform to the structure specified in
           #:value empty-corpus]{
  This library uses @deftech{corpus} objects to encapsulate
  collections of TEI documents. High-level functions, such
- as @racket[term-search], invoke methods of the object in
+ as @racket[term-search] and @racket[list-TEI-info],
+ invoke methods of the object in
  the @racket[current-corpus] parameter.
 
  In practice, this parameter should usually be initialized
  with a @racket[directory-corpus%] instance.
+}
+
+@defproc[(list-TEI-info) (listof (is-a?/c TEI-info<%>))]{
+ Returns a list of @racket[TEI-info<%>] objects for all of the
+ documents in the @racket[current-corpus].
 }
 
 @defclass[corpus% object% ()]{
@@ -53,7 +59,10 @@ documents should conform to the structure specified in
  }
 @defmethod[(•term-search [term term/c])
            (listof (is-a?/c document-search-results<%>))]{
-Used to implement @racket[term-search].
+  Used to implement @racket[term-search].
+ }
+ @defmethod[(•list-TEI-info) (listof (is-a?/c TEI-info<%>))]{
+  Used to implement @racket[list-TEI-info]
  }
 }
 

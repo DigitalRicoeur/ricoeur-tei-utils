@@ -18,6 +18,8 @@
           [term-search
            (-> term/c
                (listof (is-a?/c document-search-results<%>)))]
+          [list-TEI-info
+           (-> (listof (is-a?/c TEI-info<%>)))]
           ))
 
 (define-custom-hash-types string-ci-dict
@@ -28,15 +30,21 @@
   ;TODO: enforce unique titles
   (class/c (init [docs (listof (is-a?/c TEI<%>))]))
   (class* object% [(interface ()
+                     [•list-TEI-info (->m (listof (is-a?/c TEI-info<%>)))]
                      [•term-search
                       (->m term/c
                            (listof (is-a?/c document-search-results<%>)))])]
     (super-new)
     (init [docs '()])
-    (for/fold/define ([searchable-docs '()])
+    (for/fold/define ([headers '()]
+                      [searchable-docs '()])
                      ([doc (in-list docs)])
-      (cons (prepare-searchable-document doc)
-            searchable-docs))
+      (values (cons (send doc get-teiHeader)
+                    headers)
+              (cons (prepare-searchable-document doc)
+                    searchable-docs)))
+    (define/public (•list-TEI-info)
+      headers)
     (define search-cache
       (make-mutable-string-ci-dict))
     (define/public (•term-search raw-term)
@@ -77,9 +85,12 @@
 (define (term-search term)
   (send (current-corpus) •term-search term))
 
+(define (list-TEI-info)
+  (send (current-corpus) •list-TEI-info))
 
 #|
 (parameterize ([current-corpus (new directory-corpus%
                                     [path "/Users/philip/code/ricoeur/texts/TEI"])])
-  (term-search "utopia"))
-|#
+  ;(term-search "utopia"))
+  (list-TEI-info))
+|#  
