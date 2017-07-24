@@ -60,7 +60,7 @@
 (define EXCERPT_RATIO
   ;the maximum portion of the document that may be
   ;shown in excerpts
-  1/10)
+  18/100)
 
 (define (prepare-searchable-document obj)
   (new searchable-document%
@@ -191,6 +191,7 @@
         [else
          (define-values {ok to-nullify}
            (split-at raw-results max-exerpts))
+         ;(displayln (cons (length raw-results) (length to-nullify)))
          (append ok
                  (for/list ([raw (in-list to-nullify)])
                    (struct-copy search-result raw
@@ -309,5 +310,5 @@
      (call-with-input-file
          "/Users/philip/code/ricoeur/texts/TEI/ideology-and-utopia.xml"
        read-TEI)))
-  (search-documents "utopia" (list s)))
+  (search-documents "ideology" (list s)))
 |#
