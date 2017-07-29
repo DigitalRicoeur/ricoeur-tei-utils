@@ -16,6 +16,8 @@
                 {#:quiet? any/c}
                 #:rest (listof path-string?)
                 boolean?)]
+          [call/prettyprint-xml-out
+           (-> (-> any/c) any/c)]
           ))
 
 (define xmllint
@@ -56,3 +58,31 @@
       (apply valid-xml-file?
              #:quiet? quiet?
              pths)))
+
+
+(define (call/prettyprint-xml-out thunk)
+  (cond
+    [xmllint
+     (define-values {in-from-pipe out-to-pipe}
+       (make-pipe))
+     (define xmllint-stderr
+       (open-output-string))
+     (define rslt
+       (parameterize ([current-output-port out-to-pipe])
+         (thunk)))
+     (close-output-port out-to-pipe)
+     (if (parameterize ([current-input-port in-from-pipe]
+                        [current-error-port xmllint-stderr])
+           (system* xmllint "--pretty" "1" "-"))
+         rslt
+         (error 'call/prettyprint-xml-out
+                (format "xmllint encountered an error\n  given: ~e\n  message...: ~e"
+                        thunk
+                        (get-output-string xmllint-stderr))))]
+    [else
+     (thunk)]))
+
+
+;(call/prettyprint-xml-out (λ () (displayln "<p><b>Thin</b><i>other</i></p>")))
+;(call/prettyprint-xml-out (λ () (displayln "twljkenvqlf<wbrbvwef"))))
+
