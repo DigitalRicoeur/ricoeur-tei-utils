@@ -304,7 +304,7 @@
       (define/private (insert-parbreaks #:mode [mode 'blank-lines])
         (define split-pat
           (if (eq? 'blank-lines mode)
-              #px"\n\\s*\n"
+              #px"\n[ \t\f\r]*\n|\r[ \t\f]*\r"
               #rx"\n"))
         (flatten
          (for/list ([child (in-list (get-body))])
