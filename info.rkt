@@ -34,3 +34,5 @@
                          #f)))
 (define gracket-launcher-names (list "TEI Lint"))
 (define gracket-launcher-libraries (list "tei/tei-lint/tei-lint.rkt"))
+(define racket-launcher-names (list "tei-guess-paragraphs"))
+(define racket-launcher-libraries (list "tei/tools/tei-guess-paragraphs.rkt"))
