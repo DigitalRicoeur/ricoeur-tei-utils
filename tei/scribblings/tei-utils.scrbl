@@ -13,10 +13,14 @@
                      data/maybe
                      ricoeur/tei
                      ricoeur/tei/signatures
+                     db
+                     json
                      (only-in ricoeur/tei/search
                               search-documents
-                              searchable-document?
-                              prepare-searchable-document)
+                              searchable-document-set?
+                              regexp-searchable-document-set
+                              postgresql-searchable-document-set)
+                     (submod ricoeur/tei/search/common private)
                      gregor
                      ))
 
@@ -54,35 +58,65 @@ documents should conform to the structure specified in
  fair amount of overhead, so creating redundant values should be avoided.
  (This also improves search performance through caching, for example.)
  
- @defconstructor[([docs (listof (is-a?/c TEI<%>))])]{
-  Constructs an instance encapsulating the TEI documents @racket[docs]
+ @defconstructor[([docs (listof (is-a?/c TEI<%>))]
+                  [search-backend (or/c #f postgresql-data-source/c) #f])]{
+  Constructs a @tech{corpus} object encapsulating the TEI documents @racket[docs]
+  which uses the @tech{search backend} specified by @racket[search-backend]
+  to implement @racket[term-search].
+
+  Currently, two types of @deftech{search backend} are supported:
+  @itemlist[@item{
+               A value of @racket[#f] specifies using a simplistic
+               regular-expression-based backend implemented in pure
+               Racket.}
+            @item{
+               A @racket[postgresql-data-source/c] value will construct a
+               backend using PostgreSQL's full-text search feature by
+               connecting to the given database. @bold{Note that initializing
+                a corpus will perform destructive modifications to the database.}
+               The specified database should be dedicated completely to use by
+               the constructed @tech{corpus} object: it should not be relied upon for
+               other purposes, and multiple @tech{corpus} objects should not
+               use the same database at the same time.}]
  }
-@defmethod[(•term-search [term term/c])
-           (listof (is-a?/c document-search-results<%>))]{
+ @defmethod[#:mode public-final (•term-search [term term/c])
+            (listof (is-a?/c document-search-results<%>))]{
   Used to implement @racket[term-search].
  }
- @defmethod[(•list-TEI-info) (listof (is-a?/c TEI-info<%>))]{
+ @defmethod[#:mode public-final (•list-TEI-info) (listof (is-a?/c TEI-info<%>))]{
   Used to implement @racket[list-TEI-info]
  }
 }
 
+@defthing[postgresql-data-source/c contract?]{
+A contract recognizing values created using @racket[postgresql-data-source]
+ with sufficient arguments
+ (i.e. at least @racket[#:database] and @racket[#:user])
+ to be able to be used with @racket[dsn-connect]
+ without needing to supply any additional arguments.
+}
+
 @defthing[empty-corpus (is-a?/c corpus%)]{
-A corpus containing no documents
+ A corpus containing no documents
 }
 
 @defclass[directory-corpus% corpus% ()]{
  Extends @racket[corpus%] for the common case when you want to
  use documents from some directory in the filesystem.
 
-@defconstructor[([path (and/c path-string? directory-exists?)])]{
+ @defconstructor[([path (and/c path-string? directory-exists?)]
+                  [search-backend (or/c #f postgresql-data-source/c) #f])]{
   Constructs a corpus from every file in @racket[path],
   including recursive subdirectories,
   that is recognized by @racket[xml-path?].
   If any such file is not a valid and well-formed TEI XML file
   satisfying Digital Ricœur's specification, an error will occur.
+
+  The @racket[search-backend] argument controls the @tech{search backend}
+  as with @racket[corpus%].
  }
-@defmethod[#:mode public-final (get-path)
-           path-string?]{
+ @defmethod[#:mode public-final (get-path)
+            path-string?]{
   Returns the path used to instantiate @(this-obj)
  }
 }
@@ -103,11 +137,16 @@ A corpus containing no documents
 @definterface[document-search-results<%> (TEI-info<%>)]{
  The results of @racket[term-search] for each document in the @tech{corpus}
  are encapsulated in a @deftech{document search results} object.
-@margin-note{The @racket[document-search-results<%>] contains additional,
+ @margin-note{The @racket[document-search-results<%>]
+  interface contains additional,
   private methods which prevent it from being implemented by clients of
   this library.}
  @defmethod[(get-results) (listof search-result?)]{
   Returns the @tech{search result} values contained by @(this-obj).
+ }
+ @defmethod[(count-results) natural-number/c]{
+  Returns the number of @tech{search result} values contained by @(this-obj)
+  in a way that is cached across repeated calls
  }
 }
 @deftogether[
@@ -120,9 +159,10 @@ A corpus containing no documents
                                      optional-pat ...)
             #:grammar ([optional-pat
                         (code:line #:date date-pat)
-                        (code:line #:citation cite-pate)])])]{
-Alternative means of extracting information from
-@tech{document search results} objects.
+                        (code:line #:count count-pat)
+                        (code:line #:citation cite-pat)])])]{
+ Alternative means of extracting information from
+ @tech{document search results} objects.
 }
 
 @deftogether[
@@ -131,11 +171,12 @@ Alternative means of extracting information from
             (search-result kw-pat ...)
             #:grammar ([kw-pat
                         (code:line #:excerpt excerpt-pat)
-                        (code:line #:page-string page-string-pat)])]
+                        (code:line #:page page-pat)])]
    @defproc[(search-result-excerpt [v search-result?])
             (maybe/c string?)]
-   @defproc[(search-result-page-string [v search-result?])
-            (maybe/c string?)]
+   @defproc[(search-result-page [v search-result?])
+            (or/c (maybe/c string?)
+                  (list/c (maybe/c string?) (maybe/c string?)))]
    @defproc[(search-result<? [a search-result?] [b search-result?])
             any/c]
    @defproc[(search-result>? [a search-result?] [b search-result?])
@@ -264,7 +305,7 @@ They are used in the implementation of contracts on TEI x-expressions.
   the contracts on individual elements.
   It is implemented by @racket[tei-xexpr-contracts@].
  }
-  @defthing[tei-element-name/c flat-contract?]{
+ @defthing[tei-element-name/c flat-contract?]{
   Used to implement @racket[tei-element-name/c].
  }
  @defproc[(tei-xexpr/c [name tei-element-name/c]) flat-contract?]{
@@ -299,7 +340,7 @@ They are used in the implementation of contracts on TEI x-expressions.
 }
 
 @defsignature[element-contracts^ ()]{
-@signature-desc{
+ @signature-desc{
   This signature specifies contracts on individual Digital Ricœur TEI XML elements
   using @sigelem[tei-xexpr-contracts^ make-element-contract].
   The unit implementing this signature, @racket[element-contracts@], is
@@ -320,21 +361,145 @@ They are used in the implementation of contracts on TEI x-expressions.
 
 The bindings documented in this section are provided by
 @racketmodname[ricoeur/tei/search], but not by
-@racketmodname[ricoeur/tei].
+@racketmodname[ricoeur/tei]. They are used to implement the
+@(method corpus% •term-search) method of @racket[corpus%], and
+ultimately @racket[term-search].
 
-@deftogether[(@defproc[(prepare-searchable-document [doc (is-a?/c TEI<%>)])
-                       searchable-document?]
-               @defproc[(searchable-document? [v any/c]) any/c])]{
-A searchable document is an opaque value encapsulating some work
-that needs to be done to prepare a TEI document to be searched.
-It is a Racket object implementing the @racket[TEI-info<%>] interface.
+@defproc[(searchable-document-set? [v any/c]) any/c]{
+ A @deftech{searchable document set} encapsulates some work that must be done
+ to prepare a set of TEI documents to be searched using a specific
+ @tech{search backend}. Constuct @tech{searchable document sets} using
+ @racket[regexp-searchable-document-set] or
+ @racket[postgresql-searchable-document-set].
 }
 
 @defproc[(search-documents [term term/c]
-                           [docs (listof searchable-document?)])
+                           [docs searchable-document-set?])
          (listof (is-a?/c document-search-results<%>))]{
-Used to implement @racket[term-search]
+ Used to implement @racket[term-search].
 }
 
+@defproc[(postgresql-searchable-document-set [#:db db postgresql-data-source/c]
+                                             [docs (listof (is-a?/c TEI<%>)) '()])
+         searchable-document-set?]{
+ Constructs a @tech{searchable document set} using a PostgreSQL-based
+ @tech{search backend} as specified by @racket[db].
+}
 
+@defproc[(regexp-searchable-document-set [docs (listof (is-a?/c TEI<%>)) '()])
+         searchable-document-set?]{
+ Constructs a @tech{searchable document set} using a simplistic regular-expression-based
+ @tech{search backend} implemented in Racket.        
+}
 
+@subsubsection{Implementing Search Backends}
+@defmodule[(submod ricoeur/tei/search/common private)]
+
+The low-level bindings documented in this section are used to implement new kinds
+of @tech{searchable document sets} to support new @tech{search backends}.
+
+@defthing[EXCERPT-RATIO real?]{
+ Specifies the maximum portion of a given TEI document which may be shown in
+ the excerpt field of the @tech{search result} values for a given query.
+ The specific @tech{searchable document set} implementation is responsible
+ for ensuring that excess excerpts are replaced by @racket[nothing] values
+ (perhaps by using @racket[nullify-search-result-excerpt]) before
+ the @tech{search result} values are supplied to the @racket[document-search-results%]
+ constructor.
+}
+
+@defproc[(make-search-result [#:counter counter natural-number/c]
+                             [#:sub-counter sub-counter natural-number/c]
+                             [#:meta meta jsexpr?]
+                             [#:excerpt excerpt (maybe/c string?)])
+         search-result?]{
+ Constructs a @tech{search result} value. The @racket[counter] and
+ @racket[meta] arguments should be drawn from the fields of the corresponding
+ @racket[pre-segment]. The @racket[sub-counter] argument should indicate the
+ position of the @tech{search result} value relative to other
+ @tech{search result} values for the same query that are drawn from the same
+ @racket[pre-segment]: it is used to implement fuctions like
+ @racket[search-result<?].
+}
+
+@defproc[(nullify-search-result-excerpt [s-r search-result?])
+         search-result?]{
+ Returns a @tech{search result} value like @racket[s-r], but with
+ @racket[nothing] as the excerpt.
+}
+
+@defclass[document-search-results% object% (TEI-info<%> document-search-results<%>)]{
+ A @tech{document search results} object is an instance of the
+ @racket[document-search-results%] class, which is the only class to implement
+ the @racket[document-search-results<%>] interface.
+ @defconstructor[([info (is-a?/c TEI-info<%>)]
+                  [results (listof search-result?)])]{
+  Constructs a @tech{document search results} object. Note that the
+  @tech{searchable document set} implementation is responsible for
+  sanatizing @tech{search result} values as documented under
+  @racket[EXCERPT_RATIO] before passing them as the @racket[results]
+  argument to this constructor.
+ }
+}
+
+@deftogether[(@defproc[(prepare-pre-segments [doc (is-a?/c TEI<%>)])
+                       (listof pre-segment?)]
+               @defstruct*[pre-segment ([title string?]
+                                        [counter natural-number/c]
+                                        [body string?]
+                                        [meta jsexpr?]
+                                        [resp string?])
+                           #:omit-constructor])]{
+ Current search implementations rely on splitting TEI documents
+ into smaller segments that share the same meta-data (such as page
+ numbers). While each @tech{searchable document set} implementation
+ will likeley use its own representation of segments internally
+ (e.g. by storing them as rows in a database), the shared functionality
+ for segmenting a document is implemented by the
+ function @racket[prepare-pre-segments], which returns its results
+ as @racket[pre-segment] values.
+
+ Note that the @racket[pre-segment] constructor is not provided directly.
+
+ The @racket[title] field contains the document's title, exactly
+ as returned by @racket[(send doc #,(method TEI-info<%> get-title))].
+ The @racket[counter] field indicates the position of the @racket[pre-segment]
+ relative to the others returned by the same call to @racket[prepare-pre-segments],
+ and should be pased on to @racket[make-search-result].
+ The @racket[body] field contains the plain text of the @racket[pre-segment].
+ The @racket[meta] field encapsulates some meta-data in the format expected
+ by @racket[make-search-result].
+ The behavior of the @racket[resp] field is currently unspecified, but
+ will eventually used to facilitate the optional inclusion or exclusion
+ of portions of the TEI document not written by Paul Ricœur from the search
+ results.
+
+ The segmentation of documents does not depend on the specific search term,
+ so @tech{searchable document set} implementations should generally
+ call @racket[prepare-pre-segments] only once for each @racket[doc].
+}
+
+@defclass[abstract-searchable-document-set% object% ()]{
+ A @tech{searchable document set} is an instance of a subclass of
+ the abstract class @racket[abstract-searchable-document-set%].
+ New @tech{search backends} are implemented by deriving new
+ concrete subclasses of @racket[abstract-searchable-document-set%]
+ and overriding the implementation of
+ @(method abstract-searchable-document-set% do-search-documents).
+ @defconstructor[()]{
+  No initialization arguments are required or accepted by
+  @racket[abstract-searchable-document-set%].
+  Concrete subclasses will generally need to be initialized with
+  at least some @racket[TEI<%>] objects, and perhaps other
+  backend-specific arguments.
+ }
+@defmethod[(do-search-documents [term term/c])
+           (listof (is-a?/c document-search-results<%>))]{
+  Used to implement @racket[search-documents].
+
+  @bold{This is an abstract method.} Concrete subclasses @bold{must}
+  override it with an implementation that actually searches
+  the documents encapsulated by @(this-obj).
+}
+}
+                                                        

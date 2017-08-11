@@ -10,10 +10,7 @@
                      data/maybe
                      ricoeur/tei
                      ricoeur/tei/signatures
-                     (only-in ricoeur/tei/search
-                              search-documents
-                              searchable-document?
-                              prepare-searchable-document)
+                     (submod ricoeur/tei/search/common private)
                      gregor
                      ))
 
@@ -138,8 +135,8 @@ recursively contained by @(this-obj)
 @defmethod[(smoosh) (listof (or/c string? (is-a?/c pb<%>)))]{
   @bold{This method should be considered private.} While it
   is documented here for completeness, it is inextricably tied
-  to the specific implementation of the search feature and is
-  subject to change, especially a wider result contract.
+  to the specific implementation of @racket[prepare-pre-segments] and is
+  expected to change in backwards-incompatable ways.
 
   In the basic case, @(method TEI-body<%> smoosh) returns a flattened
   list of the textual content of the recursive children of @(this-obj),

@@ -2,17 +2,24 @@
 
 (require ricoeur/tei/base
          ricoeur/tei/search
+         ricoeur/lib/postgresql-data-source
          adjutor
          )
 
-(provide corpus%
-         directory-corpus%
+(provide postgresql-data-source/c
          empty-corpus
          (except-out (all-from-out ricoeur/tei/search)
                      search-documents
-                     searchable-document?
-                     prepare-searchable-document)
+                     searchable-document-set?
+                     regexp-searchable-document-set
+                     postgresql-searchable-document-set)
          (contract-out
+          [corpus%
+           (class/c (init [docs (listof (is-a?/c TEI<%>))]
+                          [search-backend (or/c #f postgresql-data-source/c)]))]
+          [directory-corpus%
+           (class/c (init [path (and/c path-string? directory-exists?)]
+                          [search-backend (or/c #f postgresql-data-source/c)]))]
           [current-corpus
            (parameter/c (is-a?/c corpus%))]
           [term-search
@@ -28,32 +35,37 @@
 
 (define/contract corpus%
   ;TODO: enforce unique titles
-  (class/c (init [docs (listof (is-a?/c TEI<%>))]))
+  (class/c (init [docs (listof (is-a?/c TEI<%>))]
+                 [search-backend (or/c #f postgresql-data-source/c)]))
   (class* object% [(interface ()
                      [•list-TEI-info (->m (listof (is-a?/c TEI-info<%>)))]
                      [•term-search
                       (->m term/c
                            (listof (is-a?/c document-search-results<%>)))])]
     (super-new)
-    (init [docs '()])
-    (for/fold/define ([headers '()]
-                      [searchable-docs '()])
+    (init [docs '()]
+          [search-backend #f])
+    (for/fold/define ([headers '()])
                      ([doc (in-list docs)])
       (values (cons (send doc get-teiHeader)
-                    headers)
-              (cons (prepare-searchable-document doc)
-                    searchable-docs)))
-    (define/public (•list-TEI-info)
+                    headers)))
+    (define searchable-document-set
+      (cond
+        [search-backend
+         (postgresql-searchable-document-set docs #:db search-backend)]
+        [else
+         (regexp-searchable-document-set docs)]))
+    (define/public-final (•list-TEI-info)
       headers)
     (define search-cache
       (make-mutable-string-ci-dict))
-    (define/public (•term-search raw-term)
+    (define/public-final (•term-search raw-term)
       (define term
         (string-normalize-spaces raw-term))
       (dict-ref search-cache
                 term
                 (λ ()
-                  (let ([rslts (search-documents term searchable-docs)])
+                  (let ([rslts (search-documents term searchable-document-set)])
                     (dict-set! search-cache term rslts)
                     rslts))))
     #|END class corpus%|#))
@@ -64,8 +76,7 @@
 (define current-corpus
   (make-parameter empty-corpus))
 
-(define/contract directory-corpus%
-  (class/c (init [path (and/c path-string? directory-exists?)])) 
+(define directory-corpus% 
   (class corpus%
     (init [(init:path path)])
     (define path
@@ -89,8 +100,14 @@
   (send (current-corpus) •list-TEI-info))
 
 #|
-(parameterize ([current-corpus (new directory-corpus%
-                                    [path "/Users/philip/code/ricoeur/texts/TEI"])])
-  ;(term-search "utopia"))
-  (list-TEI-info))
-|#  
+(module+ main
+  (require db)
+  (parameterize ([current-corpus (new directory-corpus%
+                                      [path "/Users/philip/code/ricoeur/texts/TEI"]
+                                      [search-backend (postgresql-data-source
+                                                       #:user "ricoeur"
+                                                       #:database "term-search")])])
+    (term-search "utopia")
+    ;(list-TEI-info)
+    ))
+|#
