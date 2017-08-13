@@ -398,7 +398,7 @@ ultimately @racket[term-search].
 The low-level bindings documented in this section are used to implement new kinds
 of @tech{searchable document sets} to support new @tech{search backends}.
 
-@defthing[EXCERPT-RATIO real?]{
+@defthing[EXCERPT_RATIO real?]{
  Specifies the maximum portion of a given TEI document which may be shown in
  the excerpt field of the @tech{search result} values for a given query.
  The specific @tech{searchable document set} implementation is responsible
