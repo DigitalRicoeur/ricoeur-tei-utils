@@ -97,7 +97,7 @@
  segDocumentTitle,
  segCounter,
  segMeta,
- ts_headline(segBody, qry, 'StartSel="",StopSel="",ShortWord=0,MaxWords=35,MinWords=15,MaxFragments=10000,FragmentDelimiter="ƒFragmentDelimiter"')
+ ts_headline(segBody, qry, 'StartSel="",StopSel="",ShortWord=0,MaxWords=18,MinWords=7,MaxFragments=10000,FragmentDelimiter="ƒFragmentDelimiter"')
  FROM
  (SELECT segDocumentTitle,segCounter,segMeta,segBody,qry
  FROM tSegments, phraseto_tsquery($1) AS qry
