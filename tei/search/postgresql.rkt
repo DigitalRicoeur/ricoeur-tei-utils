@@ -20,10 +20,10 @@
 (define postgresql-searchable-document-set%
   (class abstract-searchable-document-set%
     (super-new)
-    (init [(:db db)]
+    (init [(dsn db)]
           [docs '()])
     (define db
-      (let ([dsn (struct-copy data-source :db)]) ;prevent mutation
+      (let ([dsn (struct-copy data-source dsn)]) ;prevent mutation
         (virtual-connection
          (connection-pool
           (λ () (dsn-connect dsn))))))
@@ -47,7 +47,8 @@
         (new document-search-results%
              [info info]
              [results
-              (let loop ([to-go (vecs->search-results l-vecs)]
+              (let loop ([to-go (sort (vecs->search-results l-vecs)
+                                      search-result<?)]
                          [chars-so-far 0])
                 (match to-go
                   ['() '()]
