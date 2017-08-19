@@ -319,6 +319,7 @@ as they can improve our search feature:
   @item{@racket["contents"] (for the table of contents)}
   @item{@racket["intro"] (for an introduction)}
   @item{@racket["index"]}
+  @item{@racket["bibl"] (for a bibliograpgy)}
   @item{@racket["dedication"]}
   @item{@racket["ack"] (for acknowledgements)})
 

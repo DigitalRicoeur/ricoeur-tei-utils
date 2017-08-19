@@ -55,10 +55,8 @@ declaration, which must be exactly as follows:
           @tt{<!DOCTYPE TEI SYSTEM "DR-TEI.dtd">}))
 
 @(define (deftag tag-str)
-   ;(elemtag tag-str (litchar tag-str))
    (toc-target2-element #f (litchar tag-str) (list 'tei tag-str) (tt tag-str)))
 @(define (tag tag-str)
-   ;(elemref tag-str (litchar tag-str)))
    (link-element #f (litchar tag-str) (list 'tei tag-str)))
 @(define attr 
    tt)
@@ -277,6 +275,7 @@ The @deftag{div} element may contain
 It must have a @attr{type} attribute with a value of
 @racket["chapter"], @racket["part"], @racket["section"],
 @racket["dedication"], @racket["contents"], @racket["intro"],
+@racket["bibl"] (for a bibliography),
 @racket["ack"] (for acknowledgements), or @racket["index"].
 If the division is numbered, it should have an
 @attr{n} attribute giving the page number
@@ -316,6 +315,7 @@ elements.
                          "section"
                          "dedication"
                          "contents"
+                         "bibl"
                          "ack"
                          "intro"
                          "index")])
