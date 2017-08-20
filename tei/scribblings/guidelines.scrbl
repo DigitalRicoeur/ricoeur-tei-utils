@@ -34,29 +34,13 @@ These requirements are documented in this manual.
  by the DTD, see @url{https://manuals.digitalricoeur.org/DR-TEI_doc.html}.
 }
 
-We have implemented a number of tools to assist in preparing TEI XML documents:
-@(itemlist
-  @item{
- The script @tt{encode-entities.rkt} in the @tt{texts} repository handles
- escaping XML reserved characters, as discussed below under @secref["Prerequisites"].
- Run it with the @(elem #:style 'tt @literal{--help}) flag for usage information.
-}
-  @item{
- In the @tt{TEI} directory of the @tt{texts} repository, the @tt{validate-all.rkt}
- script checks the validity of the prepared documents (using @tt{xmllint}
- from @tt{libxml2} when available) both in terms of the DTD and
- with respect to our more stringent project-specific requirements.
- It can also be invoked by running
- @tt{make validate} in the root directory of the @tt{texts} repository.
-}
-  @item{
- Most comprehensively, the GUI program "TEI Lint" performs all of the validation
- done by the @tt{validate-all.rkt} script and also alerts the user to issues
- with the documents that, while they do not make them invalid, are indicative of
- potential subtle mistakes.
- })
+We have implemented a number of tools
+to assist in preparing and validating TEI XML documents,
+which are documented under @secref["Tools"].
 
 @(table-of-contents)
+
+@include-section["background.scrbl"]
 
 @section{Getting Started}
 
@@ -70,8 +54,8 @@ We should always start from the highest-quality OCRed text files.
 In addition, before we start adding XML syntax, we must encode the 
 reserved characters @litchar{<} and @litchar{&} in the text
 with @litchar{&lt;} and @litchar{&amp;}, respectively. This can be
-done automatically using the script @tt{encode-entities.rkt} in
-the @tt{texts} repository.
+done automatically using the command-line utility
+@exec{encode-xml-entities} as documented under @secref["Tools"] below.
 
 @subsection{Minimal Template}
 
@@ -457,3 +441,5 @@ Example:
 
 
 @include-section[(submod ricoeur/tei/specification doc)]
+@include-section["tools.scrbl"]
+

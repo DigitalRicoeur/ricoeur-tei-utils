@@ -25,10 +25,20 @@
                      ))
 
 This manual documents utilities and Racket libraries for
-working with TEI XML files developed for Digital Ricœur.
+working with TEI XML documents developed for Digital Ricœur.
 In addition to being valid and well-formed XML, the
 documents should conform to the structure specified in
 @other-doc['(lib "ricoeur/tei/scribblings/guidelines.scrbl")].
+
+This document is written for programmers intending to either
+use these libraries in their own programs (in the case particularly
+of @secref["High-level_Interface"] and, to a lesser extent,
+@secref["Object_System"]) or to contribute to their implementation.
+It assumes familiarity with Racket's class-based system for
+object-oriented programming, @racketmodname[racket/class],
+and to a lesser extent with Racket's @racketmodname[xml] library,
+particularly the concept of x-expressions
+(see the grammar documented under @racket[xexpr?]).
 
 @(table-of-contents)
 
@@ -89,7 +99,7 @@ documents should conform to the structure specified in
 }
 
 @defthing[postgresql-data-source/c contract?]{
-A contract recognizing values created using @racket[postgresql-data-source]
+ A contract recognizing values created using @racket[postgresql-data-source]
  with sufficient arguments
  (i.e. at least @racket[#:database] and @racket[#:user])
  to be able to be used with @racket[dsn-connect]
@@ -493,13 +503,66 @@ of @tech{searchable document sets} to support new @tech{search backends}.
   at least some @racket[TEI<%>] objects, and perhaps other
   backend-specific arguments.
  }
-@defmethod[(do-search-documents [term term/c])
-           (listof (is-a?/c document-search-results<%>))]{
+ @defmethod[(do-search-documents [term term/c])
+            (listof (is-a?/c document-search-results<%>))]{
   Used to implement @racket[search-documents].
 
   @bold{This is an abstract method.} Concrete subclasses @bold{must}
   override it with an implementation that actually searches
   the documents encapsulated by @(this-obj).
+ }
 }
-}
-                                                        
+
+
+
+
+
+
+
+
+@section{Installing & Updating This Library}
+
+@margin-note{Installing this library will also install
+ the tools documented under
+ @secref["Tools"
+         #:doc '(lib "ricoeur/tei/scribblings/guidelines.scrbl")].}
+            
+To use this library, you must install the Racket programming
+language and runtime system for your platform from
+@url["https://racket-lang.org"]. Racket version 6.9 or later
+is currently required, and the minimum version will soon change
+to Racket 6.10. If you use Mac OS, you are free to use the 
+"cask" for the Homebrew packacge manager (but note that the
+"minimal-racket" Homebrew formula is currently unmaintained and
+should be avoided), and, if you use Ubuntu, you may wish to
+consider the Racket
+@hyperlink["https://launchpad.net/~plt/+archive/ubuntu/racket"]{PPA}.
+Otherwise, you generally should @italic{not} use the version
+of Racket from your OS's package manager,
+as it will generally not be up-to-date.
+
+You must also configure your @envvar{PATH} environment variable
+so that the @tt{racket} and @tt{raco} programs can be run
+from the command line. For example, on Mac OS, you should add a
+line like the following to @filepath{~/.bash_profile}:
+@verbatim[#:indent 2]{export PATH="/Applications/Racket v6.10/bin":$PATH}
+
+While it is not strictly required, some features of this library
+are implemented using the utility @tt{xmllint} from @tt{libxml2}.
+This is included by default with Mac OS and is available via
+the system package manager on GNU/Linux; it can also be installed 
+on Windows.
+
+To install this library, you must first obtain a copy of the source
+code by cloning its git repository from
+@url["https://bitbucket.org/digitalricoeur/tei-utils"].
+You then must install it as a Racket package. On platforms which
+provide the utility @tt{make}, this can be done by running
+@exec{make install} from the directory into which you have cloned
+the repository.
+
+Later, you can install updated versions of the repository simply
+by running @exec{make}, which also handles pulling updates from
+the server for you. More substantial changes may occasionally
+require you to reinstall the package by running
+@exec{make reinstall}.

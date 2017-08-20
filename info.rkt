@@ -6,9 +6,9 @@
                "functional-lib"
                "roman-numeral"
                "gregor-lib"
-    "gui-lib"
-    "pict-lib"
-  "scribble-lib"
+               "gui-lib"
+               "pict-lib"
+               "scribble-lib"
                ))
 (define build-deps '("scribble-lib"
                      "racket-doc"
@@ -34,5 +34,9 @@
                          #f)))
 (define gracket-launcher-names (list "TEI Lint"))
 (define gracket-launcher-libraries (list "tei/tei-lint/tei-lint.rkt"))
-(define racket-launcher-names (list "tei-guess-paragraphs"))
-(define racket-launcher-libraries (list "tei/tools/tei-guess-paragraphs.rkt"))
+(define racket-launcher-names
+  (list "tei-guess-paragraphs"
+        "encode-xml-entities"))
+(define racket-launcher-libraries
+  (list "tei/tools/tei-guess-paragraphs.rkt"
+        "tei/tools/encode-entities.rkt"))
