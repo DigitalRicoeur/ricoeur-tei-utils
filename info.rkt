@@ -9,6 +9,8 @@
                "gui-lib"
                "pict-lib"
                "scribble-lib"
+               "data-lib"
+               "db-lib"
                ))
 (define build-deps '("scribble-lib"
                      "racket-doc"
@@ -16,6 +18,8 @@
                      "functional-doc"
                      "gregor-doc"
                      "rackunit-lib"
+                     "_-exp"
+                     "db-doc"
                      ))
 (define pkg-desc "TEI utilities for Digital Ricoeur")
 (define version "0.0")
