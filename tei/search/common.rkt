@@ -1,6 +1,7 @@
 #lang _-exp racket
 
 (require ricoeur/tei/base
+         (submod ricoeur/tei/interfaces search)
          data/maybe
          json
          racket/serialize
@@ -75,51 +76,91 @@
 
 (struct pre-segment (title counter body meta resp))
 
-(define (make-pre-segment #:title title
-                          #:counter counter
-                          #:body body
-                          #:page page
-                          #:resp [resp "ricoeur"])
-  (pre-segment title counter body
-               (hasheq 'resp resp
-                       'page (match page
-                               [(list a b)
-                                (list (from-just #f a)
-                                      (from-just #f b))]
-                               [it
-                                (from-just #f it)]))
-               resp))
-                          
+(define current-resp
+  (make-parameter "#ricoeur"))
+
+(define current-location-stack
+  (make-parameter '()))
+
+(define (call-with-metadata thunk
+                            #:resp [resp #f]
+                            #:location [location #f])
+  (parameterize ([current-resp (or resp (current-resp))]
+                 [current-location-stack (if location
+                                             (cons location
+                                                   (current-location-stack))
+                                             (current-location-stack))])
+    (thunk)))
+
+(define/contract (location-stack->jsexpr stack)
+  (-> (listof location-stack-entry/c) jsexpr?)
+  (map (match-lambda
+         ['front "front"]
+         ['back "back"]
+         [(list 'div type n)
+          (list "div" type (from-just #f n))]
+         [(list 'note place n transl)
+          (list "note" place n transl)])
+       stack))
+
+(define/contract (make-pre-segment #:title title
+                                   #:counter counter
+                                   #:body body
+                                   #:page page) 
+  (-> #:title string?
+      #:counter natural-number/c
+      #:body string?
+      #:page (or/c (maybe/c string?)
+                   (list/c (maybe/c string?) (maybe/c string?)))
+      pre-segment?)
+  (let ([resp (current-resp)])
+    (pre-segment title counter body
+                 (hasheq 'resp resp
+                         'location-stack (location-stack->jsexpr
+                                          (current-location-stack))
+                         'page (match page
+                                 [(list a b)
+                                  (list (from-just #f a)
+                                        (from-just #f b))]
+                                 [it
+                                  (from-just #f it)]))
+                 resp)))
+
+
+
+
+(struct pre-segment-accumulator (title next-counter so-far)
+  #:property prop:procedure
+  (λ (this #:body body
+           #:page page) 
+    (cond
+      [(regexp-match? #px"^\\s*$"  body)
+       this]
+      [else
+       (match-define (pre-segment-accumulator title next-counter so-far)
+         this)
+       (pre-segment-accumulator title
+                                (add1 next-counter)
+                                (cons (make-pre-segment #:title title
+                                                        #:counter next-counter
+                                                        #:body body
+                                                        #:page page)
+                                      so-far))])))
+
+(define (title->pre-segment-accumulator t)
+  (pre-segment-accumulator t 0 null))
+
+
+                 
 
 (define (prepare-pre-segments doc)
-  (define title
-    (send doc get-title))
-  (let loop ([to-go (send doc smoosh)] ;(listof (or/c string? (is-a?/c pb<%>)))
-             [counter 0] ;natural-number/c ;this counts segments
-             [pb (tag->element '(pb))] ;(is-a?/c pb<%>)
-             [this-so-far null]) ;(listof string?)
-    (match to-go
-      ['()
-       (cond [(null? this-so-far) null]
-             [else
-              (list (make-pre-segment #:counter counter
-                                      #:title title
-                                      #:page (send pb get-page-string)
-                                      #:body (string-normalize-spaces
-                                              (string-join (reverse this-so-far)
-                                                           " "))))])]
-      [(cons (? (is-a?/c pb<%>) next-pb) more)
-       (cond [(null? this-so-far)
-              (loop more (add1 counter) next-pb null)]
-             [else
-              (cons (make-pre-segment #:counter counter
-                                      #:title title
-                                      #:page (send pb get-page-string)
-                                      #:body (string-normalize-spaces
-                                              (string-join (reverse this-so-far) "")))
-                    (loop more (add1 counter) next-pb null))])]
-      [(cons (? string? this) more)
-       (loop more counter pb (cons this this-so-far))])))
+  (reverse
+   (pre-segment-accumulator-so-far
+    (send doc
+          do-prepare-pre-segments
+          pre-segment-accumulator?
+          call-with-metadata
+          title->pre-segment-accumulator))))
 
 ;                                                          
 ;                                                          

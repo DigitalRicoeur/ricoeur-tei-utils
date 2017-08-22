@@ -33,6 +33,14 @@
            body-element%
            guess-paragraphs-element%
            ab?
+           content-containing-element-mixin
+           element:elements-only+guess-paragraphs+to-pre-segments%
+           ))
+
+(module+ search
+  (provide location-stack-entry/c
+           location-stack-entry:div/c
+           location-stack-entry:note/c
            ))
 
 (define/contract (cdata->plain-text it)
@@ -224,42 +232,180 @@
 ;                          ;;      
 ;                                  
 
-(define TEI-body<%>
+(define get-page-breaks<%>
   (interface (element<%>)
-    [smoosh (->m (listof (or/c string? (recursive-contract (is-a?/c pb<%>)))))]
-    [get-page-breaks (->m (listof (recursive-contract (is-a?/c pb<%>))))]
-    ))
+    [get-page-breaks (->m (listof (recursive-contract (is-a?/c pb<%>))))]))
 
 (define pb<%>
-  (interface (TEI-body<%>)
+  (interface (get-page-breaks<%>)
     [get-page-string (->m (maybe/c string?))]
     [get-kind (->m (or/c 'none 'number 'roman 'other))]
     [get-numeric (->m (maybe/c number?))]
     ))
 
+(define pb?
+  (is-a?/c pb<%>))
+
+(define location-stack-entry:div/c
+  (list/c 'div
+          (or/c "chapter" "part" "section" "dedication"
+                "contents" "intro" "bibl" "ack" "index")
+          (maybe/c string?)))
+
+(define location-stack-entry:note/c
+  (list/c 'note
+          (or/c "foot" "end")
+          string?
+          (or/c "transl" #f)))
+
+(define location-stack-entry/c
+  (or/c 'front
+        'back
+        location-stack-entry:div/c
+        location-stack-entry:note/c))
+
+(define TEI-body<%>
+  (interface (get-page-breaks<%>)
+    [to-pre-segments
+     (->i {[this any/c]
+           [pre-segment-accumulator? (-> any/c any/c)]
+           [call-with-metadata
+            (->* {(-> any)}
+                 {#:resp string?
+                  #:location location-stack-entry/c}
+                 any)]
+           [accumulator
+            {pre-segment-accumulator?}
+            (letrec ([acc/c (and/c pre-segment-accumulator?
+                                   (-> #:body string?
+                                       #:page (or/c (maybe/c string?)
+                                                    (list/c (maybe/c string?)
+                                                            (maybe/c string?)))
+                                       (recursive-contract acc/c)))])
+              acc/c)]
+           [init-pb (is-a?/c pb<%>)]}
+          [_ {pre-segment-accumulator?}
+             (values pre-segment-accumulator?
+                     (is-a?/c pb<%>))])]
+    [to-pre-segments/add-metadata
+     (->i {[this any/c]
+           [pre-segment-accumulator? (-> any/c any/c)]
+           [call-with-metadata
+            (->* {(-> any)}
+                 {#:resp string?
+                  #:location location-stack-entry/c}
+                 any)]
+           [thunk
+            {pre-segment-accumulator?}
+            (-> (values pre-segment-accumulator?
+                        (is-a?/c pb<%>)))]}
+          [_ {pre-segment-accumulator?}
+             (values pre-segment-accumulator?
+                     (is-a?/c pb<%>))])]
+    ))
+
+(define can-get-page-breaks?
+  (is-a?/c get-page-breaks<%>))
+
 (define body-element?
   (is-a?/c TEI-body<%>))
 
 (define body-element%
-  (class* element% {TEI-body<%>}
+  (class* (class element%
+            (super-new)
+            (inherit get-attributes)
+            (define/pubment (to-pre-segments pred
+                                             call-with-metadata
+                                             acc
+                                             init-pb)
+              (to-pre-segments/add-metadata
+               pred
+               call-with-metadata
+               (λ ()
+                 (inner (values acc init-pb)
+                        to-pre-segments
+                        pred
+                        call-with-metadata
+                        acc
+                        init-pb))))
+            (define/pubment (to-pre-segments/add-metadata pred
+                                                          call-with-metadata
+                                                          thunk)
+              (define (go)
+                (let ([resp (car (dict-ref (get-attributes) 'resp '(#f)))])
+                  (if resp
+                      (call-with-metadata #:resp resp thunk)
+                      (thunk))))
+              (inner (go)
+                     to-pre-segments/add-metadata pred
+                     call-with-metadata
+                     go)))
+    {TEI-body<%>}
     (super-new)
     (inherit get-attributes get-body)
-    (define/public (smoosh) 
-      (case (dict-ref (get-attributes) 'resp '("#ricoeur"))
-        [(("#ricoeur"))
-         (flatten
-          (for/list ([child (in-list (get-body))])
-            (if (body-element? child)
-                (send child smoosh)
-                (element-or-xexpr->plain-text child))))]
-        [else
-         '()]))
+    (define/augride (to-pre-segments pred
+                                     call-with-metadata
+                                     acc
+                                     init-pb)
+      (error 'to-pre-segments "Method must be overriden"))
     (define/public (get-page-breaks) 
       (flatten
        (for/list ([child (in-list (get-body))]
-                  #:when (body-element? child))
+                  #:when (can-get-page-breaks? child))
          (send child get-page-breaks))))))
-    
+
+(define content-containing-element-mixin
+  (mixin {TEI-body<%>} {}
+    (super-new)
+    (inherit get-body)
+    (define/override (to-pre-segments pred
+                                      call-with-metadata
+                                      acc
+                                      init-pb)
+      (let loop ([to-go (get-body)]
+                 [this-so-far null] 
+                 [acc acc]
+                 [init-pb init-pb]
+                 [latest-pb init-pb])
+        (match to-go
+          ['()
+           (values (acc #:body (string-normalize-spaces
+                                (string-join (reverse this-so-far) " "))
+                        #:page (if (equal? init-pb latest-pb)
+                                   (send init-pb get-page-string)
+                                   (list (send init-pb get-page-string)
+                                         (send latest-pb get-page-string))))
+                   latest-pb)]
+          [(cons (? body-element? child) more) 
+           (define-values {new-acc new-latest-pb}
+             (send child
+                   text-do-prepare-pre-segments
+                   pred
+                   call-with-metadata
+                   (acc #:body (string-normalize-spaces
+                                (string-join (reverse this-so-far) " "))
+                        #:page (if (equal? init-pb latest-pb)
+                                   (send init-pb get-page-string)
+                                   (list (send init-pb get-page-string)
+                                         (send latest-pb get-page-string))))
+                   latest-pb))
+           (loop more null new-acc new-latest-pb new-latest-pb)]
+          [(cons (? pb? latest-pb) more)
+           (loop more
+                 this-so-far
+                 acc
+                 init-pb
+                 latest-pb)]
+          [(cons str-or-misc more)
+           (loop more
+                 (cons (element-or-xexpr->plain-text str-or-misc)
+                       this-so-far)
+                 acc
+                 init-pb
+                 latest-pb)])))))
+
+
+
 (define guess-paragraphs<%>
   (interface (TEI-body<%>)
     [guess-paragraphs (->i {[this any/c]}
@@ -277,7 +423,7 @@
     [do-guess-paragraphs (->*m {}
                                {#:mode (or/c 'blank-lines 'line-breaks)}
                                (listof (or/c (is-a?/c pb<%>)
-                                            (is-a?/c p<%>))))]))
+                                             (is-a?/c p<%>))))]))
 
 (define ab?
   (is-a?/c ab<%>))
@@ -296,13 +442,30 @@
                       [(ab? child)
                        (send child do-guess-paragraphs #:mode mode)]
                       [(guess-paragraphs? child)
-                        (send child guess-paragraphs #:mode mode)]
+                       (send child guess-paragraphs #:mode mode)]
                       [else
-                        child])))]))))
+                       child])))]))))
 
 
-
-
+(define element:elements-only+guess-paragraphs+to-pre-segments%
+  (class (elements-only-mixin guess-paragraphs-element%)
+    (super-new)
+    (inherit get-body/elements-only)
+    (define/override (to-pre-segments pred
+                                      call-with-metadata
+                                      acc
+                                      init-pb)
+      (for/fold ([acc acc]
+                 [the-pb init-pb])
+                ([child (in-list (get-body/elements-only))])
+        (cond
+          [(pb? child) (values acc child)]
+          [else (send child
+                      to-pre-segments
+                      pred
+                      call-with-metadata
+                      acc
+                      the-pb)])))))
 
 
 (define TEI<%>
@@ -311,6 +474,26 @@
               TEI-body<%>
               guess-paragraphs<%>
               elements-only<%>)
+    [do-prepare-pre-segments
+     (->i {[this any/c]
+           [pre-segment-accumulator? (-> any/c any/c)]
+           [call-with-metadata
+            (->* {(-> any)}
+                 {#:resp string?
+                  #:location location-stack-entry/c}
+                 any)]
+           [title->pre-segment-accumulator
+            {pre-segment-accumulator?}
+            (-> string?
+                (letrec ([acc/c (and/c pre-segment-accumulator?
+                                       (-> #:body string?
+                                           #:page (or/c (maybe/c string?)
+                                                        (list/c (maybe/c string?)
+                                                                (maybe/c string?)))
+                                           (recursive-contract acc/c)))])
+                  acc/c))]}
+          [_ {pre-segment-accumulator?}
+             pre-segment-accumulator?])]
     [get-teiHeader (->m (is-a?/c teiHeader<%>))]
     [write-TEI (->*m {} {output-port?} any)]))
 

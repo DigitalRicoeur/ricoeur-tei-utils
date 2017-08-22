@@ -74,13 +74,28 @@
 (define TEI%
   (class* (elements-only-mixin (TEI-info-mixin guess-paragraphs-element%)) {TEI<%>}
     (super-new)
-    (inherit to-xexpr get-body/elements-only)
+    (inherit to-xexpr get-body/elements-only get-title)
     (match-define (list teiHeader text)
       (get-body/elements-only))
     (define/public (get-teiHeader)
       teiHeader)
-    (define/override (smoosh)
-      (send text smoosh))
+    (define/override-final (to-pre-segments pred
+                                            call-with-metadata
+                                            acc
+                                            init-pb)
+      (send text
+            to-pre-segments
+            pred
+            call-with-metadata
+            acc
+            init-pb))
+    (define/public-final (do-prepare-pre-segments pred
+                                                  call-with-metadata
+                                                  title->pre-segment-accumulator)
+      (to-pre-segments pred
+                       call-with-metadata
+                       (title->pre-segment-accumulator (get-title))
+                       (new pb% [name 'pb])))                          
     (define/override (get-page-breaks)
       (send text get-page-breaks))
     (define/public (write-TEI [out (current-output-port)])
@@ -230,29 +245,58 @@
 ;                                  
 ;                                  
 
-(define (concrete-guess-paragraphs-element%)
-  (class guess-paragraphs-element%
+(define text%
+  (class element:elements-only+guess-paragraphs+to-pre-segments%
     (super-new)))
 
-(def
-  [text% (elements-only-mixin guess-paragraphs-element%)]
-  [body% (elements-only-mixin guess-paragraphs-element%)]
-  [front% (elements-only-mixin guess-paragraphs-element%)]
-  [back% (elements-only-mixin guess-paragraphs-element%)])
+(define body% 
+  (class element:elements-only+guess-paragraphs+to-pre-segments%
+    (super-new)))
+
+(define front% 
+  (class element:elements-only+guess-paragraphs+to-pre-segments%
+    (super-new)
+    (define/augment-final (to-pre-segments/add-metadata pred
+                                                        call-with-metadata
+                                                        thunk)
+      (call-with-metadata #:location 'front thunk))))
+      
+(define back% 
+  (class element:elements-only+guess-paragraphs+to-pre-segments%
+    (super-new)
+    (define/augment-final (to-pre-segments/add-metadata pred
+                                                        call-with-metadata
+                                                        thunk)
+      (call-with-metadata #:location 'back thunk))))
 
 (define div%
-  (class (elements-only-mixin guess-paragraphs-element%)
+  (class element:elements-only+guess-paragraphs+to-pre-segments%
     (super-new)
     (inherit get-attributes)
-    (define/override (smoosh)
+    (define n
+      (fmap car (false->maybe (dict-ref (get-attributes) 'n #f))))
+    (define type
+      (car (dict-ref (get-attributes) 'type)))
+    (define/augment-final (to-pre-segments/add-metadata pred
+                                                        call-with-metadata
+                                                        thunk)
+      (call-with-metadata #:location (list 'div type n) thunk))
+    (define/override-final (to-pre-segments pred
+                                            call-with-metadata
+                                            acc
+                                            init-pb)
       (case (dict-ref (get-attributes) 'type #f)
         [(("contents")("index"))
-         '()]
+         (values acc init-pb)]
         [else
-         (super smoosh)]))))
+         (super to-pre-segments
+                pred
+                call-with-metadata
+                acc
+                init-pb)]))))
   
 (define pb%
-  (class* (elements-only-mixin body-element%) {pb<%>}
+  (class* (elements-only-mixin element%) {pb<%>}
     (super-new)
     (inherit get-attributes)
     (define n
@@ -275,32 +319,52 @@
       num)
     (define/override (to-plain-text)
       "\f")
-    (define/override (get-page-breaks)
+    (define/public (get-page-breaks)
       (list this))
     (define/override (smoosh)
       (list this))))
 
 (define list%
   ;TODO: specialize to-plain-text
-  (elements-only-mixin guess-paragraphs-element%))
+  (class element:elements-only+guess-paragraphs+to-pre-segments%
+    (super-new)))
 
 (define sp%
-  (class (elements-only-mixin guess-paragraphs-element%)
+  (class element:elements-only+guess-paragraphs+to-pre-segments%
     (super-new)
     (inherit get-attributes)
-    (define/override (smoosh)
-      (case (dict-ref (get-attributes) 'who '("#ricoeur"))
-        [(("#ricoeur"))
-         (super smoosh)]
-        [else
-         '()]))))
+    (define/augment-final (to-pre-segments/add-metadata pred
+                                                        call-with-metadata
+                                                        thunk)
+      (call-with-metadata #:resp (car (dict-ref (get-attributes) 'who))
+                          thunk))))
+
+
+;                                                          
+;                                                          
+;                                                          
+;                                                          
+;                            ;;                      ;;    
+;                            ;;                      ;;    
+;      ;;;   ;;;    ;; ;   ;;;;;;;    ;;;   ;; ;   ;;;;;;; 
+;    ;;   ; ;   ;   ;;; ;    ;;     ;;   ;  ;;; ;    ;;    
+;    ;      ;   ;   ;;  ;;   ;;     ;    ;  ;;  ;;   ;;    
+;   ;;     ;;   ;;  ;;  ;;   ;;    ;;;;;;;; ;;  ;;   ;;    
+;    ;      ;   ;   ;;  ;;   ;;     ;       ;;  ;;   ;;    
+;    ;;   ; ;   ;   ;;  ;;    ;     ;;   ;  ;;  ;;    ;    
+;      ;;;   ;;;    ;;  ;;     ;;;    ;;;   ;;  ;;     ;;; 
+;                                                          
+;                                                          
+;                                                          
+;                                                          
+
 
 (define ab%
   (let ()
     (struct parbreak ())
-    (class* body-element% {ab<%>}
+    (class* (content-containing-element-mixin body-element%) {ab<%>}
       (super-new)
-      (inherit get-body)
+      (inherit get-body get-page-breaks)
       (define/private (insert-parbreaks #:mode [mode 'blank-lines])
         (define split-pat
           (if (eq? 'blank-lines mode)
@@ -328,7 +392,7 @@
              (loop (append this-group
                            (list this-item))
                    more)])))
-      (define/public (do-guess-paragraphs #:mode [mode 'blank-lines])
+      (define/public-final (do-guess-paragraphs #:mode [mode 'blank-lines])
         (for/list ([pargroup (in-list (group-by-parbreaks #:mode mode))]
                    #:unless (null? pargroup))
           (match pargroup
@@ -337,10 +401,24 @@
             [_
              (new p%
                   [name 'p]
-                  [body pargroup])]))))))
+                  [body pargroup])])))
+      (define/override-final (to-pre-segments pred
+                                              call-with-metadata
+                                              acc
+                                              init-pb)
+        (cond
+          [#f (error 'todo)]
+          [else
+           (super to-pre-segments
+                  pred
+                  call-with-metadata
+                  acc
+                  init-pb)]))
+      #|END ab%|#)))
 
 (define p%
-  (class* guess-paragraphs-element% {p<%>}
+  (class* (content-containing-element-mixin guess-paragraphs-element%)
+    {p<%>}
     (super-new)
     (inherit get-body)
     (define/override (to-plain-text)
@@ -374,11 +452,25 @@
                         #:after-last "\n"))]))))
 
 (define head%
-  (concrete-guess-paragraphs-element%))
+  (content-containing-element-mixin
+   guess-paragraphs-element%))
 
 (define note%
-  (concrete-guess-paragraphs-element%))
-
+  (class (content-containing-element-mixin
+          guess-paragraphs-element%)
+    (super-new)
+    (inherit get-attributes)
+    (define/augment-final (to-pre-segments/add-metadata pred
+                                                        call-with-metadata
+                                                        thunk)
+      (let ([n (car (dict-ref (get-attributes) 'n))]
+            [place (car (dict-ref (get-attributes) 'place))]
+            [transl (car (dict-ref (get-attributes) 'transl '(#f)))])
+        (call-with-metadata #:location (list 'note place n transl)
+                            thunk)))))
+                     
+        
 (define item%
   ;TODO: specialize to-plain-text
-  (concrete-guess-paragraphs-element%))
+  (content-containing-element-mixin
+   guess-paragraphs-element%))
