@@ -382,8 +382,8 @@ Footnotes (those references, notes, and citations appearing at the bottom of the
 and endnotes (those which appear at the end of a book or article)
 are encoded using the @tag{note} element.
 It must have a @attr{place} attribute with a value of either @racket["foot"] or
-@racket["end"]. It may have a @attr{n} attribute giving the symbol used
-to reference the note in the original.
+@racket["end"]. It must also have a @attr{n} attribute giving the
+number or symbol used to reference the note in the original.
 
 Notes must be encoded where they are referenced.
 In other words, at the location of the note reference in the text,

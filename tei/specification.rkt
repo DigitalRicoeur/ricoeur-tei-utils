@@ -368,10 +368,8 @@ and @tag{list}, @tag{note}, @tag{p}, and
 It must have a @tt{place} attribute with
 a value of either @racket["foot"] or
 @racket["end"].
-It may have an @attr{n} attribute giving the
+It must also have an @attr{n} attribute giving the
 the number or symbol for the footnote or endnote.
-If @attr{n} attributes are ommited for a document,
-numbering will be assumed to be sequential.
 Translation notes should have a @attr{type} attribute
 with a value of @racket["transl"].
 
@@ -413,7 +411,7 @@ a combination of free-form text and
                        [0+ ab])
           #:attr-contracts `([place ,(or/c "foot" "end")]
                              [type "transl"])
-          #:required-attrs `(place)))
+          #:required-attrs `(place n)))
 
        (define item/c
          (make-element-contract
