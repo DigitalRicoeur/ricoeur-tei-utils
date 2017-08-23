@@ -276,17 +276,13 @@
                  any)]
            [accumulator
             {pre-segment-accumulator?}
-            (letrec ([acc/c (and/c pre-segment-accumulator?
-                                   (-> #:body string?
-                                       #:page (or/c (maybe/c string?)
-                                                    (list/c (maybe/c string?)
-                                                            (maybe/c string?)))
-                                       (recursive-contract acc/c)))])
-              acc/c)]
+            ;a better check takes ridiculously long here, so
+            ;rely on do-prepare-pre-segments
+            pre-segment-accumulator?]
            [init-pb (is-a?/c pb<%>)]}
-          [_ {pre-segment-accumulator?}
-             (values pre-segment-accumulator?
-                     (is-a?/c pb<%>))])]
+          (values [_ {pre-segment-accumulator?}
+                     pre-segment-accumulator?]
+                  [_ (is-a?/c pb<%>)]))]
     [to-pre-segments/add-metadata
      (->i {[this any/c]
            [pre-segment-accumulator? (-> any/c any/c)]
@@ -299,9 +295,9 @@
             {pre-segment-accumulator?}
             (-> (values pre-segment-accumulator?
                         (is-a?/c pb<%>)))]}
-          [_ {pre-segment-accumulator?}
-             (values pre-segment-accumulator?
-                     (is-a?/c pb<%>))])]
+          (values [_ {pre-segment-accumulator?}
+                     pre-segment-accumulator?]
+                  [_ (is-a?/c pb<%>)]))]
     ))
 
 (define can-get-page-breaks?
@@ -313,7 +309,7 @@
 (define body-element%
   (class* (class element%
             (super-new)
-            (inherit get-attributes)
+            (inherit get-attributes get-name)
             (define/pubment (to-pre-segments pred
                                              call-with-metadata
                                              acc
@@ -337,7 +333,8 @@
                       (call-with-metadata #:resp resp thunk)
                       (thunk))))
               (inner (go)
-                     to-pre-segments/add-metadata pred
+                     to-pre-segments/add-metadata
+                     pred
                      call-with-metadata
                      go)))
     {TEI-body<%>}
@@ -376,10 +373,10 @@
                                    (list (send init-pb get-page-string)
                                          (send latest-pb get-page-string))))
                    latest-pb)]
-          [(cons (? body-element? child) more) 
+          [(cons (? body-element? child) more)
            (define-values {new-acc new-latest-pb}
              (send child
-                   text-do-prepare-pre-segments
+                   to-pre-segments
                    pred
                    call-with-metadata
                    (acc #:body (string-normalize-spaces

@@ -36,9 +36,15 @@
         (values (send doc get-title)
                 (cons (send doc get-teiHeader)
                       (* EXCERPT_RATIO doc-chars)))))
-    (let ([segs (flatten (map prepare-pre-segments docs))])
-      (unless (null? segs)
-        (insert-pre-segments db segs)))
+    (for/list ([segs (in-slice 1000 (flatten (map prepare-pre-segments
+                                                  docs)))]
+               #:unless (null? segs))
+    #|Avoid:
+query-exec: wrong number of parameters for query
+  expected: 19494
+  given: 85030
+|#
+      (insert-pre-segments db segs))
     (define/override-final (do-search-documents term)
       (for/list ([{title l-vecs} (in-query db select-statement term
                                            #:group #("segdocumenttitle"))])

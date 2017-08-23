@@ -72,7 +72,8 @@
     (super-new)))
 
 (define TEI%
-  (class* (elements-only-mixin (TEI-info-mixin guess-paragraphs-element%)) {TEI<%>}
+  (class* (elements-only-mixin (TEI-info-mixin guess-paragraphs-element%))
+    {TEI<%>}
     (super-new)
     (inherit to-xexpr get-body/elements-only get-title)
     (match-define (list teiHeader text)
@@ -92,10 +93,12 @@
     (define/public-final (do-prepare-pre-segments pred
                                                   call-with-metadata
                                                   title->pre-segment-accumulator)
-      (to-pre-segments pred
-                       call-with-metadata
-                       (title->pre-segment-accumulator (get-title))
-                       (new pb% [name 'pb])))                          
+      (define-values {acc _}
+        (to-pre-segments pred
+                         call-with-metadata
+                         (title->pre-segment-accumulator (get-title))
+                         (new pb% [name 'pb])))
+      acc)
     (define/override (get-page-breaks)
       (send text get-page-breaks))
     (define/public (write-TEI [out (current-output-port)])
@@ -320,8 +323,6 @@
     (define/override (to-plain-text)
       "\f")
     (define/public (get-page-breaks)
-      (list this))
-    (define/override (smoosh)
       (list this))))
 
 (define list%
