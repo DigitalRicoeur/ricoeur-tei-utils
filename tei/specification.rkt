@@ -280,6 +280,10 @@ It must have a @attr{type} attribute with a value of
 If the division is numbered, it should have an
 @attr{n} attribute giving the page number
 as given in the source (i.e. possibly as a Roman numeral).
+Any @tag{div} element may, and a @tag{div} representing a
+section not by Paul Ricœur must, have a @attr{resp} attribute
+that is valid per the TEI standard, as discussed above under
+@secref["Sections_Not_by_Ric_ur"].
 @margin-note{If a type of division arises that does not
  fit neatly into these categories, we should decide on a standard
  value for the @tt{type} attribute and amend this document.}
@@ -318,7 +322,8 @@ elements.
                          "bibl"
                          "ack"
                          "intro"
-                         "index")])
+                         "index")]
+            [resp #rx"#.+"])
           #:required-attrs '(type)))
        
        (define pb/c
@@ -340,6 +345,7 @@ elements.
                        [0+ p]
                        [0+ pb]
                        [0+ ab])
+          #:attr-contracts `([who #rx"#.+"])
           #:required-attrs '(who)))]
 
 @subsection{Content-Containing Elements}
@@ -372,6 +378,10 @@ It must also have an @attr{n} attribute giving the
 the number or symbol for the footnote or endnote.
 Translation notes should have a @attr{type} attribute
 with a value of @racket["transl"].
+Any @tag{note} element may, and a @tag{note} representing a
+note not by Paul Ricœur must, have a @attr{resp} attribute
+that is valid per the TEI standard, as discussed above under
+@secref["Sections_Not_by_Ric_ur"].
 
 The @deftag{item} element may contain
 a combination of free-form text and
@@ -410,6 +420,7 @@ a combination of free-form text and
                        [0+ p]
                        [0+ ab])
           #:attr-contracts `([place ,(or/c "foot" "end")]
+                             [resp #rx"#.+"]
                              [type "transl"])
           #:required-attrs `(place n)))
 

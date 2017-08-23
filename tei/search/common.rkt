@@ -49,7 +49,7 @@
                                  [counter natural-number/c]
                                  [body string?]
                                  [meta jsexpr?]
-                                 [resp string?])
+                                 [resp #rx"#.+"])
              #:omit-constructor]
             [prepare-pre-segments
              (-> (is-a?/c TEI<%>)
@@ -364,15 +364,17 @@
 (define abstract-searchable-document-set%
   (class* object% [(interface ()
                      [do-search-documents
-                      (->m term/c (listof (is-a?/c document-search-results<%>)))])]
+                      (->*m {term/c}
+                            {#:ricoeur-only? any/c}
+                            (listof (is-a?/c document-search-results<%>)))])]
     (super-new)
     (abstract do-search-documents)))
 
 (define searchable-document-set?
   (is-a?/c abstract-searchable-document-set%))
 
-(define (search-documents term sds)
-  (send sds do-search-documents term))
+(define (search-documents term sds #:ricoeur-only? [ricoeur-only? #t])
+  (send sds do-search-documents term #:ricoeur-only? ricoeur-only?))
 
 
 

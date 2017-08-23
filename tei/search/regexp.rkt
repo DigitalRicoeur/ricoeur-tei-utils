@@ -41,10 +41,10 @@
     (init [docs '()])
     (define searchable
       (map prepare-searchable-document docs))
-    (define/override-final (do-search-documents term)
+    (define/override-final (do-search-documents term #:ricoeur-only? [ricoeur-only? #t])
       (let ([term-len (string-length term)]
             [excerpt-px (term->excerpt-pregexp term)])
-        (map (λ (doc) (send doc do-term-search term-len excerpt-px))
+        (map (λ (doc) (send doc do-term-search term-len excerpt-px ricoeur-only?))
              searchable)))))
 
 (define (regexp-searchable-document-set [docs '()])
@@ -88,30 +88,32 @@
 ;                                                                                  
 ;                                                                                  
 
-(define searchable-document<%>
-  (interface (TEI-info<%>)
-    [do-term-search
-     (->m natural-number/c pregexp?
-          (recursive-contract
-           (is-a?/c document-search-results<%>)))]))
-
 (define searchable-segment%
   (class object%
     (super-new)
     (init pre)
-    (match-define (pre-segment _ counter body meta _)
+    (match-define (pre-segment _ counter body meta resp)
       pre)
-    (define/public (do-term-search/segment excerpt-px)
-      (for/list ([excerpt (in-list (regexp-match* excerpt-px body))]
-                 [sub-counter (in-naturals)])
-        (make-search-result #:counter counter
-                            #:sub-counter sub-counter
-                            #:excerpt (just (string-trim excerpt))
-                            #:meta meta)))))
+    (define this-by-ricoeur?
+      (equal? resp "#ricoeur"))
+    (define/public (do-term-search/segment excerpt-px ricoeur-only?)
+      (cond
+        [(or this-by-ricoeur? (not ricoeur-only?))
+         (for/list ([excerpt (in-list (regexp-match* excerpt-px body))]
+                    [sub-counter (in-naturals)])
+           (make-search-result #:counter counter
+                               #:sub-counter sub-counter
+                               #:excerpt (just (string-trim excerpt))
+                               #:meta meta))]
+        [else
+         null]))))
 
 
 (define searchable-document%
-  (class* (TEI-info-mixin object%) [searchable-document<%>]
+  (class* (TEI-info-mixin object%) [(interface (TEI-info<%>)
+                                      [do-term-search
+                                       (->m natural-number/c pregexp? any/c
+                                            (is-a?/c document-search-results<%>))])]
     (super-new)
     (init obj
           [(:segments segments)])
@@ -125,7 +127,7 @@
       (let ([doc-chars (string-length (string-normalize-spaces
                                        (send obj to-plain-text)))])
         (* EXCERPT_RATIO doc-chars)))
-    (define/public (do-term-search term-len excerpt-px)
+    (define/public (do-term-search term-len excerpt-px ricoeur-only?)
       (new document-search-results%
            [info teiHeader]
            [results
@@ -133,7 +135,7 @@
              term-len
              (flatten
               (for/list ([seg (in-list segments)])
-                (send seg do-term-search/segment excerpt-px))))]))
+                (send seg do-term-search/segment excerpt-px ricoeur-only?))))]))
     (define/private (term-len->max-excerpts term-len)
       (define excerpt-max-length
         (+ EXCERPT_MAX_PEEK term-len))

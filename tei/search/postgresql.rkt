@@ -45,9 +45,14 @@ query-exec: wrong number of parameters for query
   given: 85030
 |#
       (insert-pre-segments db segs))
-    (define/override-final (do-search-documents term)
-      (for/list ([{title l-vecs} (in-query db select-statement term
-                                           #:group #("segdocumenttitle"))])
+    (define/override-final (do-search-documents term #:ricoeur-only? [ricoeur-only? #t])
+      (for/list ([{title l-vecs}
+                  (in-query db
+                            (if ricoeur-only?
+                                select-statement:ricoeur-only
+                                select-statement:all)
+                            term
+                            #:group #("segdocumenttitle"))])
         (match-define (cons info excerpt-max-allow-chars)
           (hash-ref hsh:title->teiHeader+excerpt-max-allow-chars title))
         (new document-search-results%
@@ -97,18 +102,31 @@ query-exec: wrong number of parameters for query
 (define rx:FragmentDelimiter
   (regexp (regexp-quote FragmentDelimiter)))
 
-(define select-statement
-  ƒstring-append{
+(define MaxWords
+  18)
+
+(define MinWords
+  7)
+
+(define (make-select-statement [extra-where ""])
+  ƒ~a{
  SELECT
  segDocumentTitle,
  segCounter,
  segMeta,
- ts_headline(segBody, qry, 'StartSel="",StopSel="",ShortWord=0,MaxWords=18,MinWords=7,MaxFragments=10000,FragmentDelimiter="ƒFragmentDelimiter"')
+ ts_headline(segBody, qry, 'StartSel="",StopSel="",ShortWord=0,MaxWords=ƒMaxWords,MinWords=ƒMinWords,MaxFragments=10000,FragmentDelimiter="ƒFragmentDelimiter"')
  FROM
  (SELECT segDocumentTitle,segCounter,segMeta,segBody,qry
  FROM tSegments, phraseto_tsquery($1) AS qry
- WHERE segTSV @@ qry) AS tmp
+ WHERE segTSV @@ qry ƒextra-where) AS tmp
  })
+
+(define select-statement:all
+  (make-select-statement))
+
+(define select-statement:ricoeur-only
+  (make-select-statement
+   ƒ~a{AND segResp = '#ricoeur'}))
 
 
 (define (initialize db)

@@ -362,13 +362,14 @@
             (send latest-pb get-page-string))))
 
 (define content-containing-element-mixin
+  ;; for elements that contain textual data EXCEPT ab% (see below)
   (mixin {TEI-body<%>} {}
     (super-new)
     (inherit get-body)
-    (define/override (to-pre-segments pred
-                                      call-with-metadata
-                                      acc
-                                      init-pb)
+    (define/override-final (to-pre-segments pred
+                                            call-with-metadata
+                                            acc
+                                            init-pb)
       (let loop ([to-go (get-body)]
                  [this-so-far null] 
                  [acc acc]
@@ -376,11 +377,14 @@
                  [latest-pb init-pb])
         (match to-go
           ['()
+           ;; base case: finish up, accumulating the last round from this-so-far
            (values (acc #:body (string-normalize-spaces
                                 (string-join (reverse this-so-far) " "))
                         #:page (init-pb+latest-pb->page init-pb latest-pb))
                    latest-pb)]
           [(cons (? body-element? child) more)
+           ;; accumulate from this-so-far, dispatch to child element's implementation,
+           ;; then continue with new acc and init-pb from child
            (define-values {new-acc new-latest-pb}
              (send child
                    to-pre-segments
@@ -392,12 +396,14 @@
                    latest-pb))
            (loop more null new-acc new-latest-pb new-latest-pb)]
           [(cons (? pb? latest-pb) more)
+           ;; continue with new latest-pb
            (loop more
                  this-so-far
                  acc
                  init-pb
                  latest-pb)]
           [(cons str-or-misc more)
+           ;; continue, consing this child on to this-so-far
            (loop more
                  (cons (element-or-xexpr->plain-text str-or-misc)
                        this-so-far)
@@ -413,12 +419,17 @@
                                             call-with-metadata
                                             acc
                                             init-pb)
+      ;;;; TODO: How to notify the linter if this method
+      ;;;; encounters the ugly case? Logging?
       (let loop ([to-go (get-body)]
                  [acc acc]
                  [init-pb init-pb])
         (match to-go
-          ['() (values acc init-pb)]
+          ['() 
+          ;; finish by returning acc and pb
+           (values acc init-pb)]
           [(cons (? body-element? child) more)
+           ;; dispatch to child element, continue with returned acc and init-pb
            (define-values {new-acc new-init-pb}
              (send child
                    to-pre-segments
@@ -428,6 +439,10 @@
                    init-pb))
            (loop more new-acc new-init-pb)]
           [(list-rest (? not-body-element? plain-children) ... more)
+           ;; This case handles a bunch of things that are not child TEI-body<%>
+           ;; elements, i.e. strings, pb%s, and comments etc, as plain-children.
+           ;; We start by counting how many pb%s we see here and keeping track
+           ;; of the last (which may be init-pb).
            (for/fold/define ([num-pbs 0]
                              [latest-pb init-pb])
                             ([child (in-list plain-children)]
@@ -436,6 +451,8 @@
            (define new-acc
              (cond
                [[2 . > . num-pbs]
+                ;; Good case: there are fewer than two pb%s in plain-children,
+                ;; so we treat plain-children as a segment.
                 (acc #:body (string-normalize-spaces
                              (string-join
                               (for/list ([child (in-list plain-children)]
@@ -444,6 +461,8 @@
                               " "))
                      #:page (init-pb+latest-pb->page init-pb latest-pb))]
                [else
+                ;; Ugly case: this handles massive ab%s that have not been segmented.
+                ;; In this case, each page is used as a segment.
                 (let loop ([acc acc]
                            [the-pb init-pb]
                            [to-go plain-children]
@@ -465,6 +484,7 @@
                            more
                            (cons (element-or-xexpr->plain-text child)
                                  this-so-far))]))]))
+           ;; Continue with new-acc and latest-pb (which may be init-pb).
            (loop more new-acc latest-pb)])))))
 
 
@@ -546,7 +566,7 @@
            [pre-segment-accumulator? (-> any/c any/c)]
            [call-with-metadata
             (->* {(-> any)}
-                 {#:resp string?
+                 {#:resp #rx"#.+"
                   #:location location-stack-entry/c}
                  any)]
            [title->pre-segment-accumulator
