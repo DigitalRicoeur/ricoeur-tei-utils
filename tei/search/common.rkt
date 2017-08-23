@@ -79,7 +79,23 @@
 (define current-resp
   (make-parameter "#ricoeur"))
 
-(define current-location-stack
+(define location-stack/c
+  (opt/c
+   (flat-murec-contract ([tail/c (or/c (list/c)
+                                       (list/c 'front)
+                                       (list/c 'back))]
+                         [with-divs/c
+                          (or/c tail/c
+                                (cons/c location-stack-entry:div/c
+                                        with-divs/c))]
+                         [location-stack/c
+                          (or/c with-divs/c
+                                (cons/c location-stack-entry:note/c
+                                        location-stack/c))])
+                        location-stack/c)))
+          
+(define/contract current-location-stack
+  (parameter/c location-stack/c)
   (make-parameter '()))
 
 (define (call-with-metadata thunk
@@ -93,7 +109,7 @@
     (thunk)))
 
 (define/contract (location-stack->jsexpr stack)
-  (-> (listof location-stack-entry/c) jsexpr?)
+  (-> location-stack/c jsexpr?)
   (map (match-lambda
          ['front "front"]
          ['back "back"]
@@ -125,9 +141,6 @@
                                  [it
                                   (from-just #f it)]))
                  resp)))
-
-
-
 
 (struct pre-segment-accumulator (title next-counter so-far)
   #:property prop:procedure
