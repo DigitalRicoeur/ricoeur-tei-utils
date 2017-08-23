@@ -34,6 +34,7 @@
            guess-paragraphs-element%
            ab?
            content-containing-element-mixin
+           ab-to-pre-segments-mixin
            element:elements-only+guess-paragraphs+to-pre-segments%
            ))
 
@@ -306,6 +307,9 @@
 (define body-element?
   (is-a?/c TEI-body<%>))
 
+(define not-body-element?
+  (not/c body-element?))
+
 (define body-element%
   (class* (class element%
             (super-new)
@@ -351,6 +355,12 @@
                   #:when (can-get-page-breaks? child))
          (send child get-page-breaks))))))
 
+(define (init-pb+latest-pb->page init-pb latest-pb)
+  (if (equal? init-pb latest-pb)
+      (send init-pb get-page-string)
+      (list (send init-pb get-page-string)
+            (send latest-pb get-page-string))))
+
 (define content-containing-element-mixin
   (mixin {TEI-body<%>} {}
     (super-new)
@@ -368,10 +378,7 @@
           ['()
            (values (acc #:body (string-normalize-spaces
                                 (string-join (reverse this-so-far) " "))
-                        #:page (if (equal? init-pb latest-pb)
-                                   (send init-pb get-page-string)
-                                   (list (send init-pb get-page-string)
-                                         (send latest-pb get-page-string))))
+                        #:page (init-pb+latest-pb->page init-pb latest-pb))
                    latest-pb)]
           [(cons (? body-element? child) more)
            (define-values {new-acc new-latest-pb}
@@ -381,10 +388,7 @@
                    call-with-metadata
                    (acc #:body (string-normalize-spaces
                                 (string-join (reverse this-so-far) " "))
-                        #:page (if (equal? init-pb latest-pb)
-                                   (send init-pb get-page-string)
-                                   (list (send init-pb get-page-string)
-                                         (send latest-pb get-page-string))))
+                        #:page (init-pb+latest-pb->page init-pb latest-pb))
                    latest-pb))
            (loop more null new-acc new-latest-pb new-latest-pb)]
           [(cons (? pb? latest-pb) more)
@@ -400,6 +404,72 @@
                  acc
                  init-pb
                  latest-pb)])))))
+
+(define ab-to-pre-segments-mixin
+  (mixin {TEI-body<%>} {}
+    (super-new)
+    (inherit get-body)
+    (define/override-final (to-pre-segments pred
+                                            call-with-metadata
+                                            acc
+                                            init-pb)
+      (let loop ([to-go (get-body)]
+                 [acc acc]
+                 [init-pb init-pb])
+        (match to-go
+          ['() (values acc init-pb)]
+          [(cons (? body-element? child) more)
+           (define-values {new-acc new-init-pb}
+             (send child
+                   to-pre-segments
+                   pred
+                   call-with-metadata
+                   acc
+                   init-pb))
+           (loop more new-acc new-init-pb)]
+          [(list-rest (? not-body-element? plain-children) ... more)
+           (for/fold/define ([num-pbs 0]
+                             [latest-pb init-pb])
+                            ([child (in-list plain-children)]
+                             #:when (pb? child))
+             (values (add1 num-pbs) child))
+           (define new-acc
+             (cond
+               [[2 . > . num-pbs]
+                (acc #:body (string-normalize-spaces
+                             (string-join
+                              (for/list ([child (in-list plain-children)]
+                                         #:unless (pb? child))
+                                (element-or-xexpr->plain-text child))
+                              " "))
+                     #:page (init-pb+latest-pb->page init-pb latest-pb))]
+               [else
+                (let loop ([acc acc]
+                           [the-pb init-pb]
+                           [to-go plain-children]
+                           [this-so-far '()])
+                  (match to-go
+                    ['() acc]
+                    [(cons (? pb? new-pb) more)
+                     (loop (acc #:body (string-normalize-spaces
+                                        (string-join
+                                         (reverse this-so-far)
+                                         " "))
+                                #:page (send the-pb get-page-string))
+                           new-pb
+                           more
+                           '())]
+                    [(cons child more)
+                     (loop acc
+                           the-pb
+                           more
+                           (cons (element-or-xexpr->plain-text child)
+                                 this-so-far))]))]))
+           (loop more new-acc latest-pb)])))))
+
+
+
+
 
 
 

@@ -363,9 +363,9 @@
 (define ab%
   (let ()
     (struct parbreak ())
-    (class* (content-containing-element-mixin body-element%) {ab<%>}
+    (class* (ab-to-pre-segments-mixin body-element%) {ab<%>}
       (super-new)
-      (inherit get-body get-page-breaks)
+      (inherit get-body)
       (define/private (insert-parbreaks #:mode [mode 'blank-lines])
         (define split-pat
           (if (eq? 'blank-lines mode)
@@ -403,18 +403,6 @@
              (new p%
                   [name 'p]
                   [body pargroup])])))
-      (define/override-final (to-pre-segments pred
-                                              call-with-metadata
-                                              acc
-                                              init-pb)
-        (cond
-          [#f (error 'todo)]
-          [else
-           (super to-pre-segments
-                  pred
-                  call-with-metadata
-                  acc
-                  init-pb)]))
       #|END ab%|#)))
 
 (define p%
