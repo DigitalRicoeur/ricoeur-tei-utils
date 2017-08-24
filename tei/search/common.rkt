@@ -19,8 +19,9 @@
          location-stack-entry/c
          (contract-out
           [search-documents
-           (-> term/c searchable-document-set?
-               (listof (is-a?/c document-search-results<%>)))]
+           (->* {term/c searchable-document-set?}
+                {#:ricoeur-only? any/c}
+                (listof (is-a?/c document-search-results<%>)))]
           [document-search-results-title
            (-> (is-a?/c document-search-results<%>)
                string?)]
