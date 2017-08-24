@@ -23,8 +23,9 @@
           [current-corpus
            (parameter/c (is-a?/c corpus%))]
           [term-search
-           (-> term/c
-               (listof (is-a?/c document-search-results<%>)))]
+           (->* {term/c}
+                {#:ricoeur-only? any/c}
+                (listof (is-a?/c document-search-results<%>)))]
           [list-TEI-info
            (-> (listof (is-a?/c TEI-info<%>)))]
           ))
@@ -40,8 +41,9 @@
   (class* object% [(interface ()
                      [•list-TEI-info (->m (listof (is-a?/c TEI-info<%>)))]
                      [•term-search
-                      (->m term/c
-                           (listof (is-a?/c document-search-results<%>)))])]
+                      (->*m {term/c}
+                            {#:ricoeur-only? any/c}
+                            (listof (is-a?/c document-search-results<%>)))])]
     (super-new)
     (init [docs '()]
           [search-backend #f])
@@ -59,13 +61,14 @@
       headers)
     (define search-cache
       (make-mutable-string-ci-dict))
-    (define/public-final (•term-search raw-term)
+    (define/public-final (•term-search raw-term #:ricoeur-only? [ricoeur-only? #t])
       (define term
         (string-normalize-spaces raw-term))
       (dict-ref search-cache
                 term
                 (λ ()
-                  (let ([rslts (search-documents term searchable-document-set)])
+                  (let ([rslts (search-documents term searchable-document-set
+                                                 #:ricoeur-only? ricoeur-only?)])
                     (dict-set! search-cache term rslts)
                     rslts))))
     #|END class corpus%|#))
@@ -93,8 +96,8 @@
 
 
 
-(define (term-search term)
-  (send (current-corpus) •term-search term))
+(define (term-search term #:ricoeur-only? [ricoeur-only? #t])
+  (send (current-corpus) •term-search term #:ricoeur-only? ricoeur-only?))
 
 (define (list-TEI-info)
   (send (current-corpus) •list-TEI-info))

@@ -15,6 +15,7 @@
          elements-only<%>
          TEI-info<%>
          teiHeader<%>
+         get-page-breaks<%>
          TEI-body<%>
          pb<%>
          guess-paragraphs<%>
@@ -272,7 +273,7 @@
            [pre-segment-accumulator? (-> any/c any/c)]
            [call-with-metadata
             (->* {(-> any)}
-                 {#:resp string?
+                 {#:resp #rx"#.+"
                   #:location location-stack-entry/c}
                  any)]
            [accumulator
@@ -289,7 +290,7 @@
            [pre-segment-accumulator? (-> any/c any/c)]
            [call-with-metadata
             (->* {(-> any)}
-                 {#:resp string?
+                 {#:resp #rx"#.+"
                   #:location location-stack-entry/c}
                  any)]
            [thunk

@@ -89,7 +89,8 @@ particularly the concept of x-expressions
                other purposes, and multiple @tech{corpus} objects should not
                use the same database at the same time.}]
  }
- @defmethod[#:mode public-final (•term-search [term term/c])
+ @defmethod[#:mode public-final (•term-search [term term/c]
+                                              [#:ricoeur-only ricoeur-only any/c #t])
             (listof (is-a?/c document-search-results<%>))]{
   Used to implement @racket[term-search].
  }
@@ -136,7 +137,7 @@ particularly the concept of x-expressions
 @subsection{Search}
 
 @deftogether[
- (@defproc[(term-search [term term/c])
+ (@defproc[(term-search [term term/c] [#:ricoeur-only ricoeur-only any/c #t])
            (listof (is-a?/c document-search-results<%>))]
    @defthing[term/c flat-contract?
              #:value (and/c non-empty-string? (not/c #px"^\\s*$"))])]{
@@ -384,7 +385,8 @@ ultimately @racket[term-search].
 }
 
 @defproc[(search-documents [term term/c]
-                           [docs searchable-document-set?])
+                           [docs searchable-document-set?]
+                           [#:ricoeur-only? ricoeur-only? any/c #t])
          (listof (is-a?/c document-search-results<%>))]{
  Used to implement @racket[term-search].
 }
@@ -479,10 +481,11 @@ of @tech{searchable document sets} to support new @tech{search backends}.
  The @racket[body] field contains the plain text of the @racket[pre-segment].
  The @racket[meta] field encapsulates some meta-data in the format expected
  by @racket[make-search-result].
- The behavior of the @racket[resp] field is currently unspecified, but
- will eventually used to facilitate the optional inclusion or exclusion
- of portions of the TEI document not written by Paul Ricœur from the search
- results.
+ The @racket[resp] field contains either @racket["#ricoeur"], indicating that
+ the @racket[pre-segment] represents a
+ portion of the TEI document written by Paul Ricœur,
+ or some other string, indicationg that the corresponding portion of the document
+ was instead written by an editor, translator, etc.
 
  The segmentation of documents does not depend on the specific search term,
  so @tech{searchable document set} implementations should generally
@@ -503,9 +506,13 @@ of @tech{searchable document sets} to support new @tech{search backends}.
   at least some @racket[TEI<%>] objects, and perhaps other
   backend-specific arguments.
  }
- @defmethod[(do-search-documents [term term/c])
+ @defmethod[(do-search-documents [term term/c] [#:ricoeur-only? ricoeur-only? any/c #t])
             (listof (is-a?/c document-search-results<%>))]{
   Used to implement @racket[search-documents].
+                    
+  When the @racket[ricoeur-only?] argument is non-false,
+  the concrete implementation should exclude portions of the document
+  not written by Paul Ricœur.
 
   @bold{This is an abstract method.} Concrete subclasses @bold{must}
   override it with an implementation that actually searches
