@@ -16,6 +16,7 @@
          document-search-results
          search-result?
          search-result
+         location-stack-entry/c
          (contract-out
           [search-documents
            (-> term/c searchable-document-set?

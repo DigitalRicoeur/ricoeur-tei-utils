@@ -492,6 +492,22 @@ of @tech{searchable document sets} to support new @tech{search backends}.
  call @racket[prepare-pre-segments] only once for each @racket[doc].
 }
 
+@defthing[location-stack-entry/c flat-contract?
+          #:value
+          (or/c 'front 'back
+                (list/c 'div
+                        (or/c "chapter" "part" "section" "dedication"
+                              "contents" "intro" "bibl" "ack" "index")
+                        (maybe/c string?))
+                (list/c 'note
+                        (or/c "foot" "end")
+                        string?
+                        (or/c "transl" #f)))]{
+A contract recognizing values that can be supplied by
+@(xmethod TEI-body<%> to-pre-segments/add-metadata) to
+provide details about the location of a @racket[pre-segment] in a document.
+}
+
 @defclass[abstract-searchable-document-set% object% ()]{
  A @tech{searchable document set} is an instance of a subclass of
  the abstract class @racket[abstract-searchable-document-set%].
