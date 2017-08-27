@@ -29,7 +29,7 @@ into a module as follows:
 @chunk[$*$
        (require racket/unit
                 racket/contract
-                ricoeur/tei/signatures)
+                ricoeur/tei/xexpr/signatures)
 
        (provide element-contracts@)
 

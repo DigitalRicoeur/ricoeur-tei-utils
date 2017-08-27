@@ -1,8 +1,8 @@
 #lang racket
 
 (require xml 
-         ricoeur/tei/xml-entity-utils
-         ricoeur/tei/tei-xexpr-contracts
+         ricoeur/tei/oop/xml-entity-utils
+         ricoeur/tei/xexpr/tei-xexpr-contracts
          data/maybe
          gregor
          adjutor

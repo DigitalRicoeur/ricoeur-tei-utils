@@ -3,7 +3,7 @@
 @title[#:version ""]{Digital Ricœur TEI Library}
 @author[(author+email @elem{Philip M@superscript{c}Grath}
                       "philip@philipmcgrath.com")]
-@defmodule[ricoeur/tei]
+@defmodule[#:multi (ricoeur/tei ricoeur/tei/base)]
 
 @(require (for-label (except-in racket
                                 date
@@ -12,7 +12,7 @@
                      xml
                      data/maybe
                      ricoeur/tei
-                     ricoeur/tei/signatures
+                     ricoeur/tei/xexpr/signatures
                      db
                      json
                      (only-in ricoeur/tei/search
@@ -43,6 +43,10 @@ particularly the concept of x-expressions
 @(table-of-contents)
 
 @section{High-level Interface}
+@defmodule[ricoeur/tei #:link-target? #f]
+
+The bindings documented in this section are provided by
+@racketmodname[ricoeur/tei], but not @racketmodname[ricoeur/tei/base].
 
 @defparam[current-corpus corpus (is-a?/c corpus%)
           #:value empty-corpus]{
@@ -318,11 +322,11 @@ a warning is logged to @racket[(current-logger)].
 @section{Implementation Details}
 
 @subsection{Contract Implementation}
-@defmodule[ricoeur/tei/signatures]
+@defmodule[ricoeur/tei/xexpr/signatures]
 
 The bindings documented in this section are provided by
-@racketmodname[ricoeur/tei/signatures], but not by
-@racketmodname[ricoeur/tei].
+@racketmodname[ricoeur/tei/xexpr/signatures], but not by
+@racketmodname[ricoeur/tei] or @racketmodname[ricoeur/tei/base].
 They are used in the implementation of contracts on TEI x-expressions.
 
 @defsignature[tei-xexpr-contracts^ ()]{

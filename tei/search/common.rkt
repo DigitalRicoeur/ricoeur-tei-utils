@@ -1,7 +1,7 @@
 #lang _-exp racket
 
 (require ricoeur/tei/base
-         (submod ricoeur/tei/interfaces search)
+         (submod ricoeur/tei/oop/interfaces search)
          data/maybe
          json
          racket/serialize
