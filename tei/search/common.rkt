@@ -17,6 +17,7 @@
          search-result?
          search-result
          location-stack-entry/c
+         location-stack/c
          (contract-out
           [search-documents
            (->* {term/c searchable-document-set?}
@@ -38,11 +39,14 @@
            (-> search-result?
                (or/c (maybe/c string?)
                      (list/c (maybe/c string?) (maybe/c string?))))]
+          [search-result-location-stack
+           (-> search-result? location-stack/c)]
           ))
 
 (module+ private
   (provide EXCERPT_RATIO
            abstract-searchable-document-set%
+           pre-segment-meta/c
            (contract-out
             [document-search-results%
              (class/c (init [info (is-a?/c TEI-info<%>)]
@@ -50,7 +54,7 @@
             [struct pre-segment ([title string?]
                                  [counter natural-number/c]
                                  [body string?]
-                                 [meta jsexpr?]
+                                 [meta pre-segment-meta/c]
                                  [resp #rx"#.+"])
              #:omit-constructor]
             [prepare-pre-segments
@@ -59,7 +63,7 @@
             [make-search-result
              (-> #:counter natural-number/c
                  #:sub-counter natural-number/c
-                 #:meta jsexpr?
+                 #:meta pre-segment-meta/c
                  #:excerpt (maybe/c string?)
                  search-result?)]
             [nullify-search-result-excerpt
@@ -95,7 +99,25 @@
                                 (cons/c location-stack-entry:note/c
                                         location-stack/c))])
                         location-stack/c)))
-          
+
+(define location-stack-jsexpr/c
+  (opt/c
+   (flat-murec-contract ([tail/c (or/c (list/c)
+                                       (list/c "front")
+                                       (list/c "back"))]
+                         [with-divs/c
+                          (or/c tail/c
+                                (cons/c (list/c "div"
+                                                (or/c "chapter" "part" "section" "dedication"
+                                                      "contents" "intro" "bibl" "ack" "index")
+                                                (or/c #f string?))
+                                        with-divs/c))]
+                         [location-stack-js/c
+                          (or/c with-divs/c
+                                (cons/c (list/c "note" (or/c "foot" "end") string? (or/c "transl" #f))
+                                        location-stack-js/c))])
+                        (and/c jsexpr? location-stack-js/c))))
+
 (define/contract current-location-stack
   (parameter/c location-stack/c)
   (make-parameter '()))
@@ -111,7 +133,7 @@
     (thunk)))
 
 (define/contract (location-stack->jsexpr stack)
-  (-> location-stack/c jsexpr?)
+  (-> location-stack/c location-stack-jsexpr/c)
   (map (match-lambda
          ['front "front"]
          ['back "back"]
@@ -120,6 +142,37 @@
          [(list 'note place n transl)
           (list "note" place n transl)])
        stack))
+
+(define/contract (jsexpr->location-stack stack)
+  (-> location-stack-jsexpr/c location-stack/c)
+  (map (match-lambda
+         ["front" 'front]
+         ["back" 'back]
+         [(list "div" type n)
+          (list 'div type (false->maybe n))]
+         [(list "note" place n transl)
+          (list 'note place n transl)])
+       stack))
+
+(define pre-segment-meta/c
+  (opt/c
+   (and/c jsexpr?
+          (hash/dc [k (or/c 'resp 'location-stack 'page)]
+                   [v (k) (case k
+                            [(resp) #rx"#.+"]
+                            [(location-stack) location-stack-jsexpr/c]
+                            [(page) (or/c #f
+                                          string?
+                                          (list/c (or/c #f string?)
+                                                  (or/c #f string?)))]
+                            [else none/c])]
+                   #:immutable #t
+                   #:kind 'flat)
+          (λ (hsh)
+            (hash-keys-subset? #hasheq([resp . #t]
+                                       [location-stack . #t]
+                                       [page . #t])
+                               hsh)))))
 
 (define/contract (make-pre-segment #:title title
                                    #:counter counter
@@ -289,12 +342,15 @@
                          meta
                          [promise:page
                           (delay
-                            (match (hash-ref meta 'page #f)
+                            (match (hash-ref meta 'page)
                               [(list a b)
                                (list (false->maybe a)
                                      (false->maybe b))]
                               [plain
                                (false->maybe plain)]))]
+                         [promise:location-stack
+                          (delay (jsexpr->location-stack
+                                  (hash-ref meta 'location-stack)))]
                          )
     (define/public (nullify-excerpt)
       (new this%
@@ -303,6 +359,7 @@
            [excerpt (nothing)]
            [meta meta]
            [promise:page promise:page]
+           [promise:location-stack promise:location-stack]
            ))
     (define/public-final (get-counter)
       counter)
@@ -312,6 +369,8 @@
       excerpt)
     (define/public-final (get-page)
       (force promise:page))
+    (define/public-final (get-location-stack)
+      (force promise:location-stack))
     #|END search-result%|#))
 
 (define (make-search-result #:counter counter
@@ -330,6 +389,9 @@
 
 (define (search-result-page sr)
   (send sr get-page))
+
+(define (search-result-location-stack sr)
+  (send sr get-location-stack))
 
 (define search-result?
   (is-a?/c search-result%))
@@ -355,11 +417,14 @@
 (define-match-expander search-result
   (syntax-parser
     [(_ (~or (~optional (~seq #:excerpt excerpt))
+             (~optional (~seq #:location-stack loc))
              (~optional (~seq #:page page)))
         ...)
      #`(? search-result?
           (and #,@(list-when (attribute excerpt)
                     (list #`(app search-result-excerpt excerpt)))
+               #,@(list-when (attribute loc)
+                    (list #`(app search-result-location-stack loc)))
                #,@(list-when (attribute page)
                     (list #`(app search-result-page page)))))]))
 

@@ -186,12 +186,15 @@ The bindings documented in this section are provided by
             (search-result kw-pat ...)
             #:grammar ([kw-pat
                         (code:line #:excerpt excerpt-pat)
+                        (code:line #:location-stack loc-pat)
                         (code:line #:page page-pat)])]
    @defproc[(search-result-excerpt [v search-result?])
             (maybe/c string?)]
    @defproc[(search-result-page [v search-result?])
             (or/c (maybe/c string?)
                   (list/c (maybe/c string?) (maybe/c string?)))]
+   @defproc[(search-result-location-stack [v search-result?])
+            location-stack/c]
    @defproc[(search-result<? [a search-result?] [b search-result?])
             any/c]
    @defproc[(search-result>? [a search-result?] [b search-result?])
@@ -208,7 +211,30 @@ The bindings documented in this section are provided by
  @tech{document search results} object.
 }
 
+@defthing[location-stack/c flat-contract?]{
+ A contract similar to @racket[(listof location-stack-entry/c)],
+ but which also enforces that any @racket['note] entries come
+ before any @racket['div] entries and any @racket['div] entries
+ come before any @racket['front] or @racket['back] entries:
+ that is, that the location information added by the innermost
+ element comes first.
+}
 
+@defthing[location-stack-entry/c flat-contract?
+          #:value
+          (or/c 'front 'back
+                (list/c 'div
+                        (or/c "chapter" "part" "section" "dedication"
+                              "contents" "intro" "bibl" "ack" "index")
+                        (maybe/c string?))
+                (list/c 'note
+                        (or/c "foot" "end")
+                        string?
+                        (or/c "transl" #f)))]{
+A contract recognizing values that can be supplied by
+@(xmethod TEI-body<%> to-pre-segments/add-metadata) to
+provide details about the location of a @racket[pre-segment] in a document.
+}
 
 
 
@@ -443,7 +469,7 @@ of @tech{searchable document sets} to support new @tech{search backends}.
 
 @defproc[(make-search-result [#:counter counter natural-number/c]
                              [#:sub-counter sub-counter natural-number/c]
-                             [#:meta meta jsexpr?]
+                             [#:meta meta pre-segment-meta/c]
                              [#:excerpt excerpt (maybe/c string?)])
          search-result?]{
  Constructs a @tech{search result} value. The @racket[counter] and
@@ -480,8 +506,8 @@ of @tech{searchable document sets} to support new @tech{search backends}.
                @defstruct*[pre-segment ([title string?]
                                         [counter natural-number/c]
                                         [body string?]
-                                        [meta jsexpr?]
-                                        [resp string?])
+                                        [meta pre-segment-meta/c]
+                                        [resp #rx"#.+"])
                            #:omit-constructor])]{
  Current search implementations rely on splitting TEI documents
  into smaller segments that share the same meta-data (such as page
@@ -513,20 +539,11 @@ of @tech{searchable document sets} to support new @tech{search backends}.
  call @racket[prepare-pre-segments] only once for each @racket[doc].
 }
 
-@defthing[location-stack-entry/c flat-contract?
-          #:value
-          (or/c 'front 'back
-                (list/c 'div
-                        (or/c "chapter" "part" "section" "dedication"
-                              "contents" "intro" "bibl" "ack" "index")
-                        (maybe/c string?))
-                (list/c 'note
-                        (or/c "foot" "end")
-                        string?
-                        (or/c "transl" #f)))]{
-A contract recognizing values that can be supplied by
-@(xmethod TEI-body<%> to-pre-segments/add-metadata) to
-provide details about the location of a @racket[pre-segment] in a document.
+@defthing[pre-segment-meta/c flat-contract?]{
+ An opaque contract recognizing valid @racket[pre-segment] meta-data,
+ the precise specification of which in a private implementation
+ detail except that all values satisfying @racket[pre-segment-meta/c]
+ will also satisfy @racket[jsexpr?].
 }
 
 @defclass[abstract-searchable-document-set% object% ()]{
