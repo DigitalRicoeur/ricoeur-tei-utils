@@ -140,6 +140,37 @@
 ;                                                                  ;;      
 ;                                                                          
 
+(define progress-gauge%
+  (class gauge%
+    (super-new [range 10]
+               [label #f])
+    (inherit get-value set-value)
+    (define/public-final (++)
+      (set-value (add1 (get-value))))))
+
+(define loading-frame%
+  (class frame%
+    (init-field dir)
+    (super-new [label (string-append "Loading "
+                                     (path->string dir)
+                                     "… - TEI Lint")]
+               [alignment '(center top)])
+    (inherit show)
+    (new message%
+         [parent this]
+         [label (string-append "Checking files in "
+                               (path->string dir)
+                               " …")])
+    (define progress
+      (new progress-gauge%
+           [parent this]))
+    (show #t)
+    (define/public-final (set-range v)
+      (send progress set-range v))
+    (define/public-final (++)
+      (send progress ++))))
+           
+
 
 (define directory-frame%
   (class frame%
@@ -150,45 +181,65 @@
                [height 600]
                [alignment '(left top)])
     (inherit show)
-    (let ([row (new horizontal-pane%
-                    [parent this]
-                    [stretchable-height #f]
-                    [alignment '(left center)])])
-      (new message%
-           [parent row]
-           [label (path->string dir)])
-      (new button%
-           [parent row]
-           [label "Refresh"]
-           [callback (λ (b e) (refresh-directory))]))
-    (define e-c
-      (new editor-canvas%
-           [style '(transparent auto-hscroll auto-vscroll)]
-           [parent this]))
-    (define ed
-      (new text%))
-    (send e-c set-editor ed)
     (define file-snips
-      (for/list ([pth (in-directory dir)]
-                 #:when (xml-path? pth))
-        (new file-snip%
-             [pth pth]
-             [dir dir]
-             [dir-frame this])))
-    (for ([snip (in-list (sort file-snips
-                               file-snip-more-urgent?))])
-      (send ed insert snip))
-    (send ed lock #t)
-    (send ed hide-caret #t)
-    (define mb (new menu-bar% [parent this]))
-    (add-file-menu mb this)
-    (show #t)
+      (let ([progress (new loading-frame%
+                           [dir dir])])
+        (let ([row (new horizontal-pane%
+                        [parent this]
+                        [stretchable-height #f]
+                        [alignment '(left center)])])
+          (new message%
+               [parent row]
+               [label (path->string dir)])
+          (new button%
+               [parent row]
+               [label "Refresh"]
+               [callback (λ (b e) (refresh-directory))]))
+        (define e-c
+          (new editor-canvas%
+               [style '(transparent auto-hscroll auto-vscroll)]
+               [parent this]))
+        (define ed
+          (new text%))
+        (send e-c set-editor ed)
+        (define file-snips
+          (let ([pths (for/list ([pth (in-directory dir)]
+                                 #:when (xml-path? pth))
+                        pth)])
+            (send progress set-range (length pths))
+            (define dir-valid?
+              (directory-validate-xml #:quiet? #t
+                                      dir))
+            (for/list ([pth (in-list pths)])
+              (begin0 (new file-snip%
+                           [pth pth]
+                           [dir dir]
+                           [dir-valid? dir-valid?]
+                           [dir-frame this])
+                      (send progress ++)))))
+        (for ([snip (in-list (sort file-snips
+                                   file-snip-more-urgent?))])
+          (send ed insert snip))
+        (let loop ([wait 1])
+          (cond
+            [(send ed locked-for-flow?)
+             (unless [wait . > . 5]
+               (sleep wait)
+               (loop (add1 wait)))]
+            [else
+             (send ed scroll-to-position 0)]))
+        (send ed lock #t)
+        (send ed hide-caret #t)
+        (define mb (new menu-bar% [parent this]))
+        (add-file-menu mb this)
+        (send progress show #f)
+        (show #t)
+        file-snips))
     (define/public (refresh-directory)
       (show #f)
       (map (λ (w) (send w revoke))
            file-snips)
       (new this% [dir dir]))))
-
 
 ;                                  
 ;                                  
@@ -222,12 +273,14 @@
     (init-field dir
                 pth
                 dir-frame
+                [dir-valid? #f]
                 [val
                  (let ([xmllint-out (open-output-string)])
                    (cond
-                     [(not (parameterize ([current-output-port xmllint-out]
-                                          [current-error-port xmllint-out])
-                             (valid-xml-file? #:quiet? #f pth)))
+                     [(not (or dir-valid?
+                               (parameterize ([current-output-port xmllint-out]
+                                              [current-error-port xmllint-out])
+                                 (valid-xml-file? #:quiet? #f pth))))
                       (xmllint-error (get-output-string xmllint-out))]
                      [else
                       (with-handlers ([exn:fail? values])
