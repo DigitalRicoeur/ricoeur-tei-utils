@@ -90,7 +90,7 @@ particularly the concept of x-expressions
                use the same database at the same time.}]
  }
  @defmethod[#:mode public-final (•term-search [term term/c]
-                                              [#:ricoeur-only ricoeur-only any/c #t])
+                                              [#:ricoeur-only? ricoeur-only any/c #t])
             (listof (is-a?/c document-search-results<%>))]{
   Used to implement @racket[term-search].
  }
@@ -121,7 +121,7 @@ particularly the concept of x-expressions
   including recursive subdirectories,
   that is recognized by @racket[xml-path?].
   If any such file is not a valid and well-formed TEI XML file
-  satisfying Digital Ricœur's specification, an error will occur.
+  satisfying Digital Ricœur's specification, it will be silently ignored.
 
   The @racket[search-backend] argument controls the @tech{search backend}
   as with @racket[corpus%].
@@ -137,7 +137,7 @@ particularly the concept of x-expressions
 @subsection{Search}
 
 @deftogether[
- (@defproc[(term-search [term term/c] [#:ricoeur-only ricoeur-only any/c #t])
+ (@defproc[(term-search [term term/c] [#:ricoeur-only? ricoeur-only any/c #t])
            (listof (is-a?/c document-search-results<%>))]
    @defthing[term/c flat-contract?
              #:value (and/c non-empty-string? (not/c #px"^\\s*$"))])]{
