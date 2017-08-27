@@ -62,6 +62,8 @@ breaks have been guessed using the method
 @(xmethod guess-paragraphs<%> guess-paragraphs).
 Run it with the flag @DFlag{help} or @Flag{h} for usage information.
 
+When @tt{xmllint} is available, the output will be prettyprinted.
+
 Please always check the output of this tool: it operates on
 a best-effort basis. If, for example, you notice that it has simply
 replaced each "annonymous block" with one long paragraph, it

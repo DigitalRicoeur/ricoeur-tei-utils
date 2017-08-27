@@ -245,7 +245,7 @@ particularly the concept of x-expressions
  A contract recognizing the names of valid Digital Ricœur TEI XML element.
 }
 
-@subsection{XML Validation}
+@subsection{@tt{xmllint}-based Operations}
 @defmodule[ricoeur/tei/xmllint
            #:no-declare]
 @(declare-exporting ricoeur/tei/xmllint
@@ -291,7 +291,24 @@ a warning is logged to @racket[(current-logger)].
  If @tt{xmllint} is not available, always returns @racket[#t].
 }
 
+@defproc[(call/prettyprint-xml-out [thunk (-> any/c)])
+         any/c]{
+ If @tt{xmllint} is not available, equivalent to @racket[(thunk)].
 
+ When @tt{xmllint} is available, @racket[thunk] is called in
+ a context where everything written to the @racket[current-output-port] is
+ piped through @tt{xmllint}'s prettyprint function before being written to
+ the original @racket[current-output-port].
+ When prettyprinting succeeds, the result of @racket[call/prettyprint-xml-out]
+ is the result of @racket[thunk].
+ If prettyprinting fails (perhaps because the output of @racket[thunk] was
+ not well-formed XML), @bold{@tt{xmllint} may still write to the
+  original @racket[current-output-port]}, but @racket[call/prettyprint-xml-out]
+ raises an exception rather than returning a value.
+ If @racket[thunk] raises an exception and @tt{xmllint} is available,
+ @tt{xmllint} is never invoked and nothing is written to the original
+ @racket[current-output-port].
+}
 
 
 

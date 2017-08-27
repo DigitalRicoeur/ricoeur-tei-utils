@@ -3,6 +3,7 @@
 (require xml 
          ricoeur/tei/interfaces
          (submod ricoeur/tei/interfaces private)
+         ricoeur/tei/xmllint
          roman-numeral
          data/maybe
          (rename-in data/functor
@@ -102,11 +103,13 @@
     (define/override (get-page-breaks)
       (send text get-page-breaks))
     (define/public (write-TEI [out (current-output-port)])
-      (displayln @string-append{
+      (parameterize ([current-output-port out])
+        (call/prettyprint-xml-out
+         (λ () 
+           (displayln @string-append{
  <?xml version="1.0" encoding="utf-8"?>
- <!DOCTYPE TEI SYSTEM "DR-TEI.dtd">}
-                 out)
-      (write-xexpr (to-xexpr)))))
+ <!DOCTYPE TEI SYSTEM "DR-TEI.dtd">})
+           (write-xexpr (to-xexpr))))))))
     
 (define teiHeader%
   (class* (TEI-info-mixin (elements-only-mixin element%)) (teiHeader<%>)

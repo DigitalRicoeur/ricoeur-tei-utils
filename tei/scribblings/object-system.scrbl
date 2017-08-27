@@ -277,7 +277,8 @@ the others serve merely to identify elements convieniently.
 
  @defmethod[(write-TEI [out output-port? (current-output-port)])
             any]{
-  Writes the XML representation of @(this-obj) to @racket[out].
+  Writes the XML representation of @(this-obj) to @racket[out],
+  prettyprinted using @racket[call/prettyprint-xml-out].
 
   Use @(method TEI<%> write-TEI) rather than 
   @racket[(write-xexpr (send #,(this-obj) #,(method element<%> to-xexpr))
