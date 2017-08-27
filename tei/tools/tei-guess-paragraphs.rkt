@@ -23,10 +23,8 @@
      (with-output-to-file path
        #:exists 'replace
        (λ ()
-         (call/prettyprint-xml-out
-          (λ ()
-            (send (send obj guess-paragraphs #:mode mode)
-                  write-TEI))))))))
+         (send (send obj guess-paragraphs #:mode mode)
+               write-TEI))))))
 
 
      
