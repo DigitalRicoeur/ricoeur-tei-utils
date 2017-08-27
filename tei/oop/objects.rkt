@@ -1,9 +1,9 @@
 #lang racket
 
 (require (except-in xml element?)
-         ricoeur/tei/tei-xexpr-contracts
-         ricoeur/tei/interfaces
-         ricoeur/tei/classes
+         ricoeur/tei/xexpr/tei-xexpr-contracts
+         ricoeur/tei/oop/interfaces
+         ricoeur/tei/oop/classes
          data/maybe
          data/order
          gregor

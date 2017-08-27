@@ -1,8 +1,8 @@
 #lang at-exp racket
 
 (require xml 
-         ricoeur/tei/interfaces
-         (submod ricoeur/tei/interfaces private)
+         ricoeur/tei/oop/interfaces
+         (submod ricoeur/tei/oop/interfaces private)
          ricoeur/tei/xmllint
          roman-numeral
          data/maybe

@@ -37,7 +37,7 @@
                          "convert TEI XML file to plain text"
                          #f)))
 (define gracket-launcher-names (list "TEI Lint"))
-(define gracket-launcher-libraries (list "tei/tei-lint/tei-lint.rkt"))
+(define gracket-launcher-libraries (list "tei/tools/tei-lint/tei-lint.rkt"))
 (define racket-launcher-names
   (list "tei-guess-paragraphs"
         "encode-xml-entities"))
