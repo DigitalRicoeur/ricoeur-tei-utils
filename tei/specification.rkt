@@ -189,8 +189,10 @@ The @deftag{sourceDesc} element must contain exactly one
 @tag{bibl} element.
 
 The @deftag{bibl} element contains free-form text and
-zero or one @tag{date} elements, which should be
-included unless the date of publication is unknown.
+one or two @tag{date} elements: either one with
+a @attr{subtype} attribute of @racket["thisIsOriginal"]
+or one with a @attr{subtype} attribute of @racket["this"]
+and one with a @attr{subtype} attribute of @racket["original"].
 
 The @deftag{date} element contains free-form text
 representing the human-readable publication date.
@@ -211,14 +213,16 @@ and day, if present, must allways be two digits
          (make-element-contract
           'bibl
           #:text? #t
-          #:children '([0-1 date])))
+          #:children '([1+ date]))) ;extra check
 
        (define date/c
          (make-element-contract
           'date
           #:text? #t
-          #:attr-contracts `([when #px"^(\\d\\d\\d\\d)(-\\d\\d)?(-\\d\\d)?$"])
-          #:required-attrs '(when)))]
+          #:attr-contracts `([when #px"^(\\d\\d\\d\\d)(-\\d\\d)?(-\\d\\d)?$"]
+                             [type "publication"]
+                             [subtype ,(or/c "this" "original" "thisIsOriginal")])
+          #:required-attrs '(when type subtype)))]
 
 @section{The text Element}
 
