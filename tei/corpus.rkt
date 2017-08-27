@@ -87,16 +87,19 @@
     (define/public-final (get-path)
       path)
     (super-new [docs
-                (for*/list ([pth (in-directory path)]
-                            #:when (xml-path? pth)
-                            #:when (valid-xml-file? #:quiet? #t pth)
-                            [maybe-doc (in-value
-                                        (with-handlers
-                                            ([exn:fail? (λ (e) #f)])
-                                          (call-with-input-file pth
-                                            read-TEI)))]
-                            #:when maybe-doc)
-                  maybe-doc)])))
+                (let ([dir-valid? (directory-validate-xml #:quiet? #t
+                                                          path)])
+                  (for*/list ([pth (in-directory path)]
+                              #:when (xml-path? pth)
+                              #:when (or dir-valid?
+                                         (valid-xml-file? #:quiet? #t pth))
+                              [maybe-doc (in-value
+                                          (with-handlers
+                                              ([exn:fail? (λ (e) #f)])
+                                            (call-with-input-file pth
+                                              read-TEI)))]
+                              #:when maybe-doc)
+                    maybe-doc))])))
 
 
 

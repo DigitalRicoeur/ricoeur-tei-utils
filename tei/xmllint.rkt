@@ -6,8 +6,7 @@
          racket/contract
          )
 
-(provide directory-validate-xml
-         xmllint-available?
+(provide xmllint-available?
          (contract-out
           [xml-path?
            (-> path-string? any)]
@@ -15,6 +14,10 @@
            (->* {path-string?}
                 {#:quiet? any/c}
                 #:rest (listof path-string?)
+                boolean?)]
+          [directory-validate-xml
+           (->* {(and/c path-string? directory-exists?)}
+                {#:quiet? any/c}
                 boolean?)]
           [call/prettyprint-xml-out
            (-> (-> any/c) any/c)]
@@ -45,11 +48,8 @@
                "--noout"
                l-pths))))
 
-(define/contract (directory-validate-xml dir
-                                         #:quiet? [quiet? #f])
-  (->* {(and/c path-string? directory-exists?)}
-       {#:quiet? any/c}
-       boolean?)
+(define (directory-validate-xml dir
+                                #:quiet? [quiet? #f])
   (define pths
     (for/list ([pth (in-directory dir)]
                #:when (xml-path? pth))
