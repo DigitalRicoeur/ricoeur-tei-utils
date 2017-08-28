@@ -183,7 +183,7 @@
     (inherit get-attributes)
     (define promise:id
       (delay
-        (let ([v (dict-ref (get-attributes) 'id #f)])
+        (let ([v (dict-ref (get-attributes) 'xml:id #f)])
           (and v (string->symbol (car v))))))
     (define/public (get-id-or-false)
       (force promise:id))))
