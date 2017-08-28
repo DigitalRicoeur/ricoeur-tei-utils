@@ -111,15 +111,20 @@
 (define (list-TEI-info)
   (send (current-corpus) •list-TEI-info))
 
+
 #|
-(module+ main
-  (require db)
+(require db)
+(define rslts
   (parameterize ([current-corpus (new directory-corpus%
                                       [path "/Users/philip/code/ricoeur/texts/TEI"]
                                       [search-backend (postgresql-data-source
                                                        #:user "ricoeur"
                                                        #:database "term-search")])])
-    (term-search "utopia")
-    ;(list-TEI-info)
-    ))
-|#
+    (term-search "utopia" #:ricoeur-only? #f)))
+(for*/list ([dsr (in-list rslts)]
+            [sr (in-list (document-search-results-results dsr))]
+            [resp (in-value (search-result-author-string sr))]
+            #:unless (regexp-match? #rx"^Paul Ric" resp))
+  resp)
+|#  
+
