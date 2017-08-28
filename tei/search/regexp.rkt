@@ -59,17 +59,6 @@
           (new searchable-segment%
                [pre pre]))]))
 
-(define TEI-info-mixin 
-  (mixin () (TEI-info<%>)
-    (super-new)
-    (abstract get-TEI-info)
-    (public*
-     [get-title (λ () (send (get-TEI-info) get-title))]
-     [get-publication-date (λ () (send (get-TEI-info) get-publication-date))]
-     [get-citation (λ () (send (get-TEI-info) get-citation))])))
-
-
-
 ;                                                                                  
 ;                                                                                  
 ;                                                                                  

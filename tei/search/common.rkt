@@ -49,6 +49,7 @@
   (provide EXCERPT_RATIO
            abstract-searchable-document-set%
            pre-segment-meta/c
+           TEI-info-mixin
            (contract-out
             [document-search-results%
              (class/c (init [info (is-a?/c TEI-info<%>)]
