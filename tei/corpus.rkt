@@ -30,10 +30,6 @@
            (-> (listof (is-a?/c TEI-info<%>)))]
           ))
 
-(define-custom-hash-types string-ci-dict
-  #:key? string?
-  string-ci=?)
-
 (define/contract corpus%
   ;TODO: enforce unique titles
   (class/c (init [docs (listof (is-a?/c TEI<%>))]
@@ -59,18 +55,11 @@
          (regexp-searchable-document-set docs)]))
     (define/public-final (•list-TEI-info)
       headers)
-    (define search-cache
-      (make-mutable-string-ci-dict))
     (define/public-final (•term-search raw-term #:ricoeur-only? [ricoeur-only? #t])
       (define term
         (string-normalize-spaces raw-term))
-      (dict-ref search-cache
-                term
-                (λ ()
-                  (let ([rslts (search-documents term searchable-document-set
-                                                 #:ricoeur-only? ricoeur-only?)])
-                    (dict-set! search-cache term rslts)
-                    rslts))))
+      (search-documents term searchable-document-set
+                        #:ricoeur-only? ricoeur-only?))
     #|END class corpus%|#))
 
 (define empty-corpus
