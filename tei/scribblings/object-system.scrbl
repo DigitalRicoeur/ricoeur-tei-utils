@@ -251,6 +251,12 @@ implemented by broad categories of TEI elements.
  @defmethod[(get-citation) string?]{
   Returns the human-readable citation for the work
  }
+ @defmethod[(get-resp-string [resp symbol?])
+            string?]{
+  Returns a string naming the author or editor whose @tt{id}
+  attribute is the string form or @racket[resp], raising
+  an exception if none exists.
+ }
 }
 
 

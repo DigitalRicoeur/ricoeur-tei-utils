@@ -4,7 +4,7 @@
 
 @(require racket/runtime-path
           racket/list
-          (submod ricoeur/tei/specification doc)
+          (submod ricoeur/tei/xexpr/specification doc)
           (for-syntax racket/base
                       syntax/parse
                       adjutor
@@ -440,6 +440,6 @@ Example:
 
 
 
-@include-section[(submod ricoeur/tei/specification doc)]
+@include-section[(submod ricoeur/tei/xexpr/specification doc)]
 @include-section["tools.scrbl"]
 

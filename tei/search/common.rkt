@@ -33,6 +33,8 @@
            (-> search-result? search-result? any/c)]
           [search-result>?
            (-> search-result? search-result? any/c)]
+          [search-result-author-string
+           (-> search-result? string?)]
           [search-result-excerpt
            (-> search-result? (maybe/c string?))]
           [search-result-page
@@ -274,6 +276,8 @@
       [info :info]
       [results :results]
       [count (length results)])
+    (for ([rslt (in-list results)])
+      (send rslt initialize-search-result this))
     (define/override-final (get-TEI-info)
       info)
     (define/public-final (get-results)
@@ -323,6 +327,8 @@
 
 (define-member-name nullify-excerpt (generate-member-key))
 
+(define-member-name initialize-search-result (generate-member-key))
+
 (define search-result%
   (class object%
     (super-new)
@@ -351,7 +357,16 @@
                          [promise:location-stack
                           (delay (jsexpr->location-stack
                                   (hash-ref meta 'location-stack)))]
+                         [resp-string-field #f]
                          )
+    (define/public (initialize-search-result info)
+      (set! resp-string-field
+            (delay (let ([ptr (hash-ref meta 'resp)])
+                     (if (equal? ptr "#ricoeur")
+                         "Paul Ricœur"
+                         (send info
+                               get-resp-string
+                               (string->symbol (substring ptr 1))))))))
     (define/public (nullify-excerpt)
       (new this%
            [counter counter]
@@ -360,7 +375,11 @@
            [meta meta]
            [promise:page promise:page]
            [promise:location-stack promise:location-stack]
+           [resp-string-field resp-string-field]
            ))
+    (define/public-final (get-author-string)
+      (or (force resp-string-field)
+          (error 'get-author-string "used before initialization")))
     (define/public-final (get-counter)
       counter)
     (define/public-final (get-sub-counter)
@@ -393,6 +412,9 @@
 (define (search-result-location-stack sr)
   (send sr get-location-stack))
 
+(define (search-result-author-string sr)
+  (send sr get-author-string))
+
 (define search-result?
   (is-a?/c search-result%))
 
@@ -418,6 +440,7 @@
   (syntax-parser
     [(_ (~or (~optional (~seq #:excerpt excerpt))
              (~optional (~seq #:location-stack loc))
+             (~optional (~seq #:author resp))
              (~optional (~seq #:page page)))
         ...)
      #`(? search-result?
@@ -425,6 +448,8 @@
                     (list #`(app search-result-excerpt excerpt)))
                #,@(list-when (attribute loc)
                     (list #`(app search-result-location-stack loc)))
+               #,@(list-when (attribute resp)
+                    (list #`(app search-result-author-string resp)))
                #,@(list-when (attribute page)
                     (list #`(app search-result-page page)))))]))
 

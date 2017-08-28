@@ -48,12 +48,17 @@
 (define (concrete-element%)
   (class element% (super-new)))
 
+(define get-title?
+  (is-a?/c get-title<%>))
+
 (define get-title-mixin
   (mixin {element<%>} {get-title<%>}
     (super-new)
     (inherit get-body)
     (define target
-      (findf (is-a?/c get-title<%>) (get-body)))
+      (findf get-title? (get-body)))
+    (define/public (get-resp-string resp)
+      (send target get-resp-string resp))
     (define/public (get-title)
       (send target get-title))))
 
@@ -136,6 +141,15 @@
 ;                                                                          
 ;                                                                          
 
+(define can-have-id?
+  (is-a?/c can-have-id<%>))
+
+(define title%
+  (concrete-element%))
+
+(define title?
+  (is-a?/c title%))
+
 (define titleStmt%
   (class* (elements-only-mixin element%) (get-title<%>)
     (super-new)
@@ -143,21 +157,44 @@
     (define promise:title
       (delay
         (string-join (for/list ([t (in-list (get-body))]
-                                #:when ((is-a?/c title%) t))
+                                #:when (title? t))
                        (string-normalize-spaces
                         (string-trim (send t to-plain-text))))
                      ": ")))
+    (define promise:resp-table
+      (delay (for*/hasheq ([child (in-list (get-body))]
+                           #:when (can-have-id? child)
+                           [id (in-value (send child get-id-or-false))]
+                           #:when id)
+               (values id
+                       (string-normalize-spaces
+                        (string-trim (send child to-plain-text)))))))
+    (define/public (get-resp-string resp)
+      (or (hash-ref (force promise:resp-table) resp #f)
+          (raise-arguments-error 'get-resp-string
+                                 "given resp symbol not found"
+                                 "given" resp)))
     (define/public (get-title)
       (force promise:title))))
 
-(define title%
-  (concrete-element%))
+(define can-have-id-mixin
+  (mixin {element<%>} {can-have-id<%>}
+    (super-new)
+    (inherit get-attributes)
+    (define promise:id
+      (delay
+        (let ([v (dict-ref (get-attributes) 'id #f)])
+          (and v (string->symbol (car v))))))
+    (define/public (get-id-or-false)
+      (force promise:id))))
 
 (define author%
-  (concrete-element%))
+  (class (can-have-id-mixin element%)
+    (super-new)))
 
 (define editor%
-  (concrete-element%))
+  (class (can-have-id-mixin element%)
+    (super-new)))
 
 ;                                                                                          
 ;                                                                                          

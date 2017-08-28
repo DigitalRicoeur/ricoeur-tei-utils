@@ -187,6 +187,7 @@ The bindings documented in this section are provided by
             #:grammar ([kw-pat
                         (code:line #:excerpt excerpt-pat)
                         (code:line #:location-stack loc-pat)
+                        (code:line #:author author-pat)
                         (code:line #:page page-pat)])]
    @defproc[(search-result-excerpt [v search-result?])
             (maybe/c string?)]
@@ -195,6 +196,8 @@ The bindings documented in this section are provided by
                   (list/c (maybe/c string?) (maybe/c string?)))]
    @defproc[(search-result-location-stack [v search-result?])
             location-stack/c]
+   @defproc[(search-result-author-string [v search-result?])
+            string?]
    @defproc[(search-result<? [a search-result?] [b search-result?])
             any/c]
    @defproc[(search-result>? [a search-result?] [b search-result?])
@@ -479,6 +482,11 @@ of @tech{searchable document sets} to support new @tech{search backends}.
  @tech{search result} values for the same query that are drawn from the same
  @racket[pre-segment]: it is used to implement fuctions like
  @racket[search-result<?].
+
+ @bold{Note} that using @racket[search-result-author-string] on a
+ @tech{search result} value that has not yet been passed to
+ the @racket[document-search-results%] constructor will raise
+ an exception.
 }
 
 @defproc[(nullify-search-result-excerpt [s-r search-result?])

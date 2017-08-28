@@ -28,6 +28,7 @@
 (module+ private
   (provide element%
            elements-only-mixin
+           can-have-id<%>
            get-title<%>
            get-publication-date<%>
            get-citation<%>
@@ -198,9 +199,14 @@
 ;                                  
 ;                                  
 
+(define can-have-id<%>
+  (interface ()
+    [get-id-or-false (->m (or/c symbol? #f))]))
+
 (define get-title<%>
   (interface ()
-    [get-title (->m string?)]))
+    [get-title (->m string?)]
+    [get-resp-string (->m symbol? string?)]))
 
 (define get-publication-date<%>
   (interface ()
