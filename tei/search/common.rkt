@@ -255,6 +255,7 @@
     (super-new)
     (abstract get-TEI-info)
     (public*
+     [get-resp-string (λ (resp) (send (get-TEI-info) get-resp-string resp))]
      [get-title (λ () (send (get-TEI-info) get-title))]
      [get-publication-date (λ () (send (get-TEI-info) get-publication-date))]
      [get-citation (λ () (send (get-TEI-info) get-citation))])))
