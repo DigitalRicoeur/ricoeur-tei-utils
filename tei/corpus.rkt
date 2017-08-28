@@ -47,18 +47,19 @@
                      ([doc (in-list docs)])
       (values (cons (send doc get-teiHeader)
                     headers)))
-    (define searchable-document-set
-      (cond
-        [search-backend
-         (postgresql-searchable-document-set docs #:db search-backend)]
-        [else
-         (regexp-searchable-document-set docs)]))
+    (define pr:searchable-document-set
+      (delay/thread/eager-errors
+       (cond
+         [search-backend
+          (postgresql-searchable-document-set docs #:db search-backend)]
+         [else
+          (regexp-searchable-document-set docs)])))
     (define/public-final (•list-TEI-info)
       headers)
     (define/public-final (•term-search raw-term #:ricoeur-only? [ricoeur-only? #t])
       (define term
         (string-normalize-spaces raw-term))
-      (search-documents term searchable-document-set
+      (search-documents term (force pr:searchable-document-set)
                         #:ricoeur-only? ricoeur-only?))
     #|END class corpus%|#))
 
