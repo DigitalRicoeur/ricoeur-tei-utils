@@ -10,6 +10,10 @@
                      adjutor
                      ))
 
+(module+ test
+  (require rackunit
+           (submod "..")))
+
 (provide term/c
          searchable-document-set?
          document-search-results<%>
@@ -21,7 +25,8 @@
          (contract-out
           [search-documents
            (->* {term/c searchable-document-set?}
-                {#:ricoeur-only? any/c}
+                (#:ricoeur-only? any/c
+                 #:exact? any/c)
                 (listof (is-a?/c document-search-results<%>)))]
           [document-search-results-title
            (-> (is-a?/c document-search-results<%>)
@@ -36,7 +41,7 @@
           [search-result-author-string
            (-> search-result? string?)]
           [search-result-excerpt
-           (-> search-result? (maybe/c string?))]
+           (-> search-result? (maybe/c non-empty-string?))]
           [search-result-page
            (-> search-result?
                (or/c (maybe/c string?)
@@ -67,7 +72,7 @@
              (-> #:counter natural-number/c
                  #:sub-counter natural-number/c
                  #:meta pre-segment-meta/c
-                 #:excerpt (maybe/c string?)
+                 #:excerpt (maybe/c non-empty-string?)
                  search-result?)]
             [nullify-search-result-excerpt
              (-> search-result? search-result?)])
@@ -459,7 +464,8 @@
   (class* object% [(interface ()
                      [do-search-documents
                       (->*m {term/c}
-                            {#:ricoeur-only? any/c}
+                            (#:ricoeur-only? any/c
+                             #:exact? any/c)
                             (listof (is-a?/c document-search-results<%>)))])]
     (super-new)
     (abstract do-search-documents)))
@@ -467,8 +473,14 @@
 (define searchable-document-set?
   (is-a?/c abstract-searchable-document-set%))
 
-(define (search-documents term sds #:ricoeur-only? [ricoeur-only? #t])
-  (send sds do-search-documents term #:ricoeur-only? ricoeur-only?))
+(define (search-documents term
+                          sds
+                          #:ricoeur-only? [ricoeur-only? #t]
+                          #:exact? [exact? #f])
+  (send sds do-search-documents
+        term
+        #:ricoeur-only? ricoeur-only?
+        #:exact? exact?))
 
 
 
