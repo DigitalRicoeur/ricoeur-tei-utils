@@ -10,6 +10,10 @@
          (submod "common.rkt" private)
          )
 
+(module+ test
+  (require rackunit
+           (submod "..")))
+
 (provide (contract-out
           [postgresql-searchable-document-set
            (->* {#:db postgresql-data-source/c} 
@@ -45,20 +49,29 @@ query-exec: wrong number of parameters for query
   given: 85030
 |#
       (insert-pre-segments db segs))
-    (define/override-final (do-search-documents term #:ricoeur-only? [ricoeur-only? #t])
-      (for/list ([{title l-vecs}
+    (define/override-final (do-search-documents term
+                                                #:ricoeur-only? [ricoeur-only? #t]
+                                                #:exact? [exact? #f])
+      (define maybe-exact-regexp
+        (and exact?
+             (regexp (regexp-quote term #f))))
+      (for*/list ([{title l-vecs}
                   (in-query db
                             (if ricoeur-only?
                                 select-statement:ricoeur-only
                                 select-statement:all)
                             term
-                            #:group #("segdocumenttitle"))])
+                            #:group #("segdocumenttitle"))]
+                 [raw-results (in-value
+                               (vecs->search-results l-vecs
+                                                     maybe-exact-regexp))]
+                 #:unless (null? raw-results))
         (match-define (cons info excerpt-max-allow-chars)
           (hash-ref hsh:title->teiHeader+excerpt-max-allow-chars title))
         (new document-search-results%
              [info info]
              [results
-              (let loop ([to-go (sort (vecs->search-results l-vecs)
+              (let loop ([to-go (sort raw-results
                                       search-result<?)]
                          [chars-so-far 0])
                 (match to-go
@@ -72,7 +85,7 @@ query-exec: wrong number of parameters for query
                       (map nullify-search-result-excerpt to-go)]
                      [else
                       (cons this (loop more chars-with-this))])]))])))
-    (define/private (vecs->search-results l-vecs)
+    (define/private (vecs->search-results l-vecs maybe-exact-regexp)
       (flatten
        (for/list ([vec (in-list l-vecs)])
          (match-define (vector counter meta ts_headline)
@@ -80,7 +93,10 @@ query-exec: wrong number of parameters for query
          (for/list ([excerpt (in-list (regexp-split rx:FragmentDelimiter
                                                     ts_headline))]
                     [sub-counter (in-naturals)]
-                    #:when (non-empty-string? excerpt))
+                    #:when (non-empty-string? excerpt)
+                    #:when (or (not maybe-exact-regexp)
+                               (regexp-match? maybe-exact-regexp
+                                              excerpt)))
            (make-search-result #:counter counter
                                #:sub-counter sub-counter
                                #:meta meta

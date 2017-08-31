@@ -16,6 +16,10 @@
                      adjutor
                      ))
 
+(module+ test
+  (require rackunit
+           (submod "..")))
+
 (provide (contract-out
           [regexp-searchable-document-set
            (->* {}
@@ -24,7 +28,7 @@
           ))
 
 (define/contract (term->excerpt-pregexp term)
-  (-> term/c pregexp?)
+  (-> term/c any) ; an invalid term could have security implications
   (pregexp
    (string-append "(?:^|\\s).{,80}"
                   (regexp-quote (string-normalize-spaces term) #f)
@@ -41,7 +45,9 @@
     (init [docs '()])
     (define searchable
       (map prepare-searchable-document docs))
-    (define/override-final (do-search-documents term #:ricoeur-only? [ricoeur-only? #t])
+    (define/override-final (do-search-documents term
+                                                #:ricoeur-only? [ricoeur-only? #t]
+                                                #:exact? [exact? #f])
       (let ([term-len (string-length term)]
             [excerpt-px (term->excerpt-pregexp term)])
         (map (λ (doc) (send doc do-term-search term-len excerpt-px ricoeur-only?))
@@ -140,7 +146,6 @@
         [else
          (define-values {ok to-nullify}
            (split-at raw-results max-exerpts))
-         ;(displayln (cons (length raw-results) (length to-nullify)))
          (append ok
                  (for/list ([raw (in-list to-nullify)])
                    (nullify-search-result-excerpt raw)))]))

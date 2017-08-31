@@ -6,6 +6,9 @@
          adjutor
          )
 
+(module+ test
+  (require rackunit))
+
 (provide postgresql-data-source/c
          empty-corpus
          (except-out (all-from-out ricoeur/tei/search)
@@ -24,7 +27,8 @@
            (parameter/c (is-a?/c corpus%))]
           [term-search
            (->* {term/c}
-                {#:ricoeur-only? any/c}
+                {#:ricoeur-only? any/c
+                 #:exact? any/c}
                 (listof (is-a?/c document-search-results<%>)))]
           [list-TEI-info
            (-> (listof (is-a?/c TEI-info<%>)))]
@@ -38,7 +42,8 @@
                      [•list-TEI-info (->m (listof (is-a?/c TEI-info<%>)))]
                      [•term-search
                       (->*m {term/c}
-                            {#:ricoeur-only? any/c}
+                            {#:ricoeur-only? any/c
+                             #:exact? any/c}
                             (listof (is-a?/c document-search-results<%>)))])]
     (super-new)
     (init [docs '()]
@@ -56,10 +61,13 @@
           (regexp-searchable-document-set docs)])))
     (define/public-final (•list-TEI-info)
       headers)
-    (define/public-final (•term-search raw-term #:ricoeur-only? [ricoeur-only? #t])
+    (define/public-final (•term-search raw-term
+                                       #:ricoeur-only? [ricoeur-only? #t]
+                                       #:exact? [exact? #f])
       (define term
         (string-normalize-spaces raw-term))
       (search-documents term (force pr:searchable-document-set)
+                        #:exact? exact?
                         #:ricoeur-only? ricoeur-only?))
     #|END class corpus%|#))
 
@@ -95,8 +103,14 @@
 
 
 
-(define (term-search term #:ricoeur-only? [ricoeur-only? #t])
-  (send (current-corpus) •term-search term #:ricoeur-only? ricoeur-only?))
+(define (term-search term
+                     #:ricoeur-only? [ricoeur-only? #t]
+                     #:exact? [exact? #f])
+  (send (current-corpus)
+        •term-search
+        term
+        #:ricoeur-only? ricoeur-only?
+        #:exact? exact?))
 
 (define (list-TEI-info)
   (send (current-corpus) •list-TEI-info))
@@ -110,11 +124,11 @@
                                       [search-backend (postgresql-data-source
                                                        #:user "ricoeur"
                                                        #:database "term-search")])])
-    (term-search "utopia" #:ricoeur-only? #f)))
+    (term-search "utopia" #:ricoeur-only? #f #:exact? #t)))
 (for*/list ([dsr (in-list rslts)]
             [sr (in-list (document-search-results-results dsr))]
             [resp (in-value (search-result-author-string sr))]
             #:unless (regexp-match? #rx"^Paul Ric" resp))
   resp)
-|#  
+|#
 

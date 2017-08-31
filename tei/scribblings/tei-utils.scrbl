@@ -94,6 +94,7 @@ The bindings documented in this section are provided by
                use the same database at the same time.}]
  }
  @defmethod[#:mode public-final (•term-search [term term/c]
+                                              [#:exact? exact? any/c #f]
                                               [#:ricoeur-only? ricoeur-only any/c #t])
             (listof (is-a?/c document-search-results<%>))]{
   Used to implement @racket[term-search].
@@ -141,12 +142,22 @@ The bindings documented in this section are provided by
 @subsection{Search}
 
 @deftogether[
- (@defproc[(term-search [term term/c] [#:ricoeur-only? ricoeur-only any/c #t])
+ (@defproc[(term-search [term term/c]
+                        [#:ricoeur-only? ricoeur-only any/c #t]
+                        [#:exact? exact? any/c #f])
            (listof (is-a?/c document-search-results<%>))]
    @defthing[term/c flat-contract?
              #:value (and/c non-empty-string? (not/c #px"^\\s*$"))])]{
  Searches the @tech{corpus} object determined by @racket[current-corpus]
  for @racket[term]
+
+ When @racket[ricoeur-only?] is non-false, @racket[term-search]
+ omits results from passages not by Paul Ricœur.
+ When @racket[exact?] is non-false, only matches containing @racket[term]
+ exactly (but in a case-insensitive manner that normalizes whitespace)
+ are returned. Otherwise (and by default), the @tech{search backend}
+ attempts to match lexical variants of the given @racket[term],
+ though the details of this behavior are backend-specific and unspecified.
 }
 
 @definterface[document-search-results<%> (TEI-info<%>)]{
@@ -190,7 +201,7 @@ The bindings documented in this section are provided by
                         (code:line #:author author-pat)
                         (code:line #:page page-pat)])]
    @defproc[(search-result-excerpt [v search-result?])
-            (maybe/c string?)]
+            (maybe/c non-empty-string?)]
    @defproc[(search-result-page [v search-result?])
             (or/c (maybe/c string?)
                   (list/c (maybe/c string?) (maybe/c string?)))]
@@ -436,6 +447,7 @@ ultimately @racket[term-search].
 
 @defproc[(search-documents [term term/c]
                            [docs searchable-document-set?]
+                           [#:exact? exact? any/c #f]
                            [#:ricoeur-only? ricoeur-only? any/c #t])
          (listof (is-a?/c document-search-results<%>))]{
  Used to implement @racket[term-search].
@@ -473,7 +485,7 @@ of @tech{searchable document sets} to support new @tech{search backends}.
 @defproc[(make-search-result [#:counter counter natural-number/c]
                              [#:sub-counter sub-counter natural-number/c]
                              [#:meta meta pre-segment-meta/c]
-                             [#:excerpt excerpt (maybe/c string?)])
+                             [#:excerpt excerpt (maybe/c non-empty-string?)])
          search-result?]{
  Constructs a @tech{search result} value. The @racket[counter] and
  @racket[meta] arguments should be drawn from the fields of the corresponding
@@ -568,7 +580,9 @@ of @tech{searchable document sets} to support new @tech{search backends}.
   at least some @racket[TEI<%>] objects, and perhaps other
   backend-specific arguments.
  }
- @defmethod[(do-search-documents [term term/c] [#:ricoeur-only? ricoeur-only? any/c #t])
+ @defmethod[(do-search-documents [term term/c]
+                                 [#:ricoeur-only? ricoeur-only? any/c #t]
+                                 [#:exact? exact? any/c #f])
             (listof (is-a?/c document-search-results<%>))]{
   Used to implement @racket[search-documents].
                     
