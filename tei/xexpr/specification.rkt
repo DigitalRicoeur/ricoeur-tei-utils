@@ -29,6 +29,7 @@ into a module as follows:
 @chunk[$*$
        (require racket/unit
                 racket/contract
+                racket/match
                 ricoeur/tei/xexpr/signatures)
 
        (provide element-contracts@)
@@ -213,7 +214,27 @@ and day, if present, must allways be two digits
          (make-element-contract
           'bibl
           #:text? #t
-          #:children '([1+ date]))) ;extra check
+          #:children '([1+ date])
+          #:extra-check
+          (λ (val maybe-blame neg-party)
+            (match (for/list ([c (in-list (get-body val))]
+                              #:when (and (list? c)
+                                          (eq? 'date (car c))))
+                     (cadr (assq 'subtype (get-attributes c))))
+              [(or (list-no-order "this" "original")
+                   (list "thisIsOriginal"))
+               #t]
+              [bad-subtypes
+               (and maybe-blame
+                    (raise-blame-error 
+                     maybe-blame #:missing-party neg-party
+                     val
+                     '("invalid combination of date element subtypes inside bibl element"
+                       expected: "'(\"this\" \"original\") '(\"original\" \"this\") or '(\"thisIsOriginal\")"
+                       given: "~e"
+                       "\n  bibl element...: ~e")
+                     bad-subtypes
+                     val))]))))
 
        (define date/c
          (make-element-contract
@@ -244,32 +265,27 @@ may contain @tag{head},
                        [0-1 back])
           #:required-order `(front body back)))
 
+       (define children:body+front+back
+         `([0+ head]
+           [0+ p]
+           [0+ pb]
+           [0+ ab]
+           [0+ div]))
+       
        (define body/c
          (make-element-contract
           'body
-          #:children `([0+ head]
-                       [0+ p]
-                       [0+ pb]
-                       [0+ ab]
-                       [0+ div])))
+          #:children children:body+front+back))
 
        (define front/c
          (make-element-contract
           'front
-          #:children `([0+ head]
-                       [0+ p]
-                       [0+ pb]
-                       [0+ ab]
-                       [0+ div])))
+          #:children children:body+front+back))
 
        (define back/c
          (make-element-contract
           'back
-          #:children `([0+ head]
-                       [0+ p]
-                       [0+ pb]
-                       [0+ ab]
-                       [0+ div])))]
+          #:children children:body+front+back))]
 
 @subsection{Structural Elements}
 
