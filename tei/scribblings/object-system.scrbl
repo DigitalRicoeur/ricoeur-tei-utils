@@ -40,8 +40,7 @@ which form a thin layer of abstraction over plain x-expressions.
    @defproc[(maybe-date>? [a (maybe/c date?)]
                           [b (maybe/c date?)])
             any/c])]{
- Comparison functions on optional date values, such as the
- results of @(xmethod TEI-info<%> get-publication-date).
+ Comparison functions on optional date values.
 }
 
 @section{General Interfaces}
@@ -245,8 +244,14 @@ implemented by broad categories of TEI elements.
  @defmethod[(get-title) string?]{
   Returns the title of the document, including subtitles.
  }
- @defmethod[(get-publication-date) (maybe/c date?)]{
-  Returns the publication date of the work, if available
+ @defmethod[(get-publication-date) date?]{
+  Returns the publication date of the specific version of the work
+  on which the TEI document is based.
+ }
+ @defmethod[(get-original-publication-date) date?]{
+  Returns the date when the work (as a whole) was first published,
+  which may or may not be the same as the result of
+  @(method TEI-info<%> get-publication-date).
  }
  @defmethod[(get-citation) string?]{
   Returns the human-readable citation for the work

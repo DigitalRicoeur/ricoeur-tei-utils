@@ -192,17 +192,22 @@ The @deftag{sourceDesc} element must contain exactly one
 The @deftag{bibl} element contains free-form text and
 one or two @tag{date} elements: either one with
 a @attr{subtype} attribute of @racket["thisIsOriginal"]
-or one with a @attr{subtype} attribute of @racket["this"]
+or both one with a @attr{subtype} attribute of @racket["this"]
 and one with a @attr{subtype} attribute of @racket["original"].
 
 The @deftag{date} element contains free-form text
 representing the human-readable publication date.
-It must have a @attr{when} attribute giving the
-date in machine-readable format, which must be a subset of
-the format required by TEI: @tt{YYYY},
-@tt{YYYY-MM}, or @tt{YYYY-MM-DD}, where the month
-and day, if present, must allways be two digits
-(e.g. @tt{01} for January).
+It must have:
+@itemlist[
+ @item{a @attr{type} attribute with a value of @racket["publication"];}
+ @item{a @attr{subtype} attribute with a value of @racket["this"],
+  @racket["original"], or @racket["thisIsOriginal"]; and}
+ @item{a @attr{when} attribute giving the
+  date in machine-readable format, which must be a subset of
+  the format required by TEI: @racket["YYYY-MM-DD"], @racket["YYYY-MM"],
+  or @racket["YYYY"], where the month
+  and day, if present, must allways be two digits
+  (e.g. @tt{01} for January).}]
 
 @chunk[$source-description$
        (define sourceDesc/c

@@ -161,12 +161,31 @@ Whitespace (including indentation) is not significant.
  the digitized document was created — for example, as
  drawn from the "Books in English" spreadsheet in our Google Drive folder.
 
- The part of the citation that refers to the publication date should be
- wrapped in a @tag{date} element, which must have a @attr{when} attribute
- giving the date in a machine-readable format:
- either @racket["YYYY-MM-DD"], @racket["YYYY-MM"], or @racket["YYYY"].
- Note in particular that the month and day parts, when present, must always be two
- digits long.
+ The parts of the citation that refers to the publication date must be
+ wrapped in a @tag{date} element, which must have:
+ @itemlist[
+ @item{a @attr{type} attribute with a value of @racket["publication"];}
+ @item{a @attr{subtype} attribute with a value of @racket["this"],
+  @racket["original"], or @racket["thisIsOriginal"]; and}
+ @item{a @attr{when} attribute giving the
+  date in machine-readable format: @racket["YYYY-MM-DD"], @racket["YYYY-MM"],
+  or @racket["YYYY"], where the month
+  and day, if present, must allways be two digits
+  (e.g. @tt{01} for January).}]
+
+ The @(elemref "source-citation" @racketvarfont{source-citation})
+ must contain either one @tag{date} element with a @attr{subtype} of
+ @racket["thisIsOriginal"] or two @tag{date} elements,
+ one with a @attr{subtype} of @racket["this"]
+ and one with a @attr{subtype} of @racket["original"].
+ The @racket["this"] @tag{date} encodes the publication date of the
+ specific version from which the digitized document was created,
+ and the @racket["original"] @tag{date} encodes the date when the
+ work was first published. (For compilations of articles, both
+ dates refer to the collection as a whole.) The option of using
+ @racket["thisIsOriginal"] is provided for convienence in the case
+ that the specific version on which the digitized document is based
+ is the first published version.
 }
 
 @defkeyword["main-text"]{
