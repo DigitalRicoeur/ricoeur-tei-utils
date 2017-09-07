@@ -561,20 +561,25 @@
     (let ([row (new horizontal-pane%
                     [parent this]
                     [alignment '(left top)])]
-          [maybe-date (send val get-publication-date)])
+          [dt (send val get-publication-date)])
       (new message%
            [parent row]
            [font bold-system-font]
            [label "Publication Date:"])
-      (match maybe-date
-        [(just dt)
-         (new message%
+      (new message%
               [parent row]
-              [label (~t dt "y")])]
-        [_
-         (set! all-ok? #f)
-         (new missing-canvas%
-              [parent row])]))
+              [label (~t dt "y")]))
+    (let ([row (new horizontal-pane%
+                    [parent this]
+                    [alignment '(left top)])]
+          [dt (send val get-original-publication-date)])
+      (new message%
+           [parent row]
+           [font bold-system-font]
+           [label "Original Publication Date:"])
+      (new message%
+              [parent row]
+              [label (~t dt "y")]))
     ;; "ricoeur" xml:id ??
     (unless (member "ricoeur"
                     (se-path*/list `(author #:xml:id)
