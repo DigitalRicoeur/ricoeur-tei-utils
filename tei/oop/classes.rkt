@@ -62,17 +62,22 @@
     (define/public (get-title)
       (send target get-title))))
 
+(define get-citation?
+  (is-a?/c get-citation<%>))
+
 (define get-citation-mixin
   (mixin {element<%>} {get-citation<%>}
     (super-new)
     (inherit get-body)
     (define target
-      (findf (is-a?/c get-citation<%>) (get-body)))
+      (findf get-citation? (get-body)))
     (define/public (get-citation)
       (send target get-citation))
+    (define/public (get-original-publication-date)
+      (send target get-original-publication-date))
     (define/public (get-publication-date)
       (send target get-publication-date))))
-
+    
 (define (TEI-info-mixin %)
   (class* (get-title-mixin (get-citation-mixin %)) {TEI-info<%>}
     (super-new)))
@@ -252,23 +257,41 @@
     (inherit get-body)
     (define/public (get-citation)
       (string-normalize-spaces (to-plain-text)))
-    (define pr:maybe-date
-      (delay (from-just nothing
-                        (fmap (λ (d) (send d get-publication-date))
-                              (false->maybe (findf (is-a?/c date%) (get-body)))))))
+    (define pr:publication-date
+      (delay (for/first ([c (in-list (get-body))]
+                         #:when (date-obj? c)
+                         #:unless (equal? "original" (send c get-subtype)))
+               (send c get-when))))
+    (define pr:orig-date
+      (delay (or (for/first ([c (in-list (get-body))]
+                             #:when (date-obj? c)
+                             #:when (equal? "original" (send c get-subtype)))
+                   (send c get-when))
+                 (force pr:publication-date))))
     (define/public (get-publication-date)
-      (force pr:maybe-date))))
+      (force pr:publication-date))
+    (define/public (get-original-publication-date)
+      (force pr:orig-date))))
+
+(define-member-name get-subtype (generate-member-key))
+(define-member-name get-when (generate-member-key))
 
 (define date%
-  (class* element% {get-publication-date<%>}
+  (class element% 
     (super-new)
     (inherit get-attributes)
-    (define maybe-date
-      (fmap (compose1 iso8601->date car)
-            (false->maybe (dict-ref (get-attributes) 'when #f))))
-    (define/public (get-publication-date)
-      maybe-date)))
+    (match-define (list-no-order (list 'subtype subtype)
+                                 (list 'when (app iso8601->date
+                                                  when-attr))
+                                 _ ...)
+      (get-attributes))
+    (define/public-final (get-subtype)
+      subtype)
+    (define/public-final (get-when)
+      when-attr)))
 
+(define date-obj?
+  (is-a?/c date%))
 
 ;                                  
 ;                                  

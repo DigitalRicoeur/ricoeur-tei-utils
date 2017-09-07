@@ -21,6 +21,10 @@
     [tei-element-name/c flat-contract?]
     [tei-xexpr/c (-> tei-element-name/c flat-contract?)]
     [any-tei-xexpr/c flat-contract?]
+    [get-body (-> (and/c list? xexpr/c)
+                  (listof xexpr/c))]
+    [get-attributes (-> (and/c list? xexpr/c)
+                        (listof (list/c symbol? string?)))]
     [make-element-contract
      (->* {tei-element-name/c}
           {#:children (listof (list/c (or/c 1 '1+ '0-1 '0+)
@@ -28,7 +32,11 @@
            #:text? any/c
            #:required-order (listof tei-element-name/c)
            #:attr-contracts (listof (list/c symbol? flat-contract?))
-           #:required-attrs (listof symbol?)}
+           #:required-attrs (listof symbol?)
+           #:extra-check (or/c #f (-> (and/c list? xexpr/c)
+                                      (or/c blame? #f)
+                                      any/c
+                                      any/c))}
           flat-contract?)]
     )))
 
@@ -89,6 +97,7 @@
                                  #:children [children '()]
                                  #:text? [text? #f]
                                  #:required-order [required-order '()]
+                                 #:extra-check [extra-check #f]
                                  #:attr-contracts [attr-contracts '()]
                                  #:required-attrs [required-attrs '()])
     (new tei-element-contract%
@@ -96,6 +105,7 @@
          [children children]
          [text? text?]
          [required-order required-order]
+         [extra-check extra-check]
          [attr-contracts attr-contracts]
          [required-attrs required-attrs]))
 
@@ -184,12 +194,14 @@
             [(init:children children)]
             [(init:text? text?)]
             [(init:required-order required-order)]
+            [(init:maybe-extra-check extra-check)]
             [(init:attr-contracts attr-contracts)]
             [(init:required-attrs required-attrs)])
       (def
         [name init:name]
         [text? init:text?]
         [required-order init:required-order]
+        [maybe-extra-check init:maybe-extra-check]
         [required-attrs init:required-attrs])
       (define allowed-children
         (map cadr init:children))
@@ -239,7 +251,9 @@
                (let ([body (get-body val)])
                  (and (first-order:check-every-child val body)
                       (first-order:check-repetition-constraints val body)
-                      (first-order:check-order val body))))))
+                      (first-order:check-order val body)
+                      (or (not maybe-extra-check)
+                          (maybe-extra-check val #f #f)))))))
       ;   ;;;;             ;;                                            
       ;     ;;             ;;                                            
       ;     ;;      ;;   ;;;;;;;    ;;;           ;; ;      ;;;     ;;;;;
@@ -295,6 +309,9 @@
                                   val
                                   neg-party
                                   body)
+            ;extra check
+            (when maybe-extra-check
+              (maybe-extra-check val blame neg-party))
             ;success!
             val)))                                                                              
       ;           ;;                      ;;                       ;;      ;;                    

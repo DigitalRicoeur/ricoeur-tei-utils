@@ -210,7 +210,8 @@
 
 (define get-publication-date<%>
   (interface ()
-    [get-publication-date (->m (maybe/c date?))]))
+    [get-publication-date (->m date?)]
+    [get-original-publication-date (->m date?)]))
 
 (define get-citation<%>
   (interface (get-publication-date<%>)

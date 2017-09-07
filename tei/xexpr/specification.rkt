@@ -29,6 +29,7 @@ into a module as follows:
 @chunk[$*$
        (require racket/unit
                 racket/contract
+                racket/match
                 ricoeur/tei/xexpr/signatures)
 
        (provide element-contracts@)
@@ -189,17 +190,24 @@ The @deftag{sourceDesc} element must contain exactly one
 @tag{bibl} element.
 
 The @deftag{bibl} element contains free-form text and
-zero or one @tag{date} elements, which should be
-included unless the date of publication is unknown.
+one or two @tag{date} elements: either one with
+a @attr{subtype} attribute of @racket["thisIsOriginal"]
+or both one with a @attr{subtype} attribute of @racket["this"]
+and one with a @attr{subtype} attribute of @racket["original"].
 
 The @deftag{date} element contains free-form text
 representing the human-readable publication date.
-It must have a @attr{when} attribute giving the
-date in machine-readable format, which must be a subset of
-the format required by TEI: @tt{YYYY},
-@tt{YYYY-MM}, or @tt{YYYY-MM-DD}, where the month
-and day, if present, must allways be two digits
-(e.g. @tt{01} for January).
+It must have:
+@itemlist[
+ @item{a @attr{type} attribute with a value of @racket["publication"];}
+ @item{a @attr{subtype} attribute with a value of @racket["this"],
+  @racket["original"], or @racket["thisIsOriginal"]; and}
+ @item{a @attr{when} attribute giving the
+  date in machine-readable format, which must be a subset of
+  the format required by TEI: @racket["YYYY-MM-DD"], @racket["YYYY-MM"],
+  or @racket["YYYY"], where the month
+  and day, if present, must allways be two digits
+  (e.g. @tt{01} for January).}]
 
 @chunk[$source-description$
        (define sourceDesc/c
@@ -211,14 +219,36 @@ and day, if present, must allways be two digits
          (make-element-contract
           'bibl
           #:text? #t
-          #:children '([0-1 date])))
+          #:children '([1+ date])
+          #:extra-check
+          (λ (val maybe-blame neg-party)
+            (match (for/list ([c (in-list (get-body val))]
+                              #:when (and (list? c)
+                                          (eq? 'date (car c))))
+                     (cadr (assq 'subtype (get-attributes c))))
+              [(or (list-no-order "this" "original")
+                   (list "thisIsOriginal"))
+               #t]
+              [bad-subtypes
+               (and maybe-blame
+                    (raise-blame-error 
+                     maybe-blame #:missing-party neg-party
+                     val
+                     '("invalid combination of date element subtypes inside bibl element"
+                       expected: "'(\"this\" \"original\") '(\"original\" \"this\") or '(\"thisIsOriginal\")"
+                       given: "~e"
+                       "\n  bibl element...: ~e")
+                     bad-subtypes
+                     val))]))))
 
        (define date/c
          (make-element-contract
           'date
           #:text? #t
-          #:attr-contracts `([when #px"^(\\d\\d\\d\\d)(-\\d\\d)?(-\\d\\d)?$"])
-          #:required-attrs '(when)))]
+          #:attr-contracts `([when #px"^(\\d\\d\\d\\d)(-\\d\\d)?(-\\d\\d)?$"]
+                             [type "publication"]
+                             [subtype ,(or/c "this" "original" "thisIsOriginal")])
+          #:required-attrs '(when type subtype)))]
 
 @section{The text Element}
 
@@ -240,32 +270,27 @@ may contain @tag{head},
                        [0-1 back])
           #:required-order `(front body back)))
 
+       (define children:body+front+back
+         `([0+ head]
+           [0+ p]
+           [0+ pb]
+           [0+ ab]
+           [0+ div]))
+       
        (define body/c
          (make-element-contract
           'body
-          #:children `([0+ head]
-                       [0+ p]
-                       [0+ pb]
-                       [0+ ab]
-                       [0+ div])))
+          #:children children:body+front+back))
 
        (define front/c
          (make-element-contract
           'front
-          #:children `([0+ head]
-                       [0+ p]
-                       [0+ pb]
-                       [0+ ab]
-                       [0+ div])))
+          #:children children:body+front+back))
 
        (define back/c
          (make-element-contract
           'back
-          #:children `([0+ head]
-                       [0+ p]
-                       [0+ pb]
-                       [0+ ab]
-                       [0+ div])))]
+          #:children children:body+front+back))]
 
 @subsection{Structural Elements}
 

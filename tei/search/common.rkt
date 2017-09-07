@@ -264,6 +264,8 @@
      [get-resp-string (λ (resp) (send (get-TEI-info) get-resp-string resp))]
      [get-title (λ () (send (get-TEI-info) get-title))]
      [get-publication-date (λ () (send (get-TEI-info) get-publication-date))]
+     [get-original-publication-date
+       (λ () (send (get-TEI-info) get-original-publication-date))]
      [get-citation (λ () (send (get-TEI-info) get-citation))])))
 
 (define-member-name private-method (generate-member-key))
