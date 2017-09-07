@@ -397,11 +397,36 @@ They are used in the implementation of contracts on TEI x-expressions.
                                  [#:attr-contracts attr-contracts
                                   (listof (list/c symbol? flat-contract?))
                                   '()]
-                                 [#:required-attrs required-attrs (listof symbol?) '()])
+                                 [#:required-attrs required-attrs (listof symbol?) '()]
+                                 [#:extra-check extra-check
+                                  (or/c #f (-> (and/c list? xexpr/c)
+                                               (or/c blame? #f)
+                                               any/c
+                                               any/c))
+                                  #f])
           flat-contract?]{
   Creates a contract recognizing a particular Digital Ricœur TEI XML element.
   Used by units implementing @racket[element-contracts^].
   @;TODO: Add more detail
+
+  When a function is provided as the @racket[extra-check] argument,
+  its first argument is the value to which the contract is being applied,
+  which is guaranteed to satisfy all of the other requirements of
+  the contract (including the implicit requirement of having valid children).
+  When its second argument is @racket[#f], it should ignore the third
+  argument and return @racket[#f] to signal that the check fails or
+  any other value if the check succeeds.
+  When its second argument is a blame object, the return value is ignored
+  and violations must be signaled using @racket[raise-blame-error], 
+  with the third argument supplied for the @racket[#:missing-party].
+ }
+ @defproc[(get-attributes [elem (and/c list? xexpr/c)])
+          (listof (list/c symbol? string?))]{
+  Extracts the attributes from any element x-expression
+ }
+ @defproc[(get-body [elem (and/c list? xexpr/c)])
+          (listof xexpr/c)]{
+  Extracts the body of any element x-expression
  }
 }
 
