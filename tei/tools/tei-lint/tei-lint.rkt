@@ -289,8 +289,8 @@
                 [frame
                  (new (if (or (xmllint-error? val)
                               (exn? val))
-                          error-frame%
-                          file-frame%)
+                          error-proto-frame%
+                          file-proto-frame%)
                       [dir dir]
                       [pth pth]
                       [val val]
@@ -432,6 +432,42 @@
 ;                                          
 ;                                          
 
+(define abstract-proto-frame%
+  (class object%
+    (super-new)
+    (init-field dir pth val widget dir-frame)
+    (abstract get-status
+              get-title
+              do-make-frame)
+    (define real-frame #f)
+    (define/private (make-frame!)
+      (set! real-frame (do-make-frame)))
+    (define/public-final (show [should-show? #t])
+      (cond
+        [should-show?
+         (unless real-frame
+           (make-frame!))
+         (send real-frame show #t)]
+        [else
+         (when real-frame
+           (send real-frame show #f))]))))
+
+(define error-proto-frame%
+  (class abstract-proto-frame%
+    (super-new)
+    (inherit-field dir pth val widget dir-frame)
+    (define/override-final (do-make-frame)
+      (new error-frame%
+           [dir dir]
+           [pth pth]
+           [val val]
+           [widget widget]
+           [dir-frame dir-frame]))
+    (define/override-final (get-status)
+      'error)
+    (define/override-final (get-title)
+      nothing)))
+
 (define error-frame%
   (class* frame% [TEI-frame<%>]
     (init-field dir pth val widget dir-frame)
@@ -498,6 +534,33 @@
 ;                                  
 ;                                  
 ;                                  
+
+(define file-proto-frame%
+  (class abstract-proto-frame%
+    (super-new)
+    (inherit-field dir pth val widget dir-frame)
+    (define title
+      (send val get-title))
+    (define-values (pages-ok? page-descriptions)
+      (get-and-analyze-pages val))
+    (define status
+      (if (and pages-ok?
+               (member "ricoeur"
+                      (se-path*/list `(author #:xml:id)
+                                     (send val to-xexpr))))
+          'ok
+          'warning))
+    (define/override-final (get-title)
+      (just title))
+    (define/override-final (get-status)
+      status)
+    (define/override-final (do-make-frame)
+      (new file-frame%
+           [dir dir]
+           [pth pth]
+           [val val]
+           [widget widget]
+           [dir-frame dir-frame]))))
 
 (define file-frame%
   (class* frame% [TEI-frame<%>]
@@ -567,8 +630,8 @@
            [font bold-system-font]
            [label "Publication Date:"])
       (new message%
-              [parent row]
-              [label (~t dt "y")]))
+           [parent row]
+           [label (~t dt "y")]))
     (let ([row (new horizontal-pane%
                     [parent this]
                     [alignment '(left top)])]
@@ -578,8 +641,8 @@
            [font bold-system-font]
            [label "Original Publication Date:"])
       (new message%
-              [parent row]
-              [label (~t dt "y")]))
+           [parent row]
+           [label (~t dt "y")]))
     ;; "ricoeur" xml:id ??
     (unless (member "ricoeur"
                     (se-path*/list `(author #:xml:id)
@@ -694,35 +757,130 @@
                                 (if (= 1 count) "" "s")
                                 from
                                 to))))
-    (define/private (group-sequential-page-breaks pages)
-      (def
-        [init (car pages)]
-        [init-string
-         (from-just! (send init get-page-string))]
-        [init-num
-         (from-just! (send init get-numeric))])
-      (let loop ([count 1]
-                 [from-str init-string]
-                 [to-str init-string]
-                 [expect-num (add1 init-num)]
-                 [pages (cdr pages)])
+    #|END class file-frame%|#))
+
+(define (get-and-analyze-pages val)
+  (-> (is-a?/c TEI<%>)
+      (values any/c (listof string?)))
+  (define pages
+    (send val get-page-breaks))
+  (if (null? pages)
+      (values #f null)
+      (let analyze-pages ([pages pages]
+                          [arabic-seen? #f]
+                          [so-far null]
+                          [all-ok? #t])
         (cond
           [(null? pages)
-           (list (list count from-str to-str))]
-          [(= expect-num (from-just! (send (car pages) get-numeric)))
-           (loop (add1 count)
-                 from-str
-                 (from-just! (send (car pages) get-page-string))
-                 (add1 expect-num)
-                 (cdr pages))]
+           (values all-ok? (reverse so-far))]
           [else
-           (def
-             [next (car pages)]
-             [next-str (from-just! (send next get-page-string))])
-           (cons (list count from-str to-str)
-                 (loop 1
-                       next-str
-                       next-str
-                       (add1 (from-just! (send next get-numeric)))
-                       (cdr pages)))])))
-    #|END class file-frame%|#))
+           (define this-kind
+             (send (car pages) get-kind))
+           (let ([all-ok? (and all-ok?
+                               (if arabic-seen?
+                                   (eq? 'number this-kind)
+                                   #t))])
+             (case this-kind
+               [(none)
+                (define-values {nones more}
+                  (splitf-at pages
+                             (λ (p) (eq? 'none (send p get-kind)))))
+                (define len
+                  (length nones))
+                (analyze-pages more
+                               arabic-seen?
+                               (cons (format "• ~a non-numbered page~a\n"
+                                             len
+                                             (if (= 1 len) "" "s"))
+                                     so-far)
+                               all-ok?)]
+               [(other)
+                (define-values {other more}
+                  (splitf-at pages
+                             (λ (p) (eq? 'other (send p get-kind)))))
+                (define len
+                  (length other))
+                (analyze-pages more
+                               arabic-seen?
+                               (cons (format "• ~a page~a with ~aunreadable number~a\n"
+                                             len
+                                             (if (= 1 len) "" "s")
+                                             (if (= 1 len) "an " "")
+                                             (if (= 1 len) "" "s"))
+                                     so-far)
+                               #f)]
+               [(roman)
+                (define-values {roman more}
+                  (splitf-at pages
+                             (λ (p) (eq? 'roman (send p get-kind)))))
+                (define-values {these-ok? these-strs}
+                  (handle-numeric-pages roman))
+                (analyze-pages more
+                               arabic-seen?
+                               (append (reverse these-strs)
+                                       so-far)
+                               (and all-ok? these-ok?))]
+               [(number)
+                (define-values {arabic more}
+                  (splitf-at pages
+                             (λ (p) (eq? 'number (send p get-kind)))))
+                (define-values {these-ok? these-strs}
+                  (handle-numeric-pages arabic))
+                (analyze-pages more
+                               #t
+                               (append (reverse these-strs)
+                                       so-far)
+                               (and all-ok? these-ok?))]))]))))
+       
+
+(define/contract (handle-numeric-pages pages)
+  (-> (and/c list? (not/c null?)) 
+      (values any/c (listof string?)))
+  (define format-str
+    (case (send (car pages) get-kind)
+      [(roman) "• ~a page~a with Roman numerals from ~v to ~v\n"]
+      [else "• ~a page~a numbered from ~v to ~v\n"]))
+  (define groups
+    (group-sequential-page-breaks pages))
+  (values (= 1 (length groups))
+          (for/list ([grp (in-list groups)])
+            (match-define (list count from to)
+              grp)
+            (format format-str
+                    count
+                    (if (= 1 count) "" "s")
+                    from
+                    to))))
+
+(define (group-sequential-page-breaks pages)
+  (def
+    [init (car pages)]
+    [init-string
+     (from-just! (send init get-page-string))]
+    [init-num
+     (from-just! (send init get-numeric))])
+  (let loop ([count 1]
+             [from-str init-string]
+             [to-str init-string]
+             [expect-num (add1 init-num)]
+             [pages (cdr pages)])
+    (cond
+      [(null? pages)
+       (list (list count from-str to-str))]
+      [(= expect-num (from-just! (send (car pages) get-numeric)))
+       (loop (add1 count)
+             from-str
+             (from-just! (send (car pages) get-page-string))
+             (add1 expect-num)
+             (cdr pages))]
+      [else
+       (def
+         [next (car pages)]
+         [next-str (from-just! (send next get-page-string))])
+       (cons (list count from-str to-str)
+             (loop 1
+                   next-str
+                   next-str
+                   (add1 (from-just! (send next get-numeric)))
+                   (cdr pages)))])))
+

@@ -54,6 +54,7 @@
                     headers)))
     (define pr:searchable-document-set
       (delay/thread/eager-errors
+       ;#:handler ;TODO
        (cond
          [search-backend
           (postgresql-searchable-document-set docs #:db search-backend)]
