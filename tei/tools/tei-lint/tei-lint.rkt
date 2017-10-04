@@ -559,21 +559,23 @@
            [dir dir]
            [pth pth]
            [val val]
+           [status status]
+           [page-descriptions page-descriptions]
            [widget widget]
            [dir-frame dir-frame]))))
 
 (define file-frame%
   (class* frame% [TEI-frame<%>]
-    (init-field dir pth val widget dir-frame)
+    (init-field dir pth val widget dir-frame
+                status
+                page-descriptions)
     (super-new [label (string-append (path->string pth)
                                      " - TEI Lint")]
                [alignment '(left top)]
                [width 400]
                [height 500])
-    (define all-ok?
-      #t)
     (define/public (get-status)
-      (if all-ok? 'ok 'warning))
+      status)
     (define title
       (send val get-title))
     (define/public (get-title)
@@ -583,7 +585,7 @@
                        [parent this]
                        [alignment '(left center)])]
              [status-dot-canvas (new status-canvas%
-                                     [status 'ok]
+                                     [status status]
                                      [parent row])])
         (new message%
              [parent row]
@@ -647,7 +649,6 @@
     (unless (member "ricoeur"
                     (se-path*/list `(author #:xml:id)
                                    (send val to-xexpr)))
-      (set! all-ok? #f)
       (new no-ricoeur-xml:id-canvas%
            [parent (new horizontal-pane%
                         [parent this]
@@ -660,10 +661,8 @@
            [parent row]
            [font bold-system-font]
            [label "Pages:"])
-      (let ([pages (send val get-page-breaks)])
-        (cond
-          [(null? pages)
-           (set! all-ok? #f)
+      (cond
+          [(null? page-descriptions)
            (new none-canvas%
                 [parent row])]
           [else
@@ -674,89 +673,18 @@
                   [style '(auto-hscroll auto-vscroll)]))
            (define para
              (new text% [auto-wrap #t]))
-           (let analyze-pages ([pages pages]
-                               [arabic-seen? #f])
-             (cond
-               [(null? pages)
-                (void)]
-               [else
-                (define this-kind
-                  (send (car pages) get-kind))
-                (when arabic-seen?
-                  (unless (eq? 'number this-kind)
-                    (set! all-ok? #f)))
-                (case this-kind
-                  [(none)
-                   (define-values {nones more}
-                     (splitf-at pages
-                                (λ (p) (eq? 'none (send p get-kind)))))
-                   (define len
-                     (length nones))
-                   (send para
-                         insert
-                         (format "• ~a non-numbered page~a\n"
-                                 len
-                                 (if (= 1 len) "" "s")))
-                   (analyze-pages more arabic-seen?)]
-                  [(other)
-                   (set! all-ok? #f)
-                   (define-values {other more}
-                     (splitf-at pages
-                                (λ (p) (eq? 'other (send p get-kind)))))
-                   (define len
-                     (length other))
-                   (send para
-                         insert
-                         (format "• ~a page~a with ~aunreadable number~a\n"
-                                 len
-                                 (if (= 1 len) "" "s")
-                                 (if (= 1 len) "an " "")
-                                 (if (= 1 len) "" "s")))
-                   (analyze-pages more arabic-seen?)]
-                  [(roman)
-                   (define-values {roman more}
-                     (splitf-at pages
-                                (λ (p) (eq? 'roman (send p get-kind)))))
-                   (handle-numeric-pages
-                    roman
-                    para
-                    "• ~a page~a with Roman numerals from ~v to ~v\n")
-                   (analyze-pages more arabic-seen?)]
-                  [(number)
-                   (define-values {arabic more}
-                     (splitf-at pages
-                                (λ (p) (eq? 'number (send p get-kind)))))
-                   (handle-numeric-pages
-                    arabic
-                    para
-                    "• ~a page~a numbered from ~v to ~v\n")
-                   (analyze-pages more #t)])]))
+           (for ([str (in-list page-descriptions)])
+             (send para insert str))
            (send para lock #t)
-           (send e-c set-editor para)])))
+           (send e-c set-editor para)]))
     ;;;;;;;;;;;;;;;;;;;
     (define mb (new menu-bar% [parent this]))
     (add-file-menu mb dir-frame)
     (define m-edit (new menu% [label "Edit"] [parent mb]))
     (append-editor-operation-menu-items m-edit #t)
-    ;;;;;;;;;;;;;;;;;;;
-    (unless all-ok?
-      (send status-dot-canvas set-status 'warning))
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;; Methods
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    (define/private (handle-numeric-pages pages ed format-str)
-      (define groups
-        (group-sequential-page-breaks pages))
-      (unless (= 1 (length groups))
-        (set! all-ok? #f))
-      (for ([grp (in-list groups)])
-        (match-define (list count from to)
-          grp)
-        (send ed insert (format format-str
-                                count
-                                (if (= 1 count) "" "s")
-                                from
-                                to))))
     #|END class file-frame%|#))
 
 (define (get-and-analyze-pages val)
