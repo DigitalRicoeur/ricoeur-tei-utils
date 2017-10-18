@@ -27,11 +27,15 @@
                 searchable-document-set?)]
           ))
 
-(define/contract (term->excerpt-pregexp term)
-  (-> term/c any) ; an invalid term could have security implications
+(define/contract (term->excerpt-pregexp term [exact? #f])
+  (->* {term/c} {any/c} any) ; an invalid term could have security implications
   (pregexp
    (string-append "(?:^|\\s).{,80}"
+                  (string-when exact?
+                    "(?:^|[^[:alpha:]])")
                   (regexp-quote (string-normalize-spaces term) #f)
+                  (string-when exact?
+                    "(?:[^[:alpha:]]|$)")
                   ".{,80}(?:\\s|$)")))
 
 (define EXCERPT_MAX_PEEK
@@ -49,7 +53,7 @@
                                                 #:ricoeur-only? [ricoeur-only? #t]
                                                 #:exact? [exact? #f])
       (let ([term-len (string-length term)]
-            [excerpt-px (term->excerpt-pregexp term)])
+            [excerpt-px (term->excerpt-pregexp term exact?)])
         (map (λ (doc) (send doc do-term-search term-len excerpt-px ricoeur-only?))
              searchable)))))
 

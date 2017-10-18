@@ -31,7 +31,7 @@
         (virtual-connection
          (connection-pool
           (λ () (dsn-connect dsn))))))
-    (initialize db)
+    (initialize db docs)
     (define hsh:title->teiHeader+excerpt-max-allow-chars
       (for/hash ([doc (in-list docs)])
         (define doc-chars
@@ -40,32 +40,25 @@
         (values (send doc get-title)
                 (cons (send doc get-teiHeader)
                       (* EXCERPT_RATIO doc-chars)))))
-    (for/list ([segs (in-slice 1000 (flatten (map prepare-pre-segments
-                                                  docs)))]
-               #:unless (null? segs))
-    #|Avoid:
-query-exec: wrong number of parameters for query
-  expected: 19494
-  given: 85030
-|#
-      (insert-pre-segments db segs))
     (define/override-final (do-search-documents term
                                                 #:ricoeur-only? [ricoeur-only? #t]
                                                 #:exact? [exact? #f])
       (define maybe-exact-regexp
         (and exact?
-             (regexp (regexp-quote term #f))))
+             (pregexp (string-append "(?:^|[^[:alpha:]])"
+                                     (regexp-quote term #f)
+                                     "(?:[^[:alpha:]]|$)"))))
       (for*/list ([{title l-vecs}
-                  (in-query db
-                            (if ricoeur-only?
-                                select-statement:ricoeur-only
-                                select-statement:all)
-                            term
-                            #:group #("segdocumenttitle"))]
-                 [raw-results (in-value
-                               (vecs->search-results l-vecs
-                                                     maybe-exact-regexp))]
-                 #:unless (null? raw-results))
+                   (in-query db
+                             (if ricoeur-only?
+                                 select-statement:ricoeur-only
+                                 select-statement:all)
+                             term
+                             #:group #("segdocumenttitle"))]
+                  [raw-results (in-value
+                                (vecs->search-results l-vecs
+                                                      maybe-exact-regexp))]
+                  #:unless (null? raw-results))
         (match-define (cons info excerpt-max-allow-chars)
           (hash-ref hsh:title->teiHeader+excerpt-max-allow-chars title))
         (new document-search-results%
@@ -145,7 +138,7 @@ query-exec: wrong number of parameters for query
    ƒ~a{AND segResp = '#ricoeur'}))
 
 
-(define (initialize db)
+(define (initialize db docs)
   (query-exec db "DROP TABLE IF EXISTS tSegments")
 
   (query-exec db ƒstring-append{
@@ -159,8 +152,24 @@ query-exec: wrong number of parameters for query
  );
  })
 
-  (query-exec db "CREATE INDEX tsv_idx ON tSegments USING gin(segTSV)")
+  (for ([segs (in-slice 1000 (flatten (let ([num-docs (length docs)])
+                                        (for/list ([doc (in-list docs)]
+                                                   [n (in-naturals 1)])
+                                          ;(displayln ƒ~a{Preparing ƒn / ƒnum-docs : ƒ(send doc get-title)})
+                                          (prepare-pre-segments doc)))))]
+        #:unless (null? segs))
+    #|Avoid:
+query-exec: wrong number of parameters for query
+  expected: 19494
+  given: 85030
+|#
+    (insert-pre-segments db segs)
+    #;(displayln "added slice"))
   
+  (query-exec db "CREATE INDEX tsv_idx ON tSegments USING gin(segTSV)")
+
+  #;(displayln "initialized db")
+    
   db)
 
 (define insert:base-str

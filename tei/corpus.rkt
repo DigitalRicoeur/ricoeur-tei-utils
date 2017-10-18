@@ -125,11 +125,12 @@
                                       [search-backend (postgresql-data-source
                                                        #:user "ricoeur"
                                                        #:database "term-search")])])
-    (term-search "utopia" #:ricoeur-only? #f #:exact? #t)))
-(for*/list ([dsr (in-list rslts)]
-            [sr (in-list (document-search-results-results dsr))]
-            [resp (in-value (search-result-author-string sr))]
-            #:unless (regexp-match? #rx"^Paul Ric" resp))
-  resp)
+    (displayln "\n\nHere\n\n")
+    (time (term-search "utopia")))) ;#:ricoeur-only? #f #:exact? #t)))
+#;(for*/list ([dsr (in-list rslts)]
+              [sr (in-list (document-search-results-results dsr))]
+              [resp (in-value (search-result-author-string sr))]
+              #:unless (regexp-match? #rx"^Paul Ric" resp))
+    resp)
 |#
 

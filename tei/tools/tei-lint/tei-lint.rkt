@@ -18,6 +18,8 @@
    (pict->canvas% (red-text-pict "MISSING"))]
   [no-ricoeur-xml:id-canvas%
    (pict->canvas% (red-text-pict "No author element with xml:id=\"ricoeur\""))]
+  [bad-date-order-canvas%
+   (pict->canvas% (red-text-pict "Original publication date after this publication date."))]
   [none-canvas%
    (pict->canvas% (red-text-pict "NONE"))])
 
@@ -45,40 +47,39 @@
     (super-new [label "TEI Lint"]
                [height (floor (* 5/4 (send photo-bitmap get-height)))])
     (inherit show)
-    (define row
-      (new horizontal-pane% [parent this]))
-    (new message%
-         [parent row]
-         [label photo-bitmap])
-    (define col
-      (new vertical-pane% [parent row]))
-    (new message%
-         [parent col]
-         [label "Digital Ricœur"]
-         [font (make-font #:family 'system
-                          #:size 24)])
-    (new message%
-         [parent col]
-         [label "TEI Lint"]
-         [font (make-font #:family 'system
-                          #:size 36
-                          #:weight 'bold)])
-    (define e-c
-      (new editor-canvas%
+    (let ([row (new horizontal-pane% [parent this])])
+      (new message%
+           [parent row]
+           [label photo-bitmap])
+      (define col
+        (new vertical-pane% [parent row]))
+      (new message%
            [parent col]
-           [style '(transparent no-border no-hscroll auto-vscroll no-focus)]))
-    (define para
-      (new text% [auto-wrap #t]))
-    (send para insert "To begin, choose a directory containing TEI XML files.")
-    (send para lock #t)
-    (send e-c set-editor para)
-    (new button%
-         [parent col]
-         [label "Choose Directory …"]
-         [callback (λ (b e) (choose-directory))])
+           [label "Digital Ricœur"]
+           [font (make-font #:family 'system
+                            #:size 24)])
+      (new message%
+           [parent col]
+           [label "TEI Lint"]
+           [font (make-font #:family 'system
+                            #:size 36
+                            #:weight 'bold)])
+      (define e-c
+        (new editor-canvas%
+             [parent col]
+             [style '(transparent no-border no-hscroll auto-vscroll no-focus)]))
+      (define para
+        (new text% [auto-wrap #t]))
+      (send para insert "To begin, choose a directory containing TEI XML files.")
+      (send para lock #t)
+      (send e-c set-editor para)
+      (new button%
+           [parent col]
+           [label "Choose Directory …"]
+           [callback (λ (b e) (choose-directory))]))
+    (show #t)
     (unless (xmllint-available?)
       (show-xmllint-warning this))
-    (show #t)
     (define/private (choose-directory)
       (let ([dir (get-xml-directory this)])
         (when dir
@@ -105,8 +106,13 @@
 ;                                                                  
 
 
-(define (add-file-menu mb dir-frame)
+(define (add-file-menu mb dir-frame #:directory? [directory? #f])
   (define m-file (new menu% [label "File"] [parent mb]))
+  (unless directory?
+    (new menu-item%
+       [parent m-file]
+       [label "Show directory"]
+       [callback (λ (i e) (send dir-frame show #t))]))
   (new menu-item%
        [parent m-file]
        [label "Open additional directory …"]
@@ -230,15 +236,16 @@
              (send ed scroll-to-position 0)]))
         (send ed lock #t)
         (send ed hide-caret #t)
-        (define mb (new menu-bar% [parent this]))
-        (add-file-menu mb this)
+        (add-file-menu (new menu-bar% [parent this])
+                       this
+                       #:directory? #t)
         (send progress show #f)
         (show #t)
         file-snips))
     (define/public (refresh-directory)
       (show #f)
-      (map (λ (w) (send w revoke))
-           file-snips)
+      (for-each (λ (w) (send w revoke))
+                file-snips)
       (new this% [dir dir]))))
 
 ;                                  
@@ -307,7 +314,7 @@
     (define line-padding 1.0)
     (define gutter (/ STATUS_DOT_SIZE 2))
     (define extent-cache (make-hasheq))
-    (define/override (size-cache-invalid)
+    (define/override-final (size-cache-invalid)
       (hash-clear! extent-cache))
     (define/private (lookup-width dc)
       (hash-ref extent-cache
@@ -353,7 +360,7 @@
                     (+ (* 2 padding) (max STATUS_DOT_SIZE
                                           (+ pth-h title-h line-padding))))]))
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    (define/override (draw dc x y left top right bottom dx dy draw-caret)
+    (define/override-final (draw dc x y left top right bottom dx dy draw-caret)
       (draw-status-dot dc status (+ x padding) (+ y padding))
       (define old-font
         (send dc get-font))
@@ -372,7 +379,7 @@
                                               (lookup-line1-height dc)
                                               line-padding))])
       (send dc set-font old-font))
-    (define/override (get-extent dc x y	 	 	 	 
+    (define/override-final (get-extent dc x y	 	 	 	 
                                  [w #f]
                                  [h #f]
                                  [descent #f]
@@ -389,7 +396,7 @@
        [lspace padding]
        [rspace padding]))
     (define mouse-state #f)
-    (define/override (on-event dc x y ed-x ed-y evt)
+    (define/override-final (on-event dc x y ed-x ed-y evt)
       (case (send evt get-event-type)
         [(left-down)
          (set! mouse-state 'left-down)]
@@ -400,7 +407,7 @@
         [else
          (set! mouse-state #f)
          (super on-event dc x y ed-x ed-y evt)]))
-    (define/override (copy)
+    (define/override-final (copy)
       (new this%
            [dir dir]
            [pth pth]
@@ -409,9 +416,9 @@
            [frame frame]
            [status status]
            [maybe-title maybe-title]))
-    (define/public (get-status)
+    (define/public-final (get-status)
       status)
-    (define/public (revoke)
+    (define/public-final (revoke)
       (send frame show #f))))
 
 ;                                          
@@ -491,29 +498,28 @@
          [label (if (xmllint-error? val)
                     "xmllint found an error."
                     "The file is invalid.")])
-    (define e-c
-      (new editor-canvas%
-           [parent this]
-           [min-height 400]
-           [style '(auto-hscroll auto-vscroll)]))
-    (define para
-      (new text% [auto-wrap #t]))
-    (send para
-          insert
-          (match val
-            [(xmllint-error str) str]
-            [(exn:fail msg _) msg]))
-    (send para lock #t)
-    (send e-c set-editor para)
+    (let ([e-c (new editor-canvas%
+                    [parent this]
+                    [min-height 400]
+                    [style '(auto-hscroll auto-vscroll)])])
+      (define para
+        (new text% [auto-wrap #t]))
+      (send para
+            insert
+            (match val
+              [(xmllint-error str) str]
+              [(exn:fail msg _) msg]))
+      (send para lock #t)
+      (send e-c set-editor para))
     ;;;;;;;;;;;;;;;;;;;
-    (define mb (new menu-bar% [parent this]))
-    (add-file-menu mb dir-frame)
-    (define m-edit (new menu% [label "Edit"] [parent mb]))
-    (append-editor-operation-menu-items m-edit #t)
+    (let ([mb (new menu-bar% [parent this])])
+      (add-file-menu mb dir-frame)
+      (define m-edit (new menu% [label "Edit"] [parent mb]))
+      (append-editor-operation-menu-items m-edit #t))
     ;;;;;;;;;;;;;;;;;;;
-    (define/public (get-status)
+    (define/public-final (get-status)
       'error)
-    (define/public (get-title)
+    (define/public-final (get-title)
       nothing)
     #|END class error-frame%|#))
 
@@ -543,13 +549,18 @@
       (send val get-title))
     (define-values (pages-ok? page-descriptions)
       (get-and-analyze-pages val))
+    (define promise:ricoeur-xml:id-ok?
+      (delay (member "ricoeur"
+                     (se-path*/list `(author #:xml:id)
+                                    (send val to-xexpr)))))
     (define status
       (if (and pages-ok?
-               (member "ricoeur"
-                      (se-path*/list `(author #:xml:id)
-                                     (send val to-xexpr))))
+               (date<=? (send val get-original-publication-date)
+                        (send val get-publication-date))
+               (force promise:ricoeur-xml:id-ok?))
           'ok
           'warning))
+    ;; Methods
     (define/override-final (get-title)
       (just title))
     (define/override-final (get-status)
@@ -560,6 +571,7 @@
            [pth pth]
            [val val]
            [status status]
+           [promise:ricoeur-xml:id-ok? promise:ricoeur-xml:id-ok?]
            [page-descriptions page-descriptions]
            [widget widget]
            [dir-frame dir-frame]))))
@@ -567,32 +579,28 @@
 (define file-frame%
   (class* frame% [TEI-frame<%>]
     (init-field dir pth val widget dir-frame
-                status
+                status promise:ricoeur-xml:id-ok?
                 page-descriptions)
     (super-new [label (string-append (path->string pth)
                                      " - TEI Lint")]
                [alignment '(left top)]
                [width 400]
                [height 500])
-    (define/public (get-status)
-      status)
+    ;; Status and Path
+    (let* ([row (new horizontal-pane%
+                     [parent this]
+                     [alignment '(left center)])]
+           [status-dot-canvas (new status-canvas%
+                                   [status status]
+                                   [parent row])])
+      (new message%
+           [parent row]
+           [font bold-system-font]
+           [label (path->string pth)])
+      status-dot-canvas)
+    ;; Title
     (define title
       (send val get-title))
-    (define/public (get-title)
-      (just title))
-    (define status-dot-canvas
-      (let* ([row (new horizontal-pane%
-                       [parent this]
-                       [alignment '(left center)])]
-             [status-dot-canvas (new status-canvas%
-                                     [status status]
-                                     [parent row])])
-        (new message%
-             [parent row]
-             [font bold-system-font]
-             [label (path->string pth)])
-        status-dot-canvas))
-    ;; Title
     (let ([row (new horizontal-pane%
                     [parent this]
                     [alignment '(left top)])])
@@ -623,32 +631,18 @@
       (send para lock #t)
       (send e-c set-editor para))
     ;; Date
-    (let ([row (new horizontal-pane%
-                    [parent this]
-                    [alignment '(left top)])]
-          [dt (send val get-publication-date)])
-      (new message%
-           [parent row]
-           [font bold-system-font]
-           [label "Publication Date:"])
-      (new message%
-           [parent row]
-           [label (~t dt "y")]))
-    (let ([row (new horizontal-pane%
-                    [parent this]
-                    [alignment '(left top)])]
-          [dt (send val get-original-publication-date)])
-      (new message%
-           [parent row]
-           [font bold-system-font]
-           [label "Original Publication Date:"])
-      (new message%
-           [parent row]
-           [label (~t dt "y")]))
-    ;; "ricoeur" xml:id ??
-    (unless (member "ricoeur"
-                    (se-path*/list `(author #:xml:id)
-                                   (send val to-xexpr)))
+    (let ([sect (new vertical-pane%
+                     [parent this]
+                     [alignment '(left top)])]
+          [this-dt (send val get-publication-date)]
+          [orig-dt (send val get-original-publication-date)])
+      (unless (date<=? orig-dt this-dt)
+        (new bad-date-order-canvas%
+             [parent sect]))
+      (install-date-row sect "Publication Date:" this-dt)
+      (install-date-row sect "Original Publication Date:" orig-dt))
+    ;; "ricoeur" xml:id 
+    (unless (force promise:ricoeur-xml:id-ok?)
       (new no-ricoeur-xml:id-canvas%
            [parent (new horizontal-pane%
                         [parent this]
@@ -662,32 +656,48 @@
            [font bold-system-font]
            [label "Pages:"])
       (cond
-          [(null? page-descriptions)
-           (new none-canvas%
-                [parent row])]
-          [else
-           (define e-c
-             (new editor-canvas%
-                  [parent row]
-                  [min-height 300]
-                  [style '(auto-hscroll auto-vscroll)]))
-           (define para
-             (new text% [auto-wrap #t]))
-           (for ([str (in-list page-descriptions)])
-             (send para insert str))
-           (send para lock #t)
-           (send e-c set-editor para)]))
+        [(null? page-descriptions)
+         (new none-canvas%
+              [parent row])]
+        [else
+         (define e-c
+           (new editor-canvas%
+                [parent row]
+                [min-height 300]
+                [style '(auto-hscroll auto-vscroll)]))
+         (define para
+           (new text% [auto-wrap #t]))
+         (for ([str (in-list page-descriptions)])
+           (send para insert str))
+         (send para lock #t)
+         (send e-c set-editor para)]))
     ;;;;;;;;;;;;;;;;;;;
-    (define mb (new menu-bar% [parent this]))
-    (add-file-menu mb dir-frame)
-    (define m-edit (new menu% [label "Edit"] [parent mb]))
-    (append-editor-operation-menu-items m-edit #t)
+    (let ([mb (new menu-bar% [parent this])])
+      (add-file-menu mb dir-frame)
+      (define m-edit (new menu% [label "Edit"] [parent mb]))
+      (append-editor-operation-menu-items m-edit #t))
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;; Methods
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    (define/public-final (get-title)
+      (just title))
+    (define/public-final (get-status)
+      status)
     #|END class file-frame%|#))
 
-(define (get-and-analyze-pages val)
+(define (install-date-row parent str dt)
+  (let ([row (new horizontal-pane%
+                  [parent parent]
+                  [alignment '(left top)])])
+    (new message%
+         [parent row]
+         [font bold-system-font]
+         [label str])
+    (new message%
+         [parent row]
+         [label (~t dt "y")])))
+  
+(define/contract (get-and-analyze-pages val)
   (-> (is-a?/c TEI<%>)
       (values any/c (listof string?)))
   (define pages
