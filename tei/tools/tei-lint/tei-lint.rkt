@@ -224,7 +224,7 @@
                            [dir-frame this])
                       (send progress ++)))))
         (for ([snip (in-list (sort file-snips
-                                   file-snip-more-urgent?))])
+                                   file-snip-before?))])
           (send ed insert snip))
         (let loop ([wait 1])
           (cond
@@ -266,11 +266,20 @@
 ;                           ;;     
 ;                                  
 
-(define (file-snip-more-urgent? a b)
-  (case (send a get-status)
+(define (status-more-urgent? a b)
+  (case a
     [(ok) #f]
-    [(error) (not (eq? 'error (send b get-status)))]
-    [(warning) (eq? 'ok (send b get-status))]))
+    [(error) (not (eq? 'error b))]
+    [(warning) (eq? 'ok b)]))
+
+
+(define (file-snip-before? a b)
+  (let ([a-status (send a get-status)]
+        [b-status (send b get-status)])
+    (or (status-more-urgent? a-status b-status)
+        (and (eq? a-status b-status)
+             (title<? (send a get-title)
+                      (send b get-title))))))
 
 (define file-snip%
   (class snip%
@@ -310,6 +319,11 @@
                       'hard-newline
                       (get-flags)))
     (define pth-str (path->string pth))
+    (define quasi-title
+      (if (or (xmllint-error? val)
+              (exn? val))
+          pth-str
+          (send val get-title)))
     (define padding 1.0)
     (define line-padding 1.0)
     (define gutter (/ STATUS_DOT_SIZE 2))
@@ -416,6 +430,8 @@
            [frame frame]
            [status status]
            [maybe-title maybe-title]))
+    (define/public-final (get-title)
+      quasi-title)
     (define/public-final (get-status)
       status)
     (define/public-final (revoke)
