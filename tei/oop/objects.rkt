@@ -9,6 +9,10 @@
          gregor
          )
 
+(module+ test
+  (require rackunit
+           (submod "..")))
+
 (provide tag->element
          (contract-out
           [read-TEI
@@ -17,6 +21,8 @@
            (-> (maybe/c date?) (maybe/c date?) any/c)]
           [maybe-date>?
            (-> (maybe/c date?) (maybe/c date?) any/c)]
+          [title<?
+           (-> string? string? any/c)]
           ))
 
 (define/contract (tag->element tag)
@@ -99,3 +105,39 @@
              
 (define (maybe-date>? a b)
   (eq? '> (maybe-date-order a b)))
+
+(define normalize-title
+  (match-lambda
+    [(pregexp #px"^(?i:an?|the)\\s+(\\S.*)$" (list _ trimmed))
+     trimmed]
+    [full full]))
+
+(module+ test
+  (check-equal? (normalize-title "The Rain in Spain")
+                "Rain in Spain"
+                "normalize-title: remove \"The\"")
+  (check-equal? (normalize-title "A Night to Remember")
+                "Night to Remember"
+                "normalize-title: remove \"A\"")
+  (check-equal? (normalize-title "An Old Book")
+               "Old Book"
+                "normalize-title: remove \"An\"")
+  (check-equal? (normalize-title "Journals")
+                "Journals"
+                "normalize-title: preserve normal titles")
+  (check-equal? (normalize-title "The      ")
+                "The      "
+                "normalize-title: don't produce empty strings")
+  (check-equal? (normalize-title "Theories")
+                "Theories"
+                "normalize-title: require word break")
+  (check-equal? (normalize-title "Another Day")
+                "Another Day"
+                "normalize-title: require word break"))
+  
+(define (title<? a b)
+  (string-ci<? (normalize-title a) (normalize-title b)))
+
+
+
+
