@@ -1,7 +1,7 @@
 #lang info
 
 (define collection "ricoeur")
-(define deps '(("base" #:version "6.10")
+(define deps '(("base" #:version "6.11")
                "adjutor"
                "functional-lib"
                "roman-numeral"
