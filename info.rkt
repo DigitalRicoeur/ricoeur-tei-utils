@@ -1,7 +1,7 @@
 #lang info
 
 (define collection "ricoeur")
-(define deps '("base"
+(define deps '(("base" #:version "6.10")
                "adjutor"
                "functional-lib"
                "roman-numeral"
@@ -18,7 +18,7 @@
                      "functional-doc"
                      "gregor-doc"
                      "rackunit-lib"
-                     "_-exp"
+                     ("_-exp" #:version "0.1")
                      "db-doc"
                      ))
 (define pkg-desc "TEI utilities for Digital Ricoeur")
