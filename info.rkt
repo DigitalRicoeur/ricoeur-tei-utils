@@ -11,6 +11,7 @@
                "scribble-lib"
                "data-lib"
                "db-lib"
+               ("xmllint-win32-x86_64" #:platform "win32\\x86_64") 
                ))
 (define build-deps '("scribble-lib"
                      "racket-doc"

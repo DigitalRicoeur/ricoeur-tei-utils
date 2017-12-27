@@ -4,6 +4,7 @@
          racket/port
          racket/system
          racket/contract
+         setup/matching-platform
          )
 
 (provide xmllint-available?
@@ -24,7 +25,11 @@
           ))
 
 (define xmllint
-  (find-executable-path "xmllint"))
+  (or (find-executable-path "xmllint")
+      (and (matching-platform? "win32\\x86_64")
+           (collection-file-path "xmllint.exe"
+                                 "xmllint-win32-x86_64"
+                                 #:fail not))))
 
 (unless xmllint
   (log-warning "xmllint not found"))
