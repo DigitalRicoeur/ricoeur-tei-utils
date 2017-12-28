@@ -19,18 +19,29 @@ as nested objects (from Racket's class-based object system),
 which form a thin layer of abstraction over plain x-expressions.
 
 
-@defproc[(read-TEI [in input-port? (current-input-port)])
+@defproc[(read-TEI [in input-port? (current-input-port)]
+                   [#:filename filename (or/c #f path-string?) #f])
          (is-a?/c TEI<%>)]{
  Produces a Racket object representing the TEI XML
- document read from @racket[in]. 
+ document read from @racket[in].
+
+ If a @racket[filename] is provided, it is used (without the
+ directory portion) for @(method TEI-info<%> get-filename).
 }
 
+@defproc[(file->TEI [file (and/c path-string? file-exists?)])
+         (is-a?/c TEI<%>)]{
+Produces a Racket object representing the TEI XML document @racket[file].
+}
 
-
-@defproc[(tag->element [tag any-tei-xexpr/c])
+@defproc[(tag->element [tag any-tei-xexpr/c]
+                       [#:filename filename (or/c #f path-string?) #f])
          (is-a?/c element<%>)]{
  Converts a TEI XML tag, represented as an x-expression,
  to a Racket object.
+
+ If @racket[filename] is provided, it is used as with @racket[read-TEI]
+ when the resulting object implements @racket[TEI-info<%>].
 }
 
 @deftogether[
@@ -233,7 +244,7 @@ implemented by broad categories of TEI elements.
 
 @definterface[TEI-info<%> ()]{
  An interface implemented by objects encapsulating information about a
- TEI XML document, notably objects implementing @racket[TEI<%>]
+ TEI XML document, notably objects implementing @racket[TEI<%>] or
  @racket[teiHeader<%>].
 
  @margin-note{Unlike other interfaces in this section, @racket[TEI-info<%>]
@@ -243,6 +254,11 @@ implemented by broad categories of TEI elements.
  
  @defmethod[(get-title) string?]{
   Returns the title of the document, including subtitles.
+ }
+ @defmethod[(get-filename) (or/c #f string?)]{
+  Returns the file name (without directory) used to instantiate
+  @(this-obj), or @racket[#f] if none is known.
+  See alse @racket[read-TEI] and @racket[file->TEI].
  }
  @defmethod[(get-publication-date) date?]{
   Returns the publication date of the specific version of the work
@@ -297,6 +313,11 @@ the others serve merely to identify elements convieniently.
   also writes an XML declaration and appropriate @tt{DOCTYPE} declaration.
  }
 
+ @defmethod[(get-md5) string?]{
+  Returns the md5 checksum of @(this-obj). The checksum is based on the
+  same standardized XML representation used by @(method TEI<%> write-TEI).
+ }
+                
  @defmethod[(do-prepare-pre-segments [pre-segment-accumulator? (-> any/c any/c)]
                                      [call-with-metadata
                                       (->* ((-> any))

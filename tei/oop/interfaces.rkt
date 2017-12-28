@@ -218,7 +218,8 @@
     [get-citation (->m string?)]))
 
 (define TEI-info<%>
-  (interface (get-title<%> get-citation<%>)))
+  (interface (get-title<%> get-citation<%>)
+    [get-filename (->m (or/c #f string?))]))
 
 (define teiHeader<%>
   (interface (TEI-info<%> element<%>)))
@@ -562,6 +563,7 @@
                       acc
                       the-pb)])))))
 
+(define-member-name set-filename! (generate-member-key))
 
 (define TEI<%>
   (interface (element<%>
@@ -569,6 +571,7 @@
               TEI-body<%>
               guess-paragraphs<%>
               elements-only<%>)
+    [get-md5 (->m string?)]
     [do-prepare-pre-segments
      (->i {[this any/c]
            [pre-segment-accumulator? (-> any/c any/c)]

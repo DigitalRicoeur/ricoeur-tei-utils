@@ -9,6 +9,7 @@
          (rename-in data/functor
                     [map fmap])
          gregor
+         openssl/md5
          adjutor
          )
 
@@ -43,7 +44,12 @@
          head%
          note%
          item%
+         ;;
+         current-filename
          )
+
+(define current-filename
+  (make-parameter #f))
 
 (define (concrete-element%)
   (class element% (super-new)))
@@ -80,7 +86,11 @@
     
 (define (TEI-info-mixin %)
   (class* (get-title-mixin (get-citation-mixin %)) {TEI-info<%>}
-    (super-new)))
+    (super-new)
+    (define filename
+      (current-filename))
+    (define/public-final (get-filename)
+      filename)))
 
 (define TEI%
   (class* (elements-only-mixin (TEI-info-mixin guess-paragraphs-element%))
@@ -89,6 +99,14 @@
     (inherit to-xexpr get-body/elements-only get-title)
     (match-define (list teiHeader text)
       (get-body/elements-only))
+    (define pr:md5
+      (delay/thread
+        (define-values (in-from-pipe out-to-pipe)
+          (make-pipe))
+        (write-TEI out-to-pipe)
+        (md5 in-from-pipe)))
+    (define/public-final (get-md5)
+      (force pr:md5))
     (define/public (get-teiHeader)
       teiHeader)
     (define/override-final (to-pre-segments pred

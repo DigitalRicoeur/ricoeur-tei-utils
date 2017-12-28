@@ -32,6 +32,10 @@
                 (listof (is-a?/c document-search-results<%>)))]
           [list-TEI-info
            (-> (listof (is-a?/c TEI-info<%>)))]
+          [get-checksum-table
+           (-> (hash/c string?
+                       string?
+                       #:immutable #t))]
           ))
 
 (define/contract corpus%
@@ -40,6 +44,11 @@
                  [search-backend (or/c #f postgresql-data-source/c)]))
   (class* object% [(interface ()
                      [•list-TEI-info (->m (listof (is-a?/c TEI-info<%>)))]
+                     [•get-checksum-table (->m (hash/c string?
+                                                       string?
+                                                       #:immutable #t))]
+                     [on-initialize (->m (listof (is-a?/c TEI<%>))
+                                         any)]
                      [•term-search
                       (->*m {term/c}
                             {#:ricoeur-only? any/c
@@ -60,6 +69,25 @@
           (postgresql-searchable-document-set docs #:db search-backend)]
          [else
           (regexp-searchable-document-set docs)])))
+    (define pr:checksum-table
+      (delay/thread
+       (for/hash ([doc (in-list docs)])
+         (values (send doc get-title)
+                 (send doc get-md5)))))
+    ;; Must come at the end of initialization
+    (parameterize ([currently-initializing? #t])
+      (on-initialize docs))
+    ;; Methods:
+    (define/pubment (on-initialize docs)
+      (unless (currently-initializing?)
+        (raise-arguments-error 'on-initialize
+                               "cannot be called except during corpus% initialization"
+                               "corpus% instance" this
+                               "argument" docs))
+      (parameterize ([currently-initializing? #f])
+        (inner (void) on-initialize docs)))
+    (define/public-final (•get-checksum-table)
+      (force pr:checksum-table))
     (define/public-final (•list-TEI-info)
       headers)
     (define/public-final (•term-search raw-term
@@ -71,6 +99,9 @@
                         #:exact? exact?
                         #:ricoeur-only? ricoeur-only?))
     #|END class corpus%|#))
+
+(define currently-initializing?
+  (make-parameter #f))
 
 (define empty-corpus
   (new corpus%))
@@ -101,8 +132,8 @@
                     maybe-doc))])))
 
 
-
-
+(define (get-checksum-table)
+  (send (current-corpus) •get-checksum-table))
 
 (define (term-search term
                      #:ricoeur-only? [ricoeur-only? #t]

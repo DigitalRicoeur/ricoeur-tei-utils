@@ -21,6 +21,7 @@
                               regexp-searchable-document-set
                               postgresql-searchable-document-set)
                      (submod ricoeur/tei/search/common private)
+                     setup/matching-platform
                      gregor
                      ))
 
@@ -30,8 +31,8 @@ In addition to being valid and well-formed XML, the
 documents should conform to the structure specified in
 @other-doc['(lib "ricoeur/tei/scribblings/guidelines.scrbl")].
 
-This document is written for programmers intending to either
-use these libraries in their own programs (in the case particularly
+This document is written for programmers intending either to
+use these libraries in their own programs (particularly in the case
 of @secref["High-level_Interface"] and, to a lesser extent,
 @secref["Object_System"]) or to contribute to their implementation.
 It assumes familiarity with Racket's class-based system for
@@ -63,6 +64,15 @@ The bindings documented in this section are provided by
 @defproc[(list-TEI-info) (listof (is-a?/c TEI-info<%>))]{
  Returns a list of @racket[TEI-info<%>] objects for all of the
  documents in the @racket[current-corpus].
+}
+
+@defproc[(get-checksum-table) (hash/c string?
+                                      string?
+                                      #:immutable #t)]{
+ Returns an immutable hash table with an entry for every document in the
+ @racket[current-corpus], where the keys are the titles of
+ the documents (as reported by @(method TEI-info<%> get-title))
+ and the values are their md5 checksums (as reported by @(method TEI<%> get-md5)).
 }
 
 @defclass[corpus% object% ()]{
@@ -101,6 +111,25 @@ The bindings documented in this section are provided by
  }
  @defmethod[#:mode public-final (•list-TEI-info) (listof (is-a?/c TEI-info<%>))]{
   Used to implement @racket[list-TEI-info]
+ }
+ @defmethod[#:mode public-final (•get-checksum-table) (hash/c string?
+                                                              string?
+                                                              #:immutable #t)]{
+  Used to implement @racket[get-checksum-table]
+ }
+ @defmethod[#:mode pubment (on-initialize [docs (listof (is-a?/c TEI<%>))]) any]{
+  This method is called exactly once, at the end of @racket[corpus%]'s
+  portion of @(this-obj)'s initialization.
+  (Attempting to call @(method corpus% on-initialize) directly will
+  raise an exception.)
+  Its argument is the list of @racket[TEI<%>] objects encapsulated by @(this-obj).
+
+  The purpose of @(method corpus% on-initialize) is to provide a hook for subclasses
+  of @racket[corpus%] to access the full list of @racket[TEI<%>] objects,
+  without having @racket[corpus%] itself cause them remain reachable after
+  initialization.
+
+  @italic{Default implementation:} Does nothing.
  }
 }
 
@@ -143,7 +172,7 @@ The bindings documented in this section are provided by
 
 @deftogether[
  (@defproc[(term-search [term term/c]
-                        [#:ricoeur-only? ricoeur-only any/c #t]
+                        [#:ricoeur-only? ricoeur-only? any/c #t]
                         [#:exact? exact? any/c #f])
            (listof (is-a?/c document-search-results<%>))]
    @defthing[term/c flat-contract?
@@ -245,9 +274,9 @@ The bindings documented in this section are provided by
                         (or/c "foot" "end")
                         string?
                         (or/c "transl" #f)))]{
-A contract recognizing values that can be supplied by
-@(xmethod TEI-body<%> to-pre-segments/add-metadata) to
-provide details about the location of a @racket[pre-segment] in a document.
+ A contract recognizing values that can be supplied by
+ @(xmethod TEI-body<%> to-pre-segments/add-metadata) to
+ provide details about the location of a @racket[pre-segment] in a document.
 }
 
 
@@ -552,7 +581,7 @@ of @tech{searchable document sets} to support new @tech{search backends}.
                                         [counter natural-number/c]
                                         [body string?]
                                         [meta pre-segment-meta/c]
-                                        [resp #rx"#.+"])
+                                        [resp #rx"^#.+"])
                            #:omit-constructor])]{
  Current search implementations rely on splitting TEI documents
  into smaller segments that share the same meta-data (such as page
@@ -648,7 +677,7 @@ Otherwise, you generally should @italic{not} use the version
 of Racket from your OS's package manager,
 as it will generally not be up-to-date.
 
-You must also configure your @envvar{PATH} environment variable
+You should also configure your @envvar{PATH} environment variable
 so that the @tt{racket} and @tt{raco} programs can be run
 from the command line. For example, on Mac OS, you should add a
 line like the following to @filepath{~/.bash_profile}:
@@ -657,8 +686,11 @@ line like the following to @filepath{~/.bash_profile}:
 While it is not strictly required, some features of this library
 are implemented using the utility @tt{xmllint} from @tt{libxml2}.
 This is included by default with Mac OS and is available via
-the system package manager on GNU/Linux; it can also be installed 
-on Windows.
+the system package manager on GNU/Linux.
+On Windows, the necessary binaries are provided as a platform-specific
+dependency through the Racket package system.
+@margin-note{Specifically, binaries are provided for platforms where
+ @racket[(matching-platform? "win32\\x86_64")] returns @racket[#t].}
 
 To install this library, you must first obtain a copy of the source
 code by cloning its git repository from

@@ -63,7 +63,7 @@
                                  [counter natural-number/c]
                                  [body string?]
                                  [meta pre-segment-meta/c]
-                                 [resp #rx"#.+"])
+                                 [resp #rx"^#.+"])
              #:omit-constructor]
             [prepare-pre-segments
              (-> (is-a?/c TEI<%>)
@@ -263,6 +263,7 @@
     (public*
      [get-resp-string (λ (resp) (send (get-TEI-info) get-resp-string resp))]
      [get-title (λ () (send (get-TEI-info) get-title))]
+     [get-filename (λ () (send (get-TEI-info) get-filename))]
      [get-publication-date (λ () (send (get-TEI-info) get-publication-date))]
      [get-original-publication-date
        (λ () (send (get-TEI-info) get-original-publication-date))]
