@@ -23,7 +23,7 @@
                      "db-doc"
                      ))
 (define pkg-desc "TEI utilities for Digital Ricoeur")
-(define version "0.1")
+(define version "0.1.1")
 (define pkg-authors '(philip))
 (define scribblings '(("tei/scribblings/tei-utils.scrbl"
                        (multi-page)

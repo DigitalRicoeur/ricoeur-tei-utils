@@ -14,15 +14,16 @@
          (except-out (all-from-out ricoeur/tei/search)
                      search-documents
                      searchable-document-set?
+                     noop-searchable-document-set
                      regexp-searchable-document-set
                      postgresql-searchable-document-set)
          (contract-out
           [corpus%
            (class/c (init [docs (listof (is-a?/c TEI<%>))]
-                          [search-backend (or/c #f postgresql-data-source/c)]))]
+                          [search-backend search-backend/c]))]
           [directory-corpus%
            (class/c (init [path (and/c path-string? directory-exists?)]
-                          [search-backend (or/c #f postgresql-data-source/c)]))]
+                          [search-backend search-backend/c]))]
           [current-corpus
            (parameter/c (is-a?/c corpus%))]
           [term-search
@@ -38,10 +39,15 @@
                        #:immutable #t))]
           ))
 
+(define search-backend/c
+  (or/c #f 'noop postgresql-data-source/c))
+
+(define-local-member-name resolved-docs)
+
 (define/contract corpus%
   ;TODO: enforce unique titles
   (class/c (init [docs (listof (is-a?/c TEI<%>))]
-                 [search-backend (or/c #f postgresql-data-source/c)]))
+                 [search-backend search-backend/c]))
   (class* object% [(interface ()
                      [•list-TEI-info (->m (listof (is-a?/c TEI-info<%>)))]
                      [•get-checksum-table (->m (hash/c string?
@@ -55,8 +61,9 @@
                              #:exact? any/c}
                             (listof (is-a?/c document-search-results<%>)))])]
     (super-new)
-    (init [docs '()]
-          [search-backend #f])
+    (init [(init:docs docs) '()]
+          [search-backend #f]
+          [(docs resolved-docs) (deduplicate-docs init:docs)])
     (for/fold/define ([headers '()])
                      ([doc (in-list docs)])
       (values (cons (send doc get-teiHeader)
@@ -65,6 +72,8 @@
       (delay/thread/eager-errors
        ;#:handler ;TODO
        (cond
+         [(eq? 'noop search-backend)
+          noop-searchable-document-set]
          [search-backend
           (postgresql-searchable-document-set docs #:db search-backend)]
          [else
@@ -98,13 +107,17 @@
       (search-documents term (force pr:searchable-document-set)
                         #:exact? exact?
                         #:ricoeur-only? ricoeur-only?))
+    (define/private (deduplicate-docs docs)
+      (remove-duplicates docs
+                         #:key (λ (doc) (send doc get-title))))
     #|END class corpus%|#))
 
 (define currently-initializing?
   (make-parameter #f))
 
 (define empty-corpus
-  (new corpus%))
+  (new corpus%
+       [search-backend 'noop]))
 
 (define current-corpus
   (make-parameter empty-corpus))

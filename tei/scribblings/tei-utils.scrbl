@@ -83,16 +83,24 @@ The bindings documented in this section are provided by
  (This also improves search performance through caching, for example.)
  
  @defconstructor[([docs (listof (is-a?/c TEI<%>))]
-                  [search-backend (or/c #f postgresql-data-source/c) #f])]{
+                  [search-backend (or/c #f 'noop postgresql-data-source/c) #f])]{
   Constructs a @tech{corpus} object encapsulating the TEI documents @racket[docs]
   which uses the @tech{search backend} specified by @racket[search-backend]
   to implement @racket[term-search].
 
-  Currently, two types of @deftech{search backend} are supported:
+  The @racket[docs] should all have distinct titles (in the sense of
+  @(method TEI-info<%> get-title)).
+  Duplicates will be ignored in an unspecified manner.
+
+  Currently, three types of @deftech{search backend} are supported:
   @itemlist[@item{
                A value of @racket[#f] specifies using a simplistic
                regular-expression-based backend implemented in pure
                Racket.}
+            @item{
+               Using @racket['noop] as a backend will cause
+               @(method corpus% •term-search) to always return 
+               @racket['()]}
             @item{
                A @racket[postgresql-data-source/c] value will construct a
                backend using PostgreSQL's full-text search feature by
@@ -120,9 +128,13 @@ The bindings documented in this section are provided by
  @defmethod[#:mode pubment (on-initialize [docs (listof (is-a?/c TEI<%>))]) any]{
   This method is called exactly once, at the end of @racket[corpus%]'s
   portion of @(this-obj)'s initialization.
-  (Attempting to call @(method corpus% on-initialize) directly will
-  raise an exception.)
-  Its argument is the list of @racket[TEI<%>] objects encapsulated by @(this-obj).
+  Attempting to call @(method corpus% on-initialize) directly will
+  raise an exception.
+  
+  The argument given to @(method corpus% on-initialize) is the list of
+  @racket[TEI<%>] objects encapsulated by @(this-obj).
+  The implementation of @racket[corpus%] guarantees that each item
+  in @racket[docs] will have a unique result for @(method TEI-info<%> get-title).
 
   The purpose of @(method corpus% on-initialize) is to provide a hook for subclasses
   of @racket[corpus%] to access the full list of @racket[TEI<%>] objects,
@@ -520,6 +532,10 @@ ultimately @racket[term-search].
  @tech{search backend} implemented in Racket.        
 }
 
+@defthing[noop-searchable-document-set searchable-document-set?]{
+A @tech{searchable document set} that never finds any results.
+}
+
 @subsubsection{Implementing Search Backends}
 @defmodule[(submod ricoeur/tei/search/common private)]
 
@@ -615,7 +631,7 @@ of @tech{searchable document sets} to support new @tech{search backends}.
 
 @defthing[pre-segment-meta/c flat-contract?]{
  An opaque contract recognizing valid @racket[pre-segment] meta-data,
- the precise specification of which in a private implementation
+ the precise specification of which is a private implementation,
  detail except that all values satisfying @racket[pre-segment-meta/c]
  will also satisfy @racket[jsexpr?].
 }
