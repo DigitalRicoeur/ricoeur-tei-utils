@@ -126,8 +126,7 @@
                               [maybe-doc (in-value
                                           (with-handlers
                                               ([exn:fail? (λ (e) #f)])
-                                            (call-with-input-file pth
-                                              read-TEI)))]
+                                            (file->TEI pth)))]
                               #:when maybe-doc)
                     maybe-doc))])))
 

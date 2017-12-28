@@ -106,7 +106,7 @@
 
 (define (file->TEI pth-str)
   (call-with-input-file  pth-str
-    (λ (in) (read-TEI in pth-str))))
+    (λ (in) (read-TEI in #:filename pth-str))))
 
 
 (define maybe-date-order
