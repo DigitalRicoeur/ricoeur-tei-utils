@@ -104,6 +104,7 @@
         (define-values (in-from-pipe out-to-pipe)
           (make-pipe))
         (write-TEI out-to-pipe)
+        (close-output-port out-to-pipe)
         (md5 in-from-pipe)))
     (define/public-final (get-md5)
       (force pr:md5))
