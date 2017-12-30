@@ -169,12 +169,20 @@ The bindings documented in this section are provided by
   If any such file is not a valid and well-formed TEI XML file
   satisfying Digital Ricœur's specification, it will be silently ignored.
 
+  If @racket[path] is a relative path, it is resolved relative to
+  the current directory.
+
   The @racket[search-backend] argument controls the @tech{search backend}
   as with @racket[corpus%].
  }
  @defmethod[#:mode public-final (get-path)
-            path-string?]{
-  Returns the path used to instantiate @(this-obj)
+            (and/c path-string? absolute-path?)]{
+  Returns the path used to instantiate @(this-obj).
+
+  The result may not be @racket[equal?] to the @racket[path] argument
+  to the @racket[directory-corpus%] constructor, as the
+  given path will have been resolved to an absolute path
+  and simplified in the sense of @racket[simplify-path].
  }
 }
 

@@ -45,7 +45,6 @@
 (define-local-member-name resolved-docs)
 
 (define/contract corpus%
-  ;TODO: enforce unique titles
   (class/c (init [docs (listof (is-a?/c TEI<%>))]
                  [search-backend search-backend/c]))
   (class* object% [(interface ()
@@ -126,7 +125,8 @@
   (class corpus%
     (init [(init:path path)])
     (define path
-      init:path)
+      (invariant-assertion absolute-path?
+                           (simplify-path init:path)))
     (define/public-final (get-path)
       path)
     (super-new [docs
