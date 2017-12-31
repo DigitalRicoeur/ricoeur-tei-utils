@@ -6,7 +6,10 @@
          data/maybe
          gregor
          adjutor
-         )
+         (for-syntax racket/base
+                     syntax/parse
+                     racket/syntax
+                     ))
 
 (provide element-or-xexpr->plain-text
          element<%>
@@ -14,6 +17,7 @@
          element-or-xexpr/c
          elements-only<%>
          TEI-info<%>
+         define/TEI-info
          teiHeader<%>
          get-page-breaks<%>
          TEI-body<%>
@@ -32,6 +36,7 @@
            get-title<%>
            get-publication-date<%>
            get-citation<%>
+           classification<%>
            body-element%
            guess-paragraphs-element%
            ab?
@@ -217,12 +222,94 @@
   (interface (get-publication-date<%>)
     [get-citation (->m string?)]))
 
+(define classification<%>
+  (interface ()
+    ;; TODO: remove #f
+    [get-book/article (->m (or/c #f 'book 'article))]))
+
 (define TEI-info<%>
-  (interface (get-title<%> get-citation<%>)
+  (interface (get-title<%> get-citation<%> classification<%>)
     [get-filename (->m (or/c #f string?))]))
 
 (define teiHeader<%>
   (interface (TEI-info<%> element<%>)))
+
+(define-syntax defgenerics
+  (syntax-parser
+    [(_ if:expr name:id)
+     #:with gen-name (format-id #'name "gen:~a" #'name #:source #'name)
+     #`(define gen-name (generic if name))]
+    [(_ if:expr name:id more:id ...+)
+     #'(begin (defgenerics if name)
+              (defgenerics if more ...))]))
+
+(defgenerics
+ TEI-info<%>
+ get-title
+ get-resp-string ;1 arg
+ get-publication-date
+ get-original-publication-date
+ get-citation
+ get-book/article
+ get-filename
+ )
+
+(define-for-syntax (make-methods-syntaxes target-stx context-stx)
+  (with-syntax ([name target-stx]
+                [(get-title
+                  get-resp-string ;1 arg
+                  get-publication-date
+                  get-original-publication-date
+                  get-citation
+                  get-book/article
+                  get-filename)
+                 (map (λ (it) (datum->syntax context-stx it))
+                      '(get-title
+                        get-resp-string ;1 arg
+                        get-publication-date
+                        get-original-publication-date
+                        get-citation
+                        get-book/article
+                        get-filename))])
+    (syntax-e
+     #'((define/public (get-title)
+          (send-generic name gen:get-title))
+        (define/public (get-resp-string arg)
+          (send-generic name gen:get-resp-string arg))
+        (define/public (get-publication-date)
+          (send-generic name gen:get-publication-date))
+        (define/public (get-original-publication-date)
+          (send-generic name gen:get-original-publication-date))
+        (define/public (get-citation)
+          (send-generic name gen:get-citation))
+        (define/public (get-book/article)
+          (send-generic name gen:get-book/article))
+        (define/public (get-filename)
+          (send-generic name gen:get-filename))))))
+
+(define-syntax define/TEI-info 
+  (syntax-parser
+    [(_ name:id val-expr)
+     #:declare val-expr (expr/c #'(is-a?/c TEI-info<%>)
+                                #:name "TEI-info<%> expression")
+     #`(begin
+         (define real-name val-expr.c)
+         (define-syntax name
+           ; to prevent set!
+           (syntax-parser
+             [_:id
+              #'real-name]))
+         #,@(make-methods-syntaxes #'real-name #'name))]
+    [(_ val-expr)
+     #:declare val-expr (expr/c #'(is-a?/c TEI-info<%>)
+                                #:name "TEI-info<%> expression")
+     #:with (name) (generate-temporaries '(TEI-info))
+     #`(begin (define name val-expr.c)
+              #,@(make-methods-syntaxes #'name #'val-expr))]
+    [(_ #:each-time val-expr)
+     #:declare val-expr (expr/c #'(is-a?/c TEI-info<%>)
+                                #:name "TEI-info<%> expression")
+     #`(begin #,@(make-methods-syntaxes #'val-expr.c #'val-expr))]))
 
 ;                                  
 ;                                  
@@ -435,7 +522,7 @@
                  [init-pb init-pb])
         (match to-go
           ['() 
-          ;; finish by returning acc and pb
+           ;; finish by returning acc and pb
            (values acc init-pb)]
           [(cons (? body-element? child) more)
            ;; dispatch to child element, continue with returned acc and init-pb

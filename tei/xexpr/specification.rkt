@@ -42,6 +42,7 @@ into a module as follows:
          $title-statement$
          $publication-statement$
          $source-description$
+         $textClass$
          $text-element$
          $structural-elements$
          $content-containing-elements$)]
@@ -82,19 +83,30 @@ It must have the attributes
 
 @section{The teiHeader Element}
 
-The @deftag{teiHeader} element contains only
-the @tag{fileDesc} element.
+The @deftag{teiHeader} element contains one
+@tag{fileDesc} element followed by one
+@tag{profileDesc} element.
 
 The @deftag{fileDesc} element contains exactly (in order)
 the @tag{titleStmt}, @tag{publicationStmt}, and
 @tag{sourceDesc} elements.
 
+The @deftag{profileDesc} element contains only the
+@tag{textClass} element.
+
+@margin-note{
+ Currently, to facilitate transition, documents missing the
+ @tag{profileDesc} element will temporarily be accepted.}
 
 @chunk[$header$
        (define teiHeader/c
          (make-element-contract
           'teiHeader
-          #:children `([1 fileDesc])))
+          #:required-order '(fileDesc profileDesc)
+          #:children `([1 fileDesc]
+                       (code:comment
+                        @#,elem{Soon, exactly 1 @tag{profileDesc} will be required.})
+                       [0-1 profileDesc])))
 
        (define fileDesc/c
          (make-element-contract
@@ -102,7 +114,12 @@ the @tag{titleStmt}, @tag{publicationStmt}, and
           #:children `([1 titleStmt]
                        [1 publicationStmt]
                        [1 sourceDesc])
-          #:required-order `(titleStmt publicationStmt sourceDesc)))]
+          #:required-order `(titleStmt publicationStmt sourceDesc)))
+
+       (define profileDesc/c
+         (make-element-contract
+          'profileDesc
+          #:children `([1 textClass])))]
 
 @subsection{The Title Statement}
 
@@ -237,7 +254,7 @@ It must have:
                      '("invalid combination of date element subtypes inside bibl element"
                        expected: "'(\"this\" \"original\") '(\"original\" \"this\") or '(\"thisIsOriginal\")"
                        given: "~e"
-                       "\n  bibl element...: ~e")
+                       "\n  bibl element...:\n   ~e")
                      bad-subtypes
                      val))]))))
 
@@ -249,6 +266,94 @@ It must have:
                              [type "publication"]
                              [subtype ,(or/c "this" "original" "thisIsOriginal")])
           #:required-attrs '(when type subtype)))]
+
+
+@subsection{The Text Classification}
+
+The @deftag{textClass} element must contain
+one @tag{catRef} element and one @tag{keywords} element.
+
+The @deftag{catRef} element contains nothing.
+It has two attributes, @attr{scheme} and @attr{target},
+both of which are required.
+This element encodes whether
+the document is a book or an article.
+The @attr{scheme} attribute must have the value
+@racket["https://schema.digitalricoeur.org/taxonomy/type"].
+The value for the @attr{target} attribute must be either:
+@itemlist[
+ @item{@racket["https://schema.digitalricoeur.org/taxonomy/type#article"],
+  if the document is an article; or
+ }
+ @item{@racket["https://schema.digitalricoeur.org/taxonomy/type#book"],
+  if the document is a book.
+  }]
+
+The @deftag{keywords} element is currently used to encode flags
+for the @tt{guess-paragraphs} tool.
+It must have a @attr{scheme} element with a value of
+@racket["https://schema.digitalricoeur.org/tools/tei-guess-paragraphs"].
+The @tag{keywords} element must contain exactly one @tag{term} element.
+
+The @deftag{term} element contains immediate text, but its
+contents must conform to the vocabulary prescribed by the @attr{scheme}
+attribute of its parent @tag{keywords} element.
+Currently, its contents must be exactly one of the following:
+@litchar{todo}; @litchar{line-breaks}; @litchar{blank-lines}; @litchar{done};
+or @litchar{skip}.
+Only the @litchar{todo} value should be entered manually.
+
+@chunk[$textClass$
+       (define textClass/c
+         (make-element-contract
+          'textClass
+          #:children '([1 catRef]
+                       [1 keywords])))
+
+       (define catRef/c
+         (make-element-contract
+          'catRef
+          #:attr-contracts
+          `([scheme "https://schema.digitalricoeur.org/taxonomy/type"]
+            [target ,(or/c "https://schema.digitalricoeur.org/taxonomy/type#article"
+                           "https://schema.digitalricoeur.org/taxonomy/type#book")])
+          #:required-attrs '(scheme target)))
+
+       @(define keywords/c
+          (make-element-contract
+           'keywords
+           #:attr-contracts
+           `([scheme "https://schema.digitalricoeur.org/tools/tei-guess-paragraphs"])
+           #:required-attrs '(scheme)
+           #:children '([1 term])))
+
+       (define term/c
+         (make-element-contract
+          'term
+          #:text? #t
+          #:extra-check
+          (λ (val maybe-blame neg-party)
+            (code:comment @#,elem{We filter to allow XML comments.})
+            (match (filter string? (get-body val))
+              [(list (or "todo"
+                         "line-breaks"
+                         "blank-lines"
+                         "done"
+                         "skip"))
+               #t]
+              [bad
+               (and maybe-blame
+                    (raise-blame-error
+                     maybe-blame #:missing-party neg-party
+                     val
+                     '("invalid contents of term element"
+                       expected: "(list/c (or/c \"todo\" \"line-breaks\" \"blank-lines\" \"done\" \"skip\"))"
+                       given: "~e"
+                       "\n  term element...:\n   ~e")
+                     bad
+                     val))]))))]
+
+
 
 @section{The text Element}
 

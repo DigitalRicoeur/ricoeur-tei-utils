@@ -90,6 +90,12 @@ indicate sections that should be filled in with a specific
 type of content, which is explained below the example.
 Whitespace (including indentation) is not significant.
 
+@(define (kwref it)
+   (elemref it (racketvarfont it)))
+
+@(define (indent str)
+   (make-string (string-length str) #\space))
+
 @(filebox
   "example.xml"
   (verbatim
@@ -99,7 +105,7 @@ Whitespace (including indentation) is not significant.
    "  "@litchar{<teiHeader>}"\n"
    "    "@litchar{<fileDesc>}"\n"
    "      "@litchar{<titleStmt>}"\n"
-   "        "(elemref "title-statement" @racketvarfont{title-statement})"\n"
+   "        "@kwref{title-statement}"\n"
    "      "@litchar{</titleStmt>}"\n"
    "      "@litchar{<publicationStmt>}"\n"
    "        "@litchar{<authority>Digital Ricoeur</authority>}"\n"
@@ -109,15 +115,26 @@ Whitespace (including indentation) is not significant.
    "      "@litchar{</publicationStmt>}"\n"
    "      "@litchar{<sourceDesc>}"\n"
    "        "@litchar{<bibl>}"\n"
-   "          "(elemref "source-citation" @racketvarfont{source-citation})"\n"
+   "          "@kwref{source-citation}"\n"
    "        "@litchar{</bibl>}"\n"
    "      "@litchar{</sourceDesc>}"\n"
    "    "@litchar{</fileDesc>}"\n"
+   "    "@litchar{<profileDesc>}"\n"
+   "      "@litchar{<textClass>}"\n"
+   "        "@litchar{<catRef scheme="https://schema.digitalricoeur.org/"}"\n"
+   "        "@(indent "<catRef scheme=\"ht")@litchar{taxonomy/type"}"\n"
+   "        "@(indent "<catRef ")@litchar{target=}@kwref{book/article-target}@litchar{ />}"\n"
+   "        "@litchar{<keywords scheme="https://schema.digitalricoeur.org/"}"\n"
+   "        "@(indent "<keywords scheme=\"ht")@litchar{tools/tei-guess-paragraphs">}"\n"
+   "          "@litchar{<term>todo</term>}"\n"
+   "        "@litchar{</keywords>}
+   "      "@litchar{</textClass>}"\n"
+   "    "@litchar{</profileDesc>}"\n"
    "  "@litchar{</teiHeader>}"\n"
    "  "@litchar{<text>}"\n"
    "    "@litchar{<body>}"\n"
    "      "@litchar{<ab>}"\n"
-   "        "(elemref "main-text" @racketvarfont{main-text})"\n"
+   "        "@kwref{main-text}"\n"
    "      "@litchar{</ab>}"\n"
    "    "@litchar{</body>}"\n"
    "  "@litchar{</text>}"\n"
@@ -130,7 +147,7 @@ Whitespace (including indentation) is not significant.
     (apply nested #:style 'inset body)))
 
 @defkeyword["title-statement"]{
- The @(elemref "title-statement" @racketvarfont{title-statement})
+ The @kwref{title-statement}
  should contain the following tags, which may appear in any order:
  @itemlist[@item[@litchar{<title>}
                  @elem{the title of the work}
@@ -156,7 +173,7 @@ Whitespace (including indentation) is not significant.
 }
 
 @defkeyword["source-citation"]{
- The @(elemref "source-citation" @racketvarfont{source-citation})
+ The @kwref{source-citation}
  should be free-form text specifying the source from which
  the digitized document was created — for example, as
  drawn from the "Books in English" spreadsheet in our Google Drive folder.
@@ -166,14 +183,14 @@ Whitespace (including indentation) is not significant.
  @itemlist[
  @item{a @attr{type} attribute with a value of @racket["publication"];}
  @item{a @attr{subtype} attribute with a value of @racket["this"],
-  @racket["original"], or @racket["thisIsOriginal"]; and}
+   @racket["original"], or @racket["thisIsOriginal"]; and}
  @item{a @attr{when} attribute giving the
-  date in machine-readable format: @racket["YYYY-MM-DD"], @racket["YYYY-MM"],
-  or @racket["YYYY"], where the month
-  and day, if present, must allways be two digits
-  (e.g. @tt{01} for January).}]
+   date in machine-readable format: @racket["YYYY-MM-DD"], @racket["YYYY-MM"],
+   or @racket["YYYY"], where the month
+   and day, if present, must allways be two digits
+   (e.g. @tt{01} for January).}]
 
- The @(elemref "source-citation" @racketvarfont{source-citation})
+ The @kwref{source-citation}
  must contain either one @tag{date} element with a @attr{subtype} of
  @racket["thisIsOriginal"] or two @tag{date} elements,
  one with a @attr{subtype} of @racket["this"]
@@ -188,8 +205,20 @@ Whitespace (including indentation) is not significant.
  is the first published version.
 }
 
+@defkeyword["book/article-target"]{
+ The @kwref{book/article-target} (i.e. the value of the @attr{target}
+ attribute of one @tag{catRef} element) must be either:
+ @itemlist[
+ @item{@racket["https://schema.digitalricoeur.org/taxonomy/type#article"],
+   if the document is an article; or
+  }
+ @item{@racket["https://schema.digitalricoeur.org/taxonomy/type#book"],
+   if the document is a book.
+   }]
+}
+
 @defkeyword["main-text"]{
- The @(elemref "main-text" @racketvarfont{main-text}) part of the
+ The @kwref{main-text} part of the
  template is where the actual digitized text should be included,
  along with pagebreak tags.
 

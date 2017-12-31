@@ -109,7 +109,7 @@
 
 
 (define searchable-document%
-  (class* (TEI-info-mixin object%) [(interface (TEI-info<%>)
+  (class* object% [(interface (TEI-info<%>)
                                       [do-term-search
                                        (->m natural-number/c pregexp? any/c
                                             (is-a?/c document-search-results<%>))])]
@@ -118,10 +118,8 @@
           [(:segments segments)])
     (define segments
       :segments)
-    (define teiHeader
+    (define/TEI-info teiHeader
       (send obj get-teiHeader))
-    (define/override (get-TEI-info)
-      teiHeader)
     (define excerpt-max-allow-chars
       (let ([doc-chars (string-length (string-normalize-spaces
                                        (send obj to-plain-text)))])

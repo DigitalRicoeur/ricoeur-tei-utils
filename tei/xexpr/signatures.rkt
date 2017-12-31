@@ -46,10 +46,29 @@
    titleStmt/c title/c author/c editor/c
    publicationStmt/c authority/c availability/c
    sourceDesc/c bibl/c date/c
+   profileDesc/c textClass/c catRef/c keywords/c term/c
    text/c body/c front/c back/c
    div/c pb/c tei:list/c sp/c
    ab/c p/c head/c note/c item/c
    ))
+
+
+(define (body-in-order? l-child-element-names
+                        order)
+  (let body-in-order? ([l-child-element-names
+                        l-child-element-names]
+                       [order
+                        (filter (λ (n) (memq n l-child-element-names))
+                                order)])
+    (or (null? order)
+        (match l-child-element-names
+          ['() #f]
+          [(cons (? (λ (name) (eq? name (car order))))
+                 more)
+           (body-in-order? more (cdr order))]
+          [(cons _ more)
+           (body-in-order? more order)]))))
+
 
 (define-unit tei-xexpr-contracts@
   (import element-contracts^)
@@ -58,6 +77,7 @@
     (or/c 'TEI 'teiHeader 'fileDesc 'titleStmt 'title 'author 'editor
           'publicationStmt 'authority 'availability
           'sourceDesc 'bibl 'date
+          'profileDesc 'textClass 'catRef 'keywords 'term
           'text 'body 'front 'back
           'div 'pb 'list 'sp 'ab 'p 'head 'note 'item))
 
@@ -76,6 +96,11 @@
       [(sourceDesc) sourceDesc/c]
       [(bibl) bibl/c]
       [(date) date/c]
+      [(profileDesc) profileDesc/c]
+      [(textClass) textClass/c]
+      [(catRef) catRef/c]
+      [(keywords) keywords/c]
+      [(term) term/c]
       [(text) text/c]
       [(body) body/c]
       [(front) front/c]
@@ -125,22 +150,6 @@
        attrs]
       [_
        '()]))
-
-  (define (body-in-order? l-child-element-names
-                          order)
-    (let body-in-order? ([l-child-element-names
-                          l-child-element-names]
-                         [order
-                          (filter (λ (n) (memq n l-child-element-names))
-                                  order)])
-      (or (null? order)
-          (match l-child-element-names
-            ['() #f]
-            [(cons (? (λ (name) (eq? name (car order))))
-                   more)
-             (body-in-order? more (cdr order))]
-            [(cons _ more)
-             (body-in-order? more order)]))))
 
 
   (define-syntax-rule (define-lexical-member-names name ...)
@@ -214,7 +223,7 @@
                       dict:attr->late-neg-projection}
         (for/lists {dict:attr->contract
                     dict:attr->late-neg-projection}
-          ([raw (in-list init:attr-contracts)])
+                   ([raw (in-list init:attr-contracts)])
           (match-define (list attr raw-c)
             raw)
           (define c
@@ -363,7 +372,7 @@
                                                    attr
                                                    #f))]
                #:when maybe-late-neg)
-              (maybe-late-neg (cadr spec) neg-party)))                                                                                    
+          (maybe-late-neg (cadr spec) neg-party)))                                                                                    
       ;                                                           ;;         ;    ;;;;        ;; 
       ;                                                           ;;         ;;     ;;        ;; 
       ;     ;;;  ;     ;    ;;;   ;; ;;; ;     ;             ;;;  ;; ;    ;;;;;     ;;     ;;;;; 

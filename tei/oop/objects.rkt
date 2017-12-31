@@ -67,6 +67,12 @@
            [(bibl) bibl%]
            [(date) date%]
            ;;;;
+           [(profileDesc) profileDesc%]
+           [(textClass) textClass%]
+           [(catRef) catRef%]
+           [(keywords) keywords%]
+           [(term) term%]
+           ;;;;
            [(text) text%]
            [(body) body%]
            [(front) front%]

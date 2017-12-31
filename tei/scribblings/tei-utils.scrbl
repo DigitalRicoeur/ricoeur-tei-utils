@@ -456,7 +456,13 @@ They are used in the implementation of contracts on TEI x-expressions.
           flat-contract?]{
   Creates a contract recognizing a particular Digital Ricœur TEI XML element.
   Used by units implementing @racket[element-contracts^].
-  @;TODO: Add more detail
+
+  The @racket[attr-contracts] argument specifies contracts for the values
+  of attributes, without requiring that those attributes be present.
+
+  The @racket[required-order] argument applies only to children that
+  are actually present. It also allows other children to be present,
+  and it does not insist that they be in any particular order.
 
   When a function is provided as the @racket[extra-check] argument,
   its first argument is the value to which the contract is being applied,

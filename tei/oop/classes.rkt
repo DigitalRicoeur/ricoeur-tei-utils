@@ -17,6 +17,7 @@
          ;;;;
          teiHeader%
          fileDesc%
+         profileDesc%
          ;;;;
          titleStmt%
          title%
@@ -30,6 +31,11 @@
          sourceDesc%
          bibl%
          date%
+         ;;;;
+         textClass%
+         catRef%
+         keywords%
+         term%
          ;;;;
          text%
          body%
@@ -83,9 +89,23 @@
       (send target get-original-publication-date))
     (define/public (get-publication-date)
       (send target get-publication-date))))
-    
+
+(define classification?
+  (is-a?/c classification<%>))
+
+(define classification-mixin
+  ;; TODO eliminate #f case
+  (mixin {element<%>} {classification<%>}
+    (super-new)
+    (inherit get-body)
+    (define target
+      (findf classification? (get-body)))
+    (define/public (get-book/article)
+      (and target (send target get-book/article)))))
+
 (define (TEI-info-mixin %)
-  (class* (get-title-mixin (get-citation-mixin %)) {TEI-info<%>}
+  (class* (classification-mixin (get-title-mixin (get-citation-mixin %)))
+    {TEI-info<%>}
     (super-new)
     (define filename
       (current-filename))
@@ -93,19 +113,19 @@
       filename)))
 
 (define TEI%
-  (class* (elements-only-mixin (TEI-info-mixin guess-paragraphs-element%))
-    {TEI<%>}
+  (class* (elements-only-mixin guess-paragraphs-element%) {TEI<%> TEI-info<%>}
     (super-new)
-    (inherit to-xexpr get-body/elements-only get-title)
+    (inherit to-xexpr get-body/elements-only)
     (match-define (list teiHeader text)
       (get-body/elements-only))
+    (define/TEI-info teiHeader)
     (define pr:md5
       (delay/thread
-        (define-values (in-from-pipe out-to-pipe)
-          (make-pipe))
-        (write-TEI out-to-pipe)
-        (close-output-port out-to-pipe)
-        (md5 in-from-pipe)))
+       (define-values (in-from-pipe out-to-pipe)
+         (make-pipe))
+       (write-TEI out-to-pipe)
+       (close-output-port out-to-pipe)
+       (md5 in-from-pipe)))
     (define/public-final (get-md5)
       (force pr:md5))
     (define/public (get-teiHeader)
@@ -141,11 +161,15 @@
            (write-xexpr (to-xexpr))))))))
     
 (define teiHeader%
-  (class* (TEI-info-mixin (elements-only-mixin element%)) (teiHeader<%>)
+  (class* (TEI-info-mixin (elements-only-mixin element%)) {teiHeader<%>}
     (super-new)))
 
 (define fileDesc%
-  (TEI-info-mixin (elements-only-mixin element%)))
+  ;; no longer a tei-info<%> 
+  (get-title-mixin (get-citation-mixin (elements-only-mixin element%))))
+
+(define profileDesc%
+  (classification-mixin (elements-only-mixin element%)))
 
 ;                                                                          
 ;                                                                          
@@ -311,6 +335,56 @@
 
 (define date-obj?
   (is-a?/c date%))
+
+
+;                                                                          
+;                                                                          
+;                                                                          
+;                                                                          
+;    ;;                      ;;       ;;;   ;;;;                           
+;    ;;                      ;;      ;   ;    ;;                           
+;  ;;;;;;;    ;;;  ;;   ;; ;;;;;;;  ;         ;;      ;;      ;;      ;;   
+;    ;;     ;;   ;   ;  ;    ;;     ;         ;;     ;  ;   ;;  ;   ;;  ;  
+;    ;;     ;    ;   ; ;     ;;    ;;         ;;        ;;   ;       ;     
+;    ;;    ;;;;;;;;   ;      ;;     ;         ;;      ;;;;    ;;      ;;   
+;    ;;     ;        ; ;     ;;     ;         ;;     ;  ;;      ;;      ;; 
+;     ;     ;;   ;  ;   ;     ;      ;   ;     ;    ;;  ;;  ;   ;   ;   ;  
+;      ;;;    ;;;  ;;   ;;     ;;;    ;;;       ;;   ;;; ;   ;;;     ;;;   
+;                                                                          
+;                                                                          
+;                                                                          
+;                                                                          
+
+(define textClass%
+  (class* (elements-only-mixin element%) {classification<%>}
+    (super-new)
+    (inherit get-body/elements-only)
+    (define book/article
+      (for/first ([it (in-list (get-body/elements-only))]
+                  #:when (eq? 'catRef (send it get-name)))
+        (send it get-book/article)))
+    (define/public (get-book/article)
+      book/article)))
+
+(define catRef%
+  (class (elements-only-mixin element%)
+    (super-new)
+    (inherit get-attributes)
+    (define book/article
+      (case (car (dict-ref (get-attributes) 'target))
+        [("https://schema.digitalricoeur.org/taxonomy/type#article")
+         'article]
+        [("https://schema.digitalricoeur.org/taxonomy/type#book")
+         'book]))
+    (define/public (get-book/article)
+      book/article)))
+
+(define keywords%
+  (elements-only-mixin element%))
+
+(define term%
+  (class element%
+    (super-new)))
 
 ;                                  
 ;                                  

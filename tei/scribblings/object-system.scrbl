@@ -31,7 +31,7 @@ which form a thin layer of abstraction over plain x-expressions.
 
 @defproc[(file->TEI [file (and/c path-string? file-exists?)])
          (is-a?/c TEI<%>)]{
-Produces a Racket object representing the TEI XML document @racket[file].
+ Produces a Racket object representing the TEI XML document @racket[file].
 }
 
 @defproc[(tag->element [tag any-tei-xexpr/c]
@@ -250,7 +250,10 @@ implemented by broad categories of TEI elements.
  @margin-note{Unlike other interfaces in this section, @racket[TEI-info<%>]
   is not derived from @racket[element<%>], so it may be freely implemented
   by client modules. However, additional required methods may be added
-  to @racket[TEI-info<%>] without warning.}
+  to @racket[TEI-info<%>] without warning.
+  Therefore, the recommended way for client modules to implement this interface
+  is via @racket[define/TEI-info].
+ }
  
  @defmethod[(get-title) string?]{
   Returns the title of the document, including subtitles.
@@ -272,6 +275,12 @@ implemented by broad categories of TEI elements.
  @defmethod[(get-citation) string?]{
   Returns the human-readable citation for the work
  }
+ @defmethod[(get-book/article) (or/c 'book 'article)]{
+  Indicates whether @(this-obj) represents a book or an article.
+                    
+  @bold{Note} that currently, during a transition perion, this method
+  may also return @racket[#f].
+ }
  @defmethod[(get-resp-string [resp symbol?])
             string?]{
   Returns a string naming the author or editor whose @tt{id}
@@ -280,7 +289,25 @@ implemented by broad categories of TEI elements.
  }
 }
 
+@defform*[((define/TEI-info name TEI-info-expr)
+           (define/TEI-info TEI-info-expr)
+           (define/TEI-info #:each-time TEI-info-expr))
+          #:contracts ([TEI-info-expr (is-a?/c TEI-info<%>)])]{
+ Inside a @racket[class*]-like form, binds all of the methods of
+ @racket[TEI-info<%>] to implementations that invoke those methods
+ on some other object implementing @racket[TEI-info<%>], as
+ determined by the @racket[TEI-info-expr].
+ (A @racket[teiHeader<%>] object would be a good choice.)
 
+ If the @racket[#:each-time] keyword is present, the @racket[TEI-info-expr]
+ is evaluated each time one of the methods is called.
+ Otherwise, it is evaluated when an object of the class in which
+ the @racket[define/TEI-info] form appears is initialized.
+ If @racket[name] is given, it is bound to a private field containing
+ the value of @racket[TEI-info-expr], except that @racket[set!] is
+ disabled for the field to prevent mutation to a non-@racket[TEI-info<%>]
+ value.
+}
 
 @section{Element-specific Interfaces}
 
