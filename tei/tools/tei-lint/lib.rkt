@@ -11,6 +11,7 @@
 
 (provide photo-bitmap
          status-canvas%
+         progress-gauge%
          bold-system-font
          TEI-frame<%>
          STATUS_DOT_SIZE
@@ -129,6 +130,15 @@
 (define bold-system-font
   (make-font #:family 'system
              #:weight 'bold))
+
+(define progress-gauge%
+  (class gauge%
+    (super-new [range 10]
+               [label #f])
+    (inherit get-value set-value)
+    (define/public-final (++)
+      (set-value (add1 (get-value))))))
+
 
 (define TEI-frame<%>
   (interface [(class->interface frame%)]

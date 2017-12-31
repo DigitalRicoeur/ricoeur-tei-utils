@@ -8,6 +8,7 @@
          adjutor
          pict
          "lib.rkt"
+         "splash.rkt"
          )
 
 (module+ main
@@ -19,7 +20,7 @@
   [no-ricoeur-xml:id-canvas%
    (pict->canvas% (red-text-pict "No author element with xml:id=\"ricoeur\""))]
   [no-book/article-canvas%
-   (pict->canvas% (red-text-pict "Missing profileDesc element (not marked as book/article.)"))]
+   (pict->canvas% (red-text-pict "Missing profileDesc element (not marked as book/article)."))]
   [bad-date-order-canvas%
    (pict->canvas% (red-text-pict "Original publication date after this publication date."))]
   [none-canvas%
@@ -45,48 +46,15 @@
 ;                                                  
 
 (define splash-frame%
-  (class frame%
+  (class abstract-splash-frame%
     (super-new [label "TEI Lint"]
+               [subtitle "TEI Lint"]
+               [bitmap photo-bitmap]
                [height (floor (* 5/4 (send photo-bitmap get-height)))])
     (inherit show)
-    (let ([row (new horizontal-pane% [parent this])])
-      (new message%
-           [parent row]
-           [label photo-bitmap])
-      (define col
-        (new vertical-pane% [parent row]))
-      (new message%
-           [parent col]
-           [label "Digital Ricœur"]
-           [font (make-font #:family 'system
-                            #:size 24)])
-      (new message%
-           [parent col]
-           [label "TEI Lint"]
-           [font (make-font #:family 'system
-                            #:size 36
-                            #:weight 'bold)])
-      (define e-c
-        (new editor-canvas%
-             [parent col]
-             [style '(transparent no-border no-hscroll auto-vscroll no-focus)]))
-      (define para
-        (new text% [auto-wrap #t]))
-      (send para insert "To begin, choose a directory containing TEI XML files.")
-      (send para lock #t)
-      (send e-c set-editor para)
-      (new button%
-           [parent col]
-           [label "Choose Directory …"]
-           [callback (λ (b e) (choose-directory))]))
-    (show #t)
-    (unless (xmllint-available?)
-      (show-xmllint-warning this))
-    (define/private (choose-directory)
-      (let ([dir (get-xml-directory this)])
-        (when dir
-          (show #f)
-          (new directory-frame% [dir dir]))))))
+    (define/override-final (on-choose-directory dir)
+      (show #f)
+      (new directory-frame% [dir dir]))))
 
 
 ;                                                                  
@@ -147,14 +115,6 @@
 ;                                                                    ;     
 ;                                                                  ;;      
 ;                                                                          
-
-(define progress-gauge%
-  (class gauge%
-    (super-new [range 10]
-               [label #f])
-    (inherit get-value set-value)
-    (define/public-final (++)
-      (set-value (add1 (get-value))))))
 
 (define loading-frame%
   (class frame%

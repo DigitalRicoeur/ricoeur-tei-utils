@@ -29,6 +29,13 @@ are well-formed XML and meet the project-specific requirements
 expressed in Racket code, but can't actually check that the 
 documents are valid in terms of the DTD.
 
+@section{DR Migration Assistant}
+
+The a GUI program "DR Migration Assistant" is a tool to help make
+batch updates to TEI XML documents.
+Currently, it supports tagging documents as books or articles
+without manually editing the text files.
+
 @section{encode-xml-entities}
 
 The command-line tool @exec{encode-xml-entities} should be run on

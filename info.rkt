@@ -37,8 +37,16 @@
                          (submod ricoeur/tei/tools/raco-tei main)
                          "run Digital Ricoeur TEI commands"
                          #f)))
-(define gracket-launcher-names (list "TEI Lint"))
-(define gracket-launcher-libraries (list "tei/tools/tei-lint/tei-lint.rkt"))
+(define pre-install-collection
+  "tei/tools/migration/icon.rkt")
+(define gracket-launcher-names
+  '("TEI Lint"
+    "DR Migration Assistant"
+    ))
+(define gracket-launcher-libraries
+  '("tei/tools/tei-lint/tei-lint.rkt"
+    "tei/tools/migration/migration-assistant.rkt"
+    ))
 (define racket-launcher-names
   (list "tei-guess-paragraphs"
         "encode-xml-entities"))
