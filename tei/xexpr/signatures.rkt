@@ -237,9 +237,9 @@
         (contract-name
          (coerce-flat-contract 'tei-element-contract% name)))
       ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-      (define/public (get-name)
+      (define/public-final (get-name)
         `(tei-xexpr/c ,name-contract-name))
-      (define/public (stronger-than? other)
+      (define/public-final (stronger-than? other)
         (or (equal? this other)
             (contract-stronger? any-tei-xexpr/c other))) ;<-------                                                                                     
       ;                                                                                          
@@ -252,7 +252,7 @@
       ;     ;;       ;;   ;;          ;;   ;;             ;   ;   ;;      ;   ;;  ;       ;;     
       ;     ;;       ;;   ;;      ;   ;     ;             ;   ;   ;;      ;   ;;  ;;   ;  ;;     
       ;     ;;       ;;   ;;       ;;;       ;;;           ;;;    ;;       ;;; ;    ;;;   ;;     
-      (define/public (first-order)
+      (define/public-final (first-order)
         (λ (val)
           (and (list? val)
                (xexpr? val)
@@ -275,7 +275,7 @@
       ;                                                           ;    ;;
       ;                                                          ;;    ; 
       ;                                                            ;;;;  
-      (define/public (late-neg-projection)
+      (define/public-final (late-neg-projection)
         (λ (blame)
           (define list-xexpr-late-neg
             (list-xexpr-late-neg-projection (blame-add-context blame #f)))
@@ -333,46 +333,51 @@
       ;    ;;   ; ;;  ;;  ;;   ;   ;;   ; ;;   ;          ;;  ;;    ;       ;     ;;      ;   ;  
       ;      ;;;  ;;  ;;    ;;;      ;;;  ;;   ;;          ;;; ;     ;;;     ;;;  ;;       ;;;   
       ;
+      (define/private (combined:check-attributes val
+                                                 maybe-blame
+                                                 neg-party
+                                                 dict:attr->late-neg)
+        (let/ec return
+          (define attrs
+            (get-attributes val))
+          ;check required attributes
+          (for ([required (in-list required-attrs)]
+                #:unless (assq required attrs))
+            (if maybe-blame
+                (raise-blame-error 
+                 maybe-blame #:missing-party neg-party
+                 val
+                 '(expected:
+                   "attributes including required attribute ~e"
+                   given: "~e")
+                 required
+                 val)
+                (return #f)))
+          ;check attribute values satisfy contracts
+          (for* ([spec (in-list attrs)]
+                 [attr (in-value (car spec))]
+                 [maybe-cntct/late-neg
+                  (in-value (dict-ref (if maybe-blame
+                                          dict:attr->late-neg
+                                          dict:attr->contract)
+                                      attr
+                                      #f))]
+                 #:when maybe-cntct/late-neg)
+            (if maybe-blame
+                (maybe-cntct/late-neg (cadr spec) neg-party)
+                (unless ((flat-contract-predicate maybe-cntct/late-neg)
+                         (cadr spec))
+                  (return #f))))))
       (define/private (first-order:check-attributes val)
-        (define attrs
-          (get-attributes val))
-        (and
-         ;check required attributes
-         (for/and ([required (in-list required-attrs)])
-           (assq required attrs))
-         ;check attribute values satisfy contracts
-         (for*/and ([spec (in-list attrs)]
-                    [attr (in-value (car spec))]
-                    [maybe-cntct (in-value (dict-ref dict:attr->contract
-                                                     attr
-                                                     #f))]
-                    #:when maybe-cntct)
-           ((flat-contract-predicate maybe-cntct) (cadr spec)))))
+        (combined:check-attributes val #f #f #f))
       (define/private (late-neg:check-attributes blame
                                                  val
                                                  neg-party
                                                  dict:attr->late-neg)
-        (define attrs
-          (get-attributes val))
-        ;check required attributes
-        (for ([required (in-list required-attrs)]
-              #:unless (assq required attrs))
-          (raise-blame-error 
-           blame #:missing-party neg-party
-           val
-           '(expected:
-             "attributes including required attribute ~e"
-             given: "~e")
-           required
-           val))
-        ;check attribute values satisfy contracts
-        (for* ([spec (in-list attrs)]
-               [attr (in-value (car spec))]
-               [maybe-late-neg (in-value (dict-ref dict:attr->late-neg
-                                                   attr
-                                                   #f))]
-               #:when maybe-late-neg)
-          (maybe-late-neg (cadr spec) neg-party)))                                                                                    
+        (combined:check-attributes val
+                                   blame
+                                   neg-party
+                                   dict:attr->late-neg))                                                                                  
       ;                                                           ;;         ;    ;;;;        ;; 
       ;                                                           ;;         ;;     ;;        ;; 
       ;     ;;;  ;     ;    ;;;   ;; ;;; ;     ;             ;;;  ;; ;    ;;;;;     ;;     ;;;;; 
@@ -385,61 +390,59 @@
       ;                                     ;                                                    
       ;                                    ;                                                     
       ;                                  ;;
+      (define/private (combined:check-every-child val body maybe-blame neg-party)
+        (let/ec return
+          (for ([child (in-list body)])
+            (match child
+              [(cons child-name _)
+               ;check child is allowed
+               (unless (memq child-name allowed-children)
+                 (if maybe-blame
+                     (raise-blame-error
+                      maybe-blame #:missing-party neg-party
+                      val
+                      `(expected:
+                        "only child elements in this list: ~a"
+                        given: "~e"
+                        "\n  context: ~e")
+                      (pretty-format allowed-children)
+                      child-name
+                      val)
+                     (return #f)))
+               ;check child is valid
+               (if maybe-blame
+                   (((get/build-late-neg-projection
+                      (tei-xexpr/c child-name))
+                     (blame-add-context maybe-blame
+                                        (format "a child ~a element of"
+                                                child-name)))
+                    child neg-party)
+                   (unless ((tei-xexpr/c child-name) child)
+                     (return #f)))]
+              [(pregexp #px"^\\s*$")
+               (void)]
+              [bad
+               ;check text?
+               (unless text?
+                 (if maybe-blame
+                     (raise-blame-error
+                      maybe-blame #:missing-party neg-party
+                      val
+                      '(expected:
+                        "a body without textual content"
+                        given:
+                        "~e"
+                        "\n  offending part: ~e")
+                      val
+                      bad)
+                     (return #f)))]))))
       (define/private (first-order:check-every-child val body)
-        (for/and ([child (in-list body)])
-          (match child
-            [(cons child-name _)
-             (and 
-              ;check child is allowed
-              (memq child-name allowed-children)
-              ;check child is valid
-              ((flat-contract-predicate (tei-xexpr/c child-name))
-               child))]
-            [(pregexp #px"^\\s*$")
-             #t]
-            [_ 
-             text?])))
+        (combined:check-every-child val body #f #f))
       (define/private (late-neg:check-every-child blame
                                                   val
                                                   neg-party
                                                   body)
-        (for ([child (in-list body)])
-          (match child
-            [(cons child-name _)
-             ;check child is allowed
-             (unless (memq child-name allowed-children)
-               (raise-blame-error
-                blame #:missing-party neg-party
-                val
-                `(expected:
-                  "only child elements in this list: ~a"
-                  given: "~e"
-                  "\n  context: ~e")
-                (pretty-format allowed-children)
-                child-name
-                val))
-             ;check child is valid
-             (((get/build-late-neg-projection
-                (tei-xexpr/c child-name))
-               (blame-add-context blame
-                                  (format "a child ~a element of"
-                                          child-name)))
-              child neg-party)]
-            [(pregexp #px"^\\s*$")
-             (void)]
-            [bad
-             ;check text?
-             (unless text?
-               (raise-blame-error
-                blame #:missing-party neg-party
-                val
-                '(expected:
-                  "a body without textual content"
-                  given:
-                  "~e"
-                  "\n  offending part: ~e")
-                val
-                bad))])))                                
+        (combined:check-every-child val body blame neg-party))                           
       ;   ;; ;;;    ;;;   ; ;;      ;;   
       ;   ;;;     ;;   ;  ;;  ;   ;;  ;  
       ;   ;;      ;    ;  ;;  ;    ;     
@@ -450,65 +453,65 @@
       ;                   ;;             
       ;                   ;;             
       ;                   ;;
+      (define/private (combined:check-repetition-constraints val
+                                                             body
+                                                             maybe-blame
+                                                             neg-party)
+        (let/ec return
+          (for ([pr (in-list children-assocs)])
+            (match-define (cons rep child-name)
+              pr)
+            (unless (eq? rep '0+)
+              (define count
+                (length (for/list ([child (in-list body)]
+                                   #:when (and (list? child)
+                                               (eq? child-name (car child))))
+                          child)))
+              (case rep
+                [(1 1+)
+                 (when (= 0 count)
+                   (if maybe-blame
+                       (raise-blame-error
+                        maybe-blame #:missing-party neg-party
+                        val
+                        '(expected:
+                          "~a child element ~e"
+                          given: "~e")
+                        (case rep
+                          [(1) "a"]
+                          [(1+) "at least one"])
+                        child-name
+                        val)
+                       (return #f)))])
+              (case rep
+                [(1 0-1)
+                 (when (< 1 count)
+                   (if maybe-blame
+                       (raise-blame-error
+                        maybe-blame #:missing-party neg-party
+                        val
+                        '(expected:
+                          "~a one child element ~e"
+                          given: "~e")
+                        (case rep
+                          [(1) "only"]
+                          [(0-1) "at most"])
+                        child-name
+                        val)
+                       (return #f)))])))))
       (define/private (first-order:check-repetition-constraints val body)
-        (for/and ([pr (in-list children-assocs)])
-          (match-define (cons rep child-name)
-            pr)
-          (cond
-            [(eq? rep '0+)
-             #t]
-            [else
-             (define count
-               (length (for/list ([child (in-list body)]
-                                  #:when (and (list? child)
-                                              (eq? name (car child))))
-                         child)))
-             (case rep
-               [(1) (= 1 count)]
-               [(1+) (not (= 0 count))]
-               [(0-1) (or (= 0 count)
-                          (= 1 count))])])))
+        (combined:check-repetition-constraints val
+                                               body
+                                               #f
+                                               #f))
       (define/private (late-neg:check-repetition-constraints blame
                                                              val
                                                              neg-party
                                                              body)
-        (for ([pr (in-list children-assocs)])
-          (match-define (cons rep child-name)
-            pr)
-          (unless (eq? rep '0+)
-            (define count
-              (length (for/list ([child (in-list body)]
-                                 #:when (and (list? child)
-                                             (eq? child-name (car child))))
-                        child)))
-            (case rep
-              [(1 1+)
-               (when (= 0 count)
-                 (raise-blame-error
-                  blame #:missing-party neg-party
-                  val
-                  '(expected:
-                    "~a child element ~e"
-                    given: "~e")
-                  (case rep
-                    [(1) "a"]
-                    [(1+) "at least one"])
-                  child-name
-                  val))])
-            (case rep
-              [(1 0-1)
-               (when (< 1 count)
-                 (raise-blame-error
-                  blame #:missing-party neg-party
-                  val
-                  '(expected:
-                    "~a one child element ~e"
-                    given: "~e")
-                  (case rep
-                    [(1) "only"]
-                    [(0-1) "at most"])
-                  child-name
-                  val))]))))                                                                               
+        (combined:check-repetition-constraints val
+                                               body
+                                               blame
+                                               neg-party))                                                                               
       ;                                                                                  
       ;   ;;                  ;;                                      ;;                 
       ;   ;;                  ;;                                      ;;                 
@@ -533,11 +536,7 @@
                                             neg-party
                                             body)
       
-        (unless (or (null? required-order)
-                    (body-in-order? (for/list ([ch (in-list body)]
-                                               #:when (list? ch))
-                                      (car ch))
-                                    required-order))
+        (unless (first-order:check-order val body)
           (raise-blame-error
            blame #:missing-party neg-party
            val
