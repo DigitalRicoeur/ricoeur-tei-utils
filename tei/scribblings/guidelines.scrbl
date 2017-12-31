@@ -127,7 +127,7 @@ Whitespace (including indentation) is not significant.
    "        "@litchar{<keywords scheme="https://schema.digitalricoeur.org/"}"\n"
    "        "@(indent "<keywords scheme=\"ht")@litchar{tools/tei-guess-paragraphs">}"\n"
    "          "@litchar{<term>todo</term>}"\n"
-   "        "@litchar{</keywords>}
+   "        "@litchar{</keywords>}"\n"
    "      "@litchar{</textClass>}"\n"
    "    "@litchar{</profileDesc>}"\n"
    "  "@litchar{</teiHeader>}"\n"
