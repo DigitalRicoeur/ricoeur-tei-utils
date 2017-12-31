@@ -291,7 +291,7 @@ The value for the @attr{target} attribute must be either:
 
 The @deftag{keywords} element is currently used to encode flags
 for the @tt{guess-paragraphs} tool.
-It must have a @attr{scheme} element with a value of
+It must have a @attr{scheme} attribute with a value of
 @racket["https://schema.digitalricoeur.org/tools/tei-guess-paragraphs"].
 The @tag{keywords} element must contain exactly one @tag{term} element.
 
