@@ -295,10 +295,15 @@
      #`(begin
          (define real-name val-expr.c)
          (define-syntax name
-           ; to prevent set!
-           (syntax-parser
-             [_:id
-              #'real-name]))
+           (make-set!-transformer
+            (syntax-parser
+              #:literals {set!}
+              [(set! _ v)
+               #:declare v (expr/c #'(is-a?/c TEI-info<%>)
+                                   #:name "TEI-info<%> expression")
+               #'(set! real-name v.c)]
+              [_:id
+               #'real-name])))
          #,@(make-methods-syntaxes #'real-name #'name))]
     [(_ val-expr)
      #:declare val-expr (expr/c #'(is-a?/c TEI-info<%>)

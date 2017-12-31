@@ -54,6 +54,10 @@
          current-filename
          )
 
+(define-local-member-name TMP-add-profileDesc)
+(module+ TMP-add-profileDesc
+  (provide TMP-add-profileDesc))
+
 (define current-filename
   (make-parameter #f))
 
@@ -115,9 +119,25 @@
 (define TEI%
   (class* (elements-only-mixin guess-paragraphs-element%) {TEI<%> TEI-info<%>}
     (super-new)
-    (inherit to-xexpr get-body/elements-only)
+    (inherit to-xexpr
+             get-attributes
+             get-body
+             get-body/elements-only)
     (match-define (list teiHeader text)
       (get-body/elements-only))
+    (define/public-final (TMP-add-profileDesc profileDesc-elem)
+      (define new-header
+        (send teiHeader TMP-add-profileDesc profileDesc-elem))
+      (new this%
+           [name 'TEI]
+           [attributes (get-attributes)]
+           [body (let loop ([body (get-body)])
+                   (match body
+                     [(cons (? classification?) more)
+                      (cons new-header more)]
+                     [(cons other more)
+                      (cons other (loop more))]))]))
+                       
     (define/TEI-info teiHeader)
     (define pr:md5
       (delay/thread
@@ -162,7 +182,14 @@
     
 (define teiHeader%
   (class* (TEI-info-mixin (elements-only-mixin element%)) {teiHeader<%>}
-    (super-new)))
+    (super-new)
+    (inherit get-attributes get-body)
+    (define/public-final (TMP-add-profileDesc profileDesc-elem)
+      (new this%
+           [name 'teiHeader]
+           [attributes (get-attributes)]
+           [body (append (get-body)
+                         (list profileDesc-elem))]))))
 
 (define fileDesc%
   ;; no longer a tei-info<%> 

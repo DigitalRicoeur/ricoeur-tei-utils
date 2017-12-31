@@ -301,12 +301,14 @@ implemented by broad categories of TEI elements.
 
  If the @racket[#:each-time] keyword is present, the @racket[TEI-info-expr]
  is evaluated each time one of the methods is called.
- Otherwise, it is evaluated when an object of the class in which
+ Otherwise, the @racket[TEI-info-expr] evaluated
+ when an object of the class in which
  the @racket[define/TEI-info] form appears is initialized.
+ 
  If @racket[name] is given, it is bound to a private field containing
  the value of @racket[TEI-info-expr], except that @racket[set!] is
- disabled for the field to prevent mutation to a non-@racket[TEI-info<%>]
- value.
+ protected by a contract insisting that the new value also
+ be an object implementing @racket[TEI-info<%>].
 }
 
 @section{Element-specific Interfaces}
