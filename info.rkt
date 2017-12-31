@@ -33,9 +33,9 @@
                        (multi-page)
                        ("Digital Ricœur" 0)
                        )))
-(define raco-commands '(("tei-to-plain-text"
-                         (submod ricoeur/tei/tools/tei-to-plain-text main)
-                         "convert TEI XML file to plain text"
+(define raco-commands '(("tei"
+                         (submod ricoeur/tei/tools/raco-tei main)
+                         "run Digital Ricoeur TEI commands"
                          #f)))
 (define gracket-launcher-names (list "TEI Lint"))
 (define gracket-launcher-libraries (list "tei/tools/tei-lint/tei-lint.rkt"))

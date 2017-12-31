@@ -18,6 +18,8 @@
    (pict->canvas% (red-text-pict "MISSING"))]
   [no-ricoeur-xml:id-canvas%
    (pict->canvas% (red-text-pict "No author element with xml:id=\"ricoeur\""))]
+  [no-book/article-canvas%
+   (pict->canvas% (red-text-pict "Missing profileDesc element (not marked as book/article.)"))]
   [bad-date-order-canvas%
    (pict->canvas% (red-text-pict "Original publication date after this publication date."))]
   [none-canvas%
@@ -110,9 +112,9 @@
   (define m-file (new menu% [label "File"] [parent mb]))
   (unless directory?
     (new menu-item%
-       [parent m-file]
-       [label "Show directory"]
-       [callback (λ (i e) (send dir-frame show #t))]))
+         [parent m-file]
+         [label "Show directory"]
+         [callback (λ (i e) (send dir-frame show #t))]))
   (new menu-item%
        [parent m-file]
        [label "Open additional directory …"]
@@ -156,16 +158,17 @@
 
 (define loading-frame%
   (class frame%
-    (init-field dir)
+    (init dir
+          [dir-string (path->string dir)])
     (super-new [label (string-append "Loading "
-                                     (path->string dir)
+                                     dir-string
                                      "… - TEI Lint")]
                [alignment '(center top)])
     (inherit show)
     (new message%
          [parent this]
          [label (string-append "Checking files in "
-                               (path->string dir)
+                               dir-string
                                " …")])
     (define progress
       (new progress-gauge%
@@ -201,13 +204,12 @@
                [parent row]
                [label "Refresh"]
                [callback (λ (b e) (refresh-directory))]))
-        (define e-c
-          (new editor-canvas%
-               [style '(transparent auto-hscroll auto-vscroll)]
-               [parent this]))
         (define ed
           (new text%))
-        (send e-c set-editor ed)
+        (new editor-canvas%
+             [style '(transparent auto-hscroll auto-vscroll)]
+             [parent this]
+             [editor ed])
         (define file-snips
           (let ([pths (for/list ([pth (in-directory dir)]
                                  #:when (xml-path? pth))
@@ -394,12 +396,12 @@
                                               line-padding))])
       (send dc set-font old-font))
     (define/override-final (get-extent dc x y	 	 	 	 
-                                 [w #f]
-                                 [h #f]
-                                 [descent #f]
-                                 [space #f]
-                                 [lspace #f]
-                                 [rspace #f])
+                                       [w #f]
+                                       [h #f]
+                                       [descent #f]
+                                       [space #f]
+                                       [lspace #f]
+                                       [rspace #f])
       (define-syntax-rule (maybe-set-boxes! [b v] ...)
         (begin (when b (set-box! b v)) ...))
       (maybe-set-boxes!
@@ -573,6 +575,7 @@
       (if (and pages-ok?
                (date<=? (send val get-original-publication-date)
                         (send val get-publication-date))
+               (send val get-book/article)
                (force promise:ricoeur-xml:id-ok?))
           'ok
           'warning))
@@ -646,6 +649,22 @@
             (send val get-citation))
       (send para lock #t)
       (send e-c set-editor para))
+    ;; Type
+    (let ([row (new horizontal-pane%
+                    [parent this]
+                    [alignment '(left top)])])
+      (case (send val get-book/article)
+        [(book)
+         (new message%
+              [parent row]
+              [label "Type: Book"])]
+        [(article)
+         (new message%
+              [parent row]
+              [label "Type: Article"])]
+        [(#f)
+         (new no-book/article-canvas%
+              [parent row])]))
     ;; Date
     (let ([sect (new vertical-pane%
                      [parent this]

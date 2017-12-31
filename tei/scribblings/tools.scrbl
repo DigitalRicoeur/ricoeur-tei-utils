@@ -29,22 +29,6 @@ are well-formed XML and meet the project-specific requirements
 expressed in Racket code, but can't actually check that the 
 documents are valid in terms of the DTD.
 
-@subsection{Command-line Validation}
-
-In the @tt{TEI} directory of the @tt{texts} repository,
-the @tt{validate-all.rkt} script provides a way to perform
-a subset of the checking done by "TEI Lint" from the command line,
-though it only works under a Unix-like shell
-(i.e. on Mac OS or GNU/Linux, or possibly under Cygwin).
-It also only checks that the documents are valid, well-formed, and
-meet the additional requirements stated in
-@other-doc['(lib "ricoeur/tei/scribblings/guidelines.scrbl")]: it
-does not check for subtle mistakes. For both of these reasons,
-"TEI Lint" should generally be preferred.
-
-The script can also be invoked by running
-@tt{make validate} in the root directory of the @tt{texts} repository.
-
 @section{encode-xml-entities}
 
 The command-line tool @exec{encode-xml-entities} should be run on
@@ -70,13 +54,33 @@ replaced each "annonymous block" with one long paragraph, it
 would be better to revert your change and wait for this tool
 to be improved than to commit such semantically meaningless output.
 
-@section{raco tei-to-plain-text}
+@section{raco tei}
 
-The @tt{raco} subcommand @tt{tei-to-plain-text} writes a
-TEI XML file to STDOUT as plain text.
-It is primarily intended to be used by invoking @exec{make}
-in the @tt{texts} repository, which will populate the
-@tt{plain-text} directory with plain text versions of
-every TEI XML file in the @tt{TEI} directory.
-If for some reason you want to use it directly,
-run @exec{raco tei-to-plain-text -h} for usage information.
+The @exec{raco tei} command extends @exec{raco} with some further
+subcommands for processing TEI documents.
+These are primarily intended to be used via @exec{make}
+in the @tt{texts} repository.
+They are included as @exec{raco} subcommands to ensure they are
+in the @tt{PATH} under most circumstances.
+@itemlist[
+ @item{@exec{raco tei to-plain-text} writes a
+  TEI XML file to STDOUT as plain text.
+  It is primarily intended to be used by invoking @exec{make}
+  (or @exec{make all}) in the @tt{texts} repository,
+  which will populate the
+  @tt{plain-text} directory with plain text versions of
+  every TEI XML file in the @tt{TEI} directory.
+  If for some reason you want to use it directly,
+  run @exec{raco tei-to-plain-text -h} for usage information.
+  }
+  @item{@exec{raco tei validate-directory} validates all of
+  the XML files in some directory, enforcing both the DTD
+  (when @exec{xmllint} is available) and the additional requirements
+  specified in @other-doc['(lib "ricoeur/tei/scribblings/guidelines.scrbl")].
+  It does not give warnings about potential subtle mistakes,
+  so "TEI Lint" should generally be preferred.
+
+  Running @exec{make validate} in the root directory of the @tt{texts}
+  repository validates the contents of the @tt{TEI} directory
+  of that repository.
+  }]
