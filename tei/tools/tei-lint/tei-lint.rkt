@@ -243,6 +243,9 @@
              (title<? (send a get-title)
                       (send b get-title))))))
 
+(define hand-cursor
+  (make-object cursor% 'hand))
+
 (define file-snip%
   (class snip%
     (super-new)
@@ -280,6 +283,13 @@
                       'handles-all-mouse-events
                       'hard-newline
                       (get-flags)))
+    (define/override (adjust-cursor dc	 
+                                    x	 
+                                    y	 
+                                    editorx	 
+                                    editory	 
+                                    event)
+      hand-cursor)
     (define pth-str (path->string pth))
     (define quasi-title
       (if (or (xmllint-error? val)
