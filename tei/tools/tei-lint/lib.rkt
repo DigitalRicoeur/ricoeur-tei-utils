@@ -16,6 +16,7 @@
          big-bold-system-font
          TEI-frame<%>
          STATUS_DOT_SIZE
+         insert-message-row
          (contract-out
           [scroll-editor-to-top
            (-> (is-a?/c editor<%>) any)]
@@ -61,6 +62,20 @@
          (loop (add1 wait)))]
       [else
        (send ed scroll-to-position 0)])))
+
+(define (insert-message-row parent l r #:left-font [left-font bold-system-font])
+  (define row
+    (new horizontal-pane%
+         [parent parent]
+         [alignment '(left bottom)]))
+  (new message%
+       [label l]
+       [font left-font]
+       [parent row])
+  (new message%
+       [label r]
+       [parent row])
+  (void))
 
 (define (get-xml-directory [parent #f])
   (let ([pth (get-directory "Choose a directory containing TEI XML files."

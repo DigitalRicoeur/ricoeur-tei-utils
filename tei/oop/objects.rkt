@@ -2,6 +2,7 @@
 
 (require (except-in xml element?)
          ricoeur/tei/xexpr/tei-xexpr-contracts
+         ricoeur/tei/xexpr/normalize
          ricoeur/tei/oop/interfaces
          ricoeur/tei/oop/classes
          data/maybe
@@ -58,45 +59,46 @@
       [(cons name raw-body)
        (values name null raw-body)]))
   (new (case name
-           [(TEI) TEI%]
-           [(teiHeader) teiHeader%] 
-           [(fileDesc) fileDesc%]
-           [(titleStmt) titleStmt%]
-           [(title) title%]
-           [(author) author%]
-           [(editor) editor%]
-           [(publicationStmt) publicationStmt%]
-           [(authority) authority%]
-           [(availability) availability%]
-           [(sourceDesc) sourceDesc%]
-           [(bibl) bibl%]
-           [(date) date%]
-           ;;;;
-           [(profileDesc) profileDesc%]
-           [(textClass) textClass%]
-           [(catRef) catRef%]
-           [(keywords) keywords%]
-           [(term) term%]
-           ;;;;
-           [(text) text%]
-           [(body) body%]
-           [(front) front%]
-           [(back) back%]
-           [(div) div%]
-           [(pb) pb%]
-           [(list) list%]
-           [(sp) sp%]
-           [(ab) ab%]
-           [(p) p%]
-           [(head) head%]
-           [(note) note%]
-           [(item) item%])
-         [name name]
-         [attributes attributes]
-         [body (for/list ([child (in-list raw-body)])
-                 (if (list? child)
-                     (tag->element* child)
-                     child))]))
+         [(TEI) TEI%]
+         [(teiHeader) teiHeader%] 
+         [(fileDesc) fileDesc%]
+         [(titleStmt) titleStmt%]
+         [(title) title%]
+         [(author) author%]
+         [(editor) editor%]
+         [(publicationStmt) publicationStmt%]
+         [(authority) authority%]
+         [(availability) availability%]
+         [(sourceDesc) sourceDesc%]
+         [(bibl) bibl%]
+         [(date) date%]
+         ;;;;
+         [(profileDesc) profileDesc%]
+         [(textClass) textClass%]
+         [(catRef) catRef%]
+         [(keywords) keywords%]
+         [(term) term%]
+         ;;;;
+         [(text) text%]
+         [(body) body%]
+         [(front) front%]
+         [(back) back%]
+         [(div) div%]
+         [(pb) pb%]
+         [(list) list%]
+         [(sp) sp%]
+         [(ab) ab%]
+         [(p) p%]
+         [(head) head%]
+         [(note) note%]
+         [(item) item%])
+       [name name]
+       [attributes attributes]
+       [body (for/list ([child (in-list
+                                (normalize-xexpr-body raw-body))])
+               (if (list? child)
+                   (tag->element* child)
+                   child))]))
   
 
 (define (discard-bom p)
@@ -117,8 +119,10 @@
    #:filename filename))
 
 (define (file->TEI pth-str)
-  (call-with-input-file  pth-str
-    (λ (in) (read-TEI in #:filename pth-str))))
+  (parameterize ([current-object-modify-seconds
+                  (file-or-directory-modify-seconds pth-str)])
+    (call-with-input-file  pth-str
+      (λ (in) (read-TEI in #:filename pth-str)))))
 
 
 (define maybe-date-order

@@ -12,6 +12,9 @@
            (-> non-element-xexpr/c string?)]
           [non-element-body->plain-text
            (-> (listof non-element-xexpr/c) string?)]
+          [normalize-xexpr-body
+           (-> (listof xexpr/c)
+               (listof (or/c string? (and/c list? xexpr/c))))]
           ))
 
 (define (non-element-xexpr->plain-text child)
@@ -49,6 +52,37 @@
 
 (define (valid-char->plain-text num)
   (string (integer->char num)))
+
+(define (normalize-xexpr-body body)
+  (match body
+    ['() '()]
+    [(cons (? list? elem) more)
+     (cons elem (normalize-xexpr-body more))]
+    [(cons non-element more)
+     (let normalize-textual-data ([l-str-so-far
+                                   (list (non-element-xexpr->plain-text
+                                          non-element))]
+                                  [body more])
+       (match body
+         [(cons (? non-element-xexpr/c non-element)
+                more)
+          (normalize-textual-data
+           (cons (non-element-xexpr->plain-text non-element)
+                 l-str-so-far)
+           more)]
+         [more
+          (cons (string-join (reverse l-str-so-far) "")
+                (normalize-xexpr-body more))]))]))
+
+
+
+
+
+
+
+
+
+
 
 
 

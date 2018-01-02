@@ -4,6 +4,7 @@
          ricoeur/tei/oop/interfaces
          (submod ricoeur/tei/oop/interfaces private)
          ricoeur/tei/xmllint
+         ricoeur/tei/xexpr/normalize
          roman-numeral
          data/maybe
          (rename-in data/functor
@@ -53,12 +54,16 @@
          ;;
          current-filename
          current-full-path
+         current-object-modify-seconds
          )
 
 (define current-filename
   (make-parameter #f))
 
 (define current-full-path
+  (make-parameter #f))
+
+(define current-object-modify-seconds
   (make-parameter #f))
 
 (define (concrete-element%)
@@ -106,21 +111,65 @@
     (define/public (get-book/article)
       (send target get-book/article))))
 
+(define guess-paragraphs-status?
+  (is-a?/c tei-guess-paragraphs-status<%>))
+
+(define update-guess-paragraphs-status-mixin
+  (mixin {element<%>} {}
+    (super-new)
+    (inherit get-name get-attributes get-body)
+    (define/public (update-guess-paragraphs-status new-status)
+      (new this%
+           [name (get-name)]
+           [attributes (get-attributes)]
+           [body (list/pred/update (get-body)
+                                   guess-paragraphs-status?
+                                   (λ (target)
+                                     (send target
+                                           update-guess-paragraphs-status
+                                           new-status)))]))))
+
+(define (list/pred/update lst pred? update)
+  (let loop ([lst lst])
+    (match lst
+      [(cons (? pred? target)
+             more)
+       (cons (update target) more)]
+      [(cons a more)
+       (cons a (loop more))])))
+
+
+(define (guess-paragraphs-status-mixin %)
+  (class* (update-guess-paragraphs-status-mixin %) {tei-guess-paragraphs-status<%>}
+    (super-new)
+    (inherit get-body)
+    (define target
+      (findf guess-paragraphs-status? (get-body)))
+    (define/public-final (get-guess-paragraphs-status)
+      (send target get-guess-paragraphs-status))))
+
 (define (TEI-info-mixin %)
-  (class* (classification-mixin (get-title-mixin (get-citation-mixin %)))
+  (class* (guess-paragraphs-status-mixin
+           (classification-mixin (get-title-mixin (get-citation-mixin %))))
     {TEI-info<%>}
     (super-new)
     (define full-path
       (current-full-path))
     (define filename
       (current-filename))
+    (define secs
+      (current-object-modify-seconds))
+    (define/public-final (get-modify-seconds)
+      secs)
     (define/public-final (get-full-path)
       full-path)
     (define/public-final (get-filename)
       filename)))
 
 (define TEI%
-  (class* (elements-only-mixin guess-paragraphs-element%) {TEI<%> TEI-info<%>}
+  (class* (update-guess-paragraphs-status-mixin
+           (elements-only-mixin guess-paragraphs-element%))
+    {TEI<%> TEI-info<%>}
     (super-new)
     (inherit to-xexpr
              get-attributes
@@ -128,18 +177,6 @@
              get-body/elements-only)
     (match-define (list teiHeader text)
       (get-body/elements-only))
-    #|(define/public-final (TMP-add-profileDesc profileDesc-elem)
-      (define new-header
-        (send teiHeader TMP-add-profileDesc profileDesc-elem))
-      (new this%
-           [name 'TEI]
-           [attributes (get-attributes)]
-           [body (let loop ([body (get-body)])
-                   (match body
-                     [(cons (? classification?) more)
-                      (cons new-header more)]
-                     [(cons other more)
-                      (cons other (loop more))]))]))|#
     (define/TEI-info teiHeader)
     (define pr:md5
       (delay/sync
@@ -152,6 +189,10 @@
       (force pr:md5))
     (define/public-final (get-teiHeader)
       teiHeader)
+    (define/override (guess-paragraphs #:mode [mode 'blank-lines])
+      (send (super guess-paragraphs #:mode mode)
+            update-guess-paragraphs-status
+            mode))
     (define/override-final (to-pre-segments pred
                                             call-with-metadata
                                             acc
@@ -193,7 +234,7 @@
   (get-title-mixin (get-citation-mixin (elements-only-mixin element%))))
 
 (define profileDesc%
-  (classification-mixin (elements-only-mixin element%)))
+  (guess-paragraphs-status-mixin (classification-mixin (elements-only-mixin element%))))
 
 ;                                                                          
 ;                                                                          
@@ -380,7 +421,8 @@
 ;                                                                          
 
 (define textClass%
-  (class* (elements-only-mixin element%) {classification<%>}
+  (class* (guess-paragraphs-status-mixin (elements-only-mixin element%))
+    {classification<%>}
     (super-new)
     (inherit get-body/elements-only)
     (define book/article
@@ -404,11 +446,35 @@
       book/article)))
 
 (define keywords%
-  (elements-only-mixin element%))
-
+  (class* (elements-only-mixin element%) {tei-guess-paragraphs-status<%>}
+    (super-new)
+    (inherit get-attributes get-body get-body/elements-only)
+    (define status
+      (string->symbol
+       (non-element-body->plain-text
+        (send (car (get-body/elements-only))
+              get-body))))
+    (define/public-final (get-guess-paragraphs-status)
+      status)
+    (define/public-final (update-guess-paragraphs-status new-status)
+      (new this%
+           [name 'keywords]
+           [attributes (get-attributes)]
+           [body (list/pred/update
+                  (get-body)
+                  term?
+                  (λ (_)
+                    (new term%
+                         [name 'term]
+                         [attributes '()]
+                         [body (list (symbol->string new-status))])))]))))
+    
 (define term%
   (class element%
     (super-new)))
+
+(define term?
+  (is-a?/c term%))
 
 ;                                  
 ;                                  

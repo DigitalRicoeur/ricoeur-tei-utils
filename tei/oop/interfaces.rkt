@@ -37,6 +37,8 @@
            get-publication-date<%>
            get-citation<%>
            classification<%>
+           tei-guess-paragraphs-status<%>
+           update-guess-paragraphs-status
            body-element%
            guess-paragraphs-element%
            ab?
@@ -204,9 +206,23 @@
   (interface ()
     [get-book/article (->m (or/c 'book 'article))]))
 
+(define-local-member-name update-guess-paragraphs-status)
+
+(define tei-guess-paragraphs-status<%>
+  (interface ()
+    [get-guess-paragraphs-status
+     (->m (or/c 'todo
+                'line-breaks
+                'blank-lines
+                'done
+                'skip))]))
+
 (define TEI-info<%>
-  (interface (get-title<%> get-citation<%> classification<%>)
-    ;; TODO get-timestamp
+  (interface {get-title<%>
+              get-citation<%>
+              classification<%>
+              tei-guess-paragraphs-status<%>}
+    [get-modify-seconds (->m (or/c #f exact-integer?))]
     [get-full-path (->m (or/c #f (and/c path-string? absolute-path?)))]
     [get-filename (->m (or/c #f string?))]))
 
@@ -232,6 +248,8 @@
  get-book/article
  get-filename
  get-full-path
+ get-modify-seconds
+ get-guess-paragraphs-status
  )
 
 (define-for-syntax (make-methods-syntaxes target-stx context-stx)
@@ -242,7 +260,9 @@
                   get-original-publication-date
                   get-citation
                   get-book/article
+                  get-guess-paragraphs-status
                   get-full-path
+                  get-modify-seconds
                   get-filename)
                  (map (λ (it) (datum->syntax context-stx it))
                       '(get-title
@@ -251,7 +271,9 @@
                         get-original-publication-date
                         get-citation
                         get-book/article
+                        get-guess-paragraphs-status
                         get-full-path
+                        get-modify-seconds
                         get-filename))])
     (syntax-e
      #'((define/public (get-title)
@@ -264,10 +286,14 @@
           (send-generic name gen:get-original-publication-date))
         (define/public (get-citation)
           (send-generic name gen:get-citation))
+        (define/public (get-guess-paragraphs-status)
+          (send-generic name gen:get-guess-paragraphs-status))
         (define/public (get-book/article)
           (send-generic name gen:get-book/article))
         (define/public (get-full-path)
           (send-generic name gen:get-full-path))
+        (define/public (get-modify-seconds)
+          (send-generic name gen:get-modify-seconds))
         (define/public (get-filename)
           (send-generic name gen:get-filename))))))
 

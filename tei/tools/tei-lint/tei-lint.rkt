@@ -10,6 +10,7 @@
          "lib.rkt"
          "splash.rkt"
          "check-diverge.rkt"
+         "paragraphs.rkt"
          )
 
 (module+ main
@@ -22,6 +23,8 @@
    (red-text-message "No author element with xml:id=\"ricoeur\"")]
   [bad-date-order-message%
    (red-text-message "Original publication date after this publication date.")]
+  [not-done-message%
+   (red-text-message "Not Done")]
   [serious-error-message%
    (red-text-message "SERIOUS ERROR")]
   [please-move-message%
@@ -205,10 +208,16 @@
         (send progress show #f)
         (show #t)
         file-snips))
+    (define revoke-st
+      (weak-seteq))
+    (define/public (register-revoke it)
+      (set-add! revoke-st it))
     (define/public (refresh-directory)
       (show #f)
       (for-each (λ (w) (send w revoke))
                 file-snips)
+      (for ([it (in-weak-set revoke-st)])
+        (send it show #f))
       (new this% [dir dir]))))
 
 ;                                  
@@ -550,6 +559,7 @@
         [diverge-seconds
          'error]
         [(and pages-ok?
+              (not (eq? 'todo (send val get-guess-paragraphs-status)))
               (date<=? (send val get-original-publication-date)
                        (send val get-publication-date))
               (force promise:ricoeur-xml:id-ok?))
@@ -683,6 +693,41 @@
            [parent (new horizontal-pane%
                         [parent this]
                         [alignment '(left top)])]))
+    ;; paragraphs
+    (let ([row (new horizontal-pane%
+                    [parent this]
+                    [alignment '(left center)])]
+          [status
+           (send val get-guess-paragraphs-status)])
+      (new message%
+           [label "Paragraphs: "]
+           [parent row])
+      (define (add-button label)
+        (new button%
+             [parent row]
+             [label label]
+             [callback (λ (b e)
+                         (new paragraphs:prompt%
+                              [doc val]
+                              [parent this]
+                              [maybe-dir-frame dir-frame]))]))
+      (case status
+        [(line-breaks blank-lines done)
+         (new message%
+              [parent row]
+              [label (case status
+                       [(done) "Done"]
+                       [(line-breaks) "Line Breaks"]
+                       [(blank-lines) "Blank Lines"])])]
+        [(skip)
+         (new message%
+              [parent row]
+              [label "Skipped "])
+         (add-button "Try Again")]
+        [(todo)
+         (new not-done-message%
+              [parent row])
+         (add-button "Do Now")]))
     ;; pages
     (let ([row (new horizontal-pane%
                     [parent this]

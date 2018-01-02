@@ -156,17 +156,5 @@
       (send msg set-label (get-label)))))
 
 
-(define (insert-message-row parent l r)
-  (define row
-    (new horizontal-pane%
-         [parent parent]
-         [alignment '(left bottom)]))
-  (new message%
-       [label l]
-       [font bold-system-font]
-       [parent row])
-  (new message%
-       [label r]
-       [parent row])
-  (void))
+
 
