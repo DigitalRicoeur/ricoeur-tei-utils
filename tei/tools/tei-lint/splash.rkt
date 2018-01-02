@@ -43,6 +43,7 @@
       (define para
         (new text% [auto-wrap #t]))
       (send para insert message)
+      (scroll-editor-to-top para)
       (send para lock #t)
       (send e-c set-editor para)
       (on-initialize-col col))

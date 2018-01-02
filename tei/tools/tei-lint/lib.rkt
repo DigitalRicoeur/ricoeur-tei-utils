@@ -13,9 +13,12 @@
          status-canvas%
          progress-gauge%
          bold-system-font
+         big-bold-system-font
          TEI-frame<%>
          STATUS_DOT_SIZE
          (contract-out
+          [scroll-editor-to-top
+           (-> (is-a?/c editor<%>) any)]
           [get-xml-directory
            (->* {}
                 {(or/c (is-a?/c frame%)
@@ -30,6 +33,8 @@
                 any)]
           [pict->canvas%
            (-> pict? (implementation?/c canvas<%>))]
+          [pict->message%
+           (-> pict? (subclass?/c message%))]
           [red-text-pict
            (-> string? pict?)]
           [struct xmllint-error ([str string?])]
@@ -47,6 +52,16 @@
   (call-with-input-file photo-path
     read-bitmap))
 
+(define (scroll-editor-to-top ed)
+  (let loop ([wait 1])
+    (cond
+      [(send ed locked-for-flow?)
+       (unless [wait . > . 5]
+         (sleep wait)
+         (loop (add1 wait)))]
+      [else
+       (send ed scroll-to-position 0)])))
+
 (define (get-xml-directory [parent #f])
   (let ([pth (get-directory "Choose a directory containing TEI XML files."
                             parent)])
@@ -59,6 +74,13 @@
                "xmllint Not Found\n\nThe program xmllint was not found. Please install libxml2 for full validation."
                parent
                '(ok caution)))
+
+(define (pict->message% pict)
+  (define bmp
+    (pict->bitmap pict #:make-bitmap make-screen-bitmap))
+  (class message%
+    (init [label bmp])
+    (super-new [label label])))
 
 (define (pict->canvas% pict)
   (def
@@ -120,8 +142,6 @@
     (define/public (set-status new-status)
       (set! status new-status)
       (refresh-now))
-    (define/private (color->brush color)
-      (make-brush #:color color))
     (define/override (on-paint)
       (draw-status-dot (get-dc) status))))
 
@@ -129,6 +149,13 @@
 
 (define bold-system-font
   (make-font #:family 'system
+             #:smoothing 'smoothed
+             #:weight 'bold))
+
+(define big-bold-system-font
+  (make-font #:family 'system
+             #:size 24
+             #:smoothing 'smoothed
              #:weight 'bold))
 
 (define progress-gauge%

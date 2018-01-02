@@ -9,20 +9,25 @@
          pict
          "lib.rkt"
          "splash.rkt"
+         "check-diverge.rkt"
          )
 
 (module+ main
   (void (new splash-frame%)))
 
 (def
-  [missing-canvas%
-   (pict->canvas% (red-text-pict "MISSING"))]
-  [no-ricoeur-xml:id-canvas%
-   (pict->canvas% (red-text-pict "No author element with xml:id=\"ricoeur\""))]
-  [bad-date-order-canvas%
-   (pict->canvas% (red-text-pict "Original publication date after this publication date."))]
-  [none-canvas%
-   (pict->canvas% (red-text-pict "NONE"))])
+  [(red-text-message str)
+   (pict->message% (red-text-pict str))]
+  [no-ricoeur-xml:id-message%
+   (red-text-message "No author element with xml:id=\"ricoeur\"")]
+  [bad-date-order-message%
+   (red-text-message "Original publication date after this publication date.")]
+  [serious-error-message%
+   (red-text-message "SERIOUS ERROR")]
+  [please-move-message%
+   (red-text-message "Please move this file out of harm's way!!!")]
+  [none-message%
+   (red-text-message "NONE")])
 
 
 ;                                                  
@@ -164,10 +169,11 @@
                [callback (λ (b e) (refresh-directory))]))
         (define ed
           (new text%))
-        (new editor-canvas%
-             [style '(transparent auto-hscroll auto-vscroll)]
-             [parent this]
-             [editor ed])
+        (define ec
+          (new editor-canvas%
+               [style '(transparent auto-hscroll auto-vscroll)]
+               [parent this]
+               [editor ed]))
         (define file-snips
           (let ([pths (for/list ([pth (in-directory dir)]
                                  #:when (xml-path? pth))
@@ -181,24 +187,21 @@
                            [pth pth]
                            [dir dir]
                            [dir-valid? dir-valid?]
+                           [progress-frame progress]
                            [dir-frame this])
                       (send progress ++)))))
         (for ([snip (in-list (sort file-snips
                                    file-snip-before?))])
           (send ed insert snip))
-        (let loop ([wait 1])
-          (cond
-            [(send ed locked-for-flow?)
-             (unless [wait . > . 5]
-               (sleep wait)
-               (loop (add1 wait)))]
-            [else
-             (send ed scroll-to-position 0)]))
+        (scroll-editor-to-top ed)
         (send ed lock #t)
         (send ed hide-caret #t)
         (add-file-menu (new menu-bar% [parent this])
                        this
                        #:directory? #t)
+        ;; Refresh the editor-canvas here b/c otherwise some strange
+        ;; circumstance sometimes makes it appear empty.
+        (send ec refresh) 
         (send progress show #f)
         (show #t)
         file-snips))
@@ -249,6 +252,7 @@
     (super-new)
     (inherit get-flags
              set-flags)
+    (init progress-frame)
     (init-field dir
                 pth
                 dir-frame
@@ -263,8 +267,7 @@
                       (xmllint-error (get-output-string xmllint-out))]
                      [else
                       (with-handlers ([exn:fail? values])
-                        (call-with-input-file pth
-                          read-TEI))]))]
+                        (file->TEI pth))]))]
                 [frame
                  (new (if (or (xmllint-error? val)
                               (exn? val))
@@ -273,6 +276,9 @@
                       [dir dir]
                       [pth pth]
                       [val val]
+                      [diverge-seconds (if (infix: val is-a? TEI<%>)
+                                           (check-diverge val progress-frame)
+                                           #f)]
                       [dir-frame dir-frame]
                       [widget this])]
                 [status (send frame get-status)]
@@ -428,7 +434,7 @@
 (define abstract-proto-frame%
   (class object%
     (super-new)
-    (init-field dir pth val widget dir-frame)
+    (init-field dir pth val widget dir-frame diverge-seconds)
     (abstract get-status
               get-title
               do-make-frame)
@@ -530,7 +536,7 @@
 (define file-proto-frame%
   (class abstract-proto-frame%
     (super-new)
-    (inherit-field dir pth val widget dir-frame)
+    (inherit-field dir pth val widget dir-frame diverge-seconds)
     (define title
       (send val get-title))
     (define-values (pages-ok? page-descriptions)
@@ -540,12 +546,16 @@
                      (se-path*/list `(author #:xml:id)
                                     (send val to-xexpr)))))
     (define status
-      (if (and pages-ok?
-               (date<=? (send val get-original-publication-date)
-                        (send val get-publication-date))
-               (force promise:ricoeur-xml:id-ok?))
-          'ok
-          'warning))
+      (cond
+        [diverge-seconds
+         'error]
+        [(and pages-ok?
+              (date<=? (send val get-original-publication-date)
+                       (send val get-publication-date))
+              (force promise:ricoeur-xml:id-ok?))
+         'ok]
+        [else
+         'warning]))
     ;; Methods
     (define/override-final (get-title)
       (just title))
@@ -557,6 +567,7 @@
            [pth pth]
            [val val]
            [status status]
+           [diverge-seconds diverge-seconds]
            [promise:ricoeur-xml:id-ok? promise:ricoeur-xml:id-ok?]
            [page-descriptions page-descriptions]
            [widget widget]
@@ -565,6 +576,7 @@
 (define file-frame%
   (class* frame% [TEI-frame<%>]
     (init-field dir pth val widget dir-frame
+                diverge-seconds
                 status promise:ricoeur-xml:id-ok?
                 page-descriptions)
     (super-new [label (string-append (path->string pth)
@@ -597,6 +609,31 @@
       (new message%
            [parent row]
            [label title]))
+    ;; Diverge notice (if any)
+    (when diverge-seconds
+      (let ([row (new group-box-panel% ;horizontal-panel%
+                      [parent this]
+                      [label ""]
+                      ;[style '(border)]
+                      [alignment '(left top)])])
+        (let ([col (new vertical-pane%
+                        [parent row]
+                        [alignment '(left top)])])
+          (new serious-error-message%
+               [parent col])
+          (new message%
+               [label "Trying to segment this document for search appears to run forever."]
+               [parent col])
+          (new message%
+               [label (string-append "You gave up after "
+                                     (real->decimal-string diverge-seconds)
+                                     " seconds.")]
+               [parent col])
+          (new message%
+               [label "Including this file in a corpus% object could break the server."]
+               [parent col])
+          (new please-move-message%
+               [parent col]))))
     ;; Citation
     (let ([row (new horizontal-pane%
                     [parent this]
@@ -636,13 +673,13 @@
           [this-dt (send val get-publication-date)]
           [orig-dt (send val get-original-publication-date)])
       (unless (date<=? orig-dt this-dt)
-        (new bad-date-order-canvas%
+        (new bad-date-order-message%
              [parent sect]))
       (install-date-row sect "Publication Date:" this-dt)
       (install-date-row sect "Original Publication Date:" orig-dt))
     ;; "ricoeur" xml:id 
     (unless (force promise:ricoeur-xml:id-ok?)
-      (new no-ricoeur-xml:id-canvas%
+      (new no-ricoeur-xml:id-message%
            [parent (new horizontal-pane%
                         [parent this]
                         [alignment '(left top)])]))
@@ -656,7 +693,7 @@
            [label "Pages:"])
       (cond
         [(null? page-descriptions)
-         (new none-canvas%
+         (new none-message%
               [parent row])]
         [else
          (define e-c
