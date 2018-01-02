@@ -142,7 +142,7 @@
                       (cons other (loop more))]))]))|#
     (define/TEI-info teiHeader)
     (define pr:md5
-      (delay/thread
+      (delay/sync
        (define-values (in-from-pipe out-to-pipe)
          (make-pipe))
        (write-TEI out-to-pipe)

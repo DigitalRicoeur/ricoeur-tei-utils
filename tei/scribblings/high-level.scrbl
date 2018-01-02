@@ -142,7 +142,7 @@ The bindings documented in this section are provided by
  use documents from some directory in the filesystem.
 
  @defconstructor[([path (and/c path-string? directory-exists?)]
-                  [search-backend (or/c #f postgresql-data-source/c) #f])]{
+                  [search-backend (or/c #f 'noop postgresql-data-source/c) #f])]{
   Constructs a corpus from every file in @racket[path],
   including recursive subdirectories,
   that is recognized by @racket[xml-path?].

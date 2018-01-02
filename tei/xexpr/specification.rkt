@@ -159,18 +159,20 @@ of @racket["editor"].
                        [0+ editor])))
 
        (define title/c
-         (make-element-contract 'title #:text? #t
-                                #:extra-check
-                                (λ (val maybe-blame neg-party)
-                                  (or (non-empty-string?
-                                       (non-element-body->plain-text (get-body val)))
-                                      (and maybe-blame
-                                           (raise-blame-error
-                                            maybe-blame #:missing-party neg-party
-                                            val
-                                            '("title element may not be empty"
-                                              given: "~e")
-                                            val))))))
+         (make-element-contract
+          'title
+          #:text? #t
+          #:extra-check
+          (λ (val maybe-blame neg-party)
+            (or (regexp-match? #px"\\S"
+                               (non-element-body->plain-text (get-body val)))
+                (and maybe-blame
+                     (raise-blame-error
+                      maybe-blame #:missing-party neg-party
+                      val
+                      '("title element may not be empty"
+                        given: "~e")
+                      val))))))
                       
                 
        (define author/c

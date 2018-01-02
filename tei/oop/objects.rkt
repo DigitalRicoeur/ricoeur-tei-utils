@@ -38,14 +38,6 @@
   (->* {any-tei-xexpr/c}
        {#:filename (or/c #f path-string?)}
        (is-a?/c element<%>))
-  (define-values {name attributes raw-body}
-    (match tag
-      [(list-rest name
-                  (? (listof (list/c symbol? string?)) attributes)
-                  raw-body)
-       (values name attributes raw-body)]
-      [(cons name raw-body)
-       (values name null raw-body)]))
   (parameterize ([current-filename (cond
                                      [filename
                                       (define-values (base name dir?)    
@@ -54,7 +46,18 @@
                                      [else #f])]
                  [current-full-path (and filename
                                          (simplify-path filename))])
-    (new (case name
+    (tag->element* tag)))
+
+(define (tag->element* tag)
+  (define-values {name attributes raw-body}
+    (match tag
+      [(list-rest name
+                  (? (listof (list/c symbol? string?)) attributes)
+                  raw-body)
+       (values name attributes raw-body)]
+      [(cons name raw-body)
+       (values name null raw-body)]))
+  (new (case name
            [(TEI) TEI%]
            [(teiHeader) teiHeader%] 
            [(fileDesc) fileDesc%]
@@ -92,8 +95,9 @@
          [attributes attributes]
          [body (for/list ([child (in-list raw-body)])
                  (if (list? child)
-                     (tag->element child)
-                     child))])))
+                     (tag->element* child)
+                     child))]))
+  
 
 (define (discard-bom p)
   (void (regexp-try-match #rx"^\uFEFF" p)))
