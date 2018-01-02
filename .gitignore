@@ -15,3 +15,6 @@ compiled/
 *.tex
 *.toc
 *IGNORE*
+migration-assistant.icns
+migration-assistant.ico
+migration-assistant.png

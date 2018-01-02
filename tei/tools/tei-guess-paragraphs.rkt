@@ -1,7 +1,12 @@
-#lang racket
+#!/usr/bin/env racket
+#lang racket/base
 
 (module+ main
-  (require ricoeur/tei/base)
+  (require ricoeur/tei/base
+           ricoeur/lib
+           racket/class
+           racket/cmdline
+           )
   
   (let ([mode #f])
     (command-line
@@ -20,7 +25,7 @@
      (define obj
        (call-with-input-file path
          read-TEI))
-     (with-output-to-file path
+     (with-output-to-file/unless-exn path
        #:exists 'replace
        (λ ()
          (send (send obj guess-paragraphs #:mode mode)

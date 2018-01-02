@@ -229,6 +229,7 @@
 
 (define TEI-info<%>
   (interface (get-title<%> get-citation<%> classification<%>)
+    [get-full-path (->m (or/c #f (and/c path-string? absolute-path?)))]
     [get-filename (->m (or/c #f string?))]))
 
 (define teiHeader<%>
@@ -252,6 +253,7 @@
  get-citation
  get-book/article
  get-filename
+ get-full-path
  )
 
 (define-for-syntax (make-methods-syntaxes target-stx context-stx)
@@ -262,6 +264,7 @@
                   get-original-publication-date
                   get-citation
                   get-book/article
+                  get-full-path
                   get-filename)
                  (map (λ (it) (datum->syntax context-stx it))
                       '(get-title
@@ -270,6 +273,7 @@
                         get-original-publication-date
                         get-citation
                         get-book/article
+                        get-full-path
                         get-filename))])
     (syntax-e
      #'((define/public (get-title)
@@ -284,6 +288,8 @@
           (send-generic name gen:get-citation))
         (define/public (get-book/article)
           (send-generic name gen:get-book/article))
+        (define/public (get-full-path)
+          (send-generic name gen:get-full-path))
         (define/public (get-filename)
           (send-generic name gen:get-filename))))))
 

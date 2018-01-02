@@ -81,13 +81,15 @@
            (system* xmllint "--pretty" "1" "-"))
          rslt
          (error 'call/prettyprint-xml-out
-                (format "xmllint encountered an error\n  given: ~e\n  message...: ~e"
-                        thunk
-                        (get-output-string xmllint-stderr))))]
+                "~a\n  given: ~e\n  result: ~e\n  message...:\n   ~e"
+                "xmllint encountered an error"
+                thunk
+                rslt
+                (get-output-string xmllint-stderr)))]
     [else
      (thunk)]))
 
 
 ;(call/prettyprint-xml-out (λ () (displayln "<p><b>Thin</b><i>other</i></p>")))
-;(call/prettyprint-xml-out (λ () (displayln "twljkenvqlf<wbrbvwef"))))
+;(call/prettyprint-xml-out (λ () (displayln "twljkenvqlf<wbrbvwef")))
 

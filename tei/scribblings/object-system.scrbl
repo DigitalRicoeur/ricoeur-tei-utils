@@ -263,6 +263,10 @@ implemented by broad categories of TEI elements.
   @(this-obj), or @racket[#f] if none is known.
   See alse @racket[read-TEI] and @racket[file->TEI].
  }
+ @defmethod[(get-full-path) (or/c #f (and/c path-string? absolute-path?))]{
+  Like @(method TEI-info<%> get-filename), but returns the full path
+  (if available).
+ }
  @defmethod[(get-publication-date) date?]{
   Returns the publication date of the specific version of the work
   on which the TEI document is based.

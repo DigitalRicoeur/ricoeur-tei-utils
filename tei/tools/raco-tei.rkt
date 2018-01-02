@@ -7,7 +7,7 @@
            )
 
   (lazy-require
-   ["tei-to-plain-text.rkt" (to-plain-text)]
+   ["to-plain-text.rkt" (to-plain-text)]
    ["validate-directory.rkt" (validate-directory)]
    )
 

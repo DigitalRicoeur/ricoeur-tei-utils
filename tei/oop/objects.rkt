@@ -51,7 +51,9 @@
                                       (define-values (base name dir?)    
                                         (split-path filename))
                                       (path->string name)]
-                                     [else #f])])
+                                     [else #f])]
+                 [current-full-path (and filename
+                                         (simplify-path filename))])
     (new (case name
            [(TEI) TEI%]
            [(teiHeader) teiHeader%] 

@@ -52,6 +52,7 @@
          item%
          ;;
          current-filename
+         current-full-path
          )
 
 (define-local-member-name TMP-add-profileDesc)
@@ -59,6 +60,9 @@
   (provide TMP-add-profileDesc))
 
 (define current-filename
+  (make-parameter #f))
+
+(define current-full-path
   (make-parameter #f))
 
 (define (concrete-element%)
@@ -111,8 +115,12 @@
   (class* (classification-mixin (get-title-mixin (get-citation-mixin %)))
     {TEI-info<%>}
     (super-new)
+    (define full-path
+      (current-full-path))
     (define filename
       (current-filename))
+    (define/public-final (get-full-path)
+      full-path)
     (define/public-final (get-filename)
       filename)))
 
