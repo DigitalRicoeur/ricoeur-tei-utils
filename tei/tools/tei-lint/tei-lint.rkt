@@ -19,8 +19,6 @@
    (pict->canvas% (red-text-pict "MISSING"))]
   [no-ricoeur-xml:id-canvas%
    (pict->canvas% (red-text-pict "No author element with xml:id=\"ricoeur\""))]
-  [no-book/article-canvas%
-   (pict->canvas% (red-text-pict "Missing profileDesc element (not marked as book/article)."))]
   [bad-date-order-canvas%
    (pict->canvas% (red-text-pict "Original publication date after this publication date."))]
   [none-canvas%
@@ -545,7 +543,6 @@
       (if (and pages-ok?
                (date<=? (send val get-original-publication-date)
                         (send val get-publication-date))
-               (send val get-book/article)
                (force promise:ricoeur-xml:id-ok?))
           'ok
           'warning))
@@ -631,10 +628,7 @@
         [(article)
          (new message%
               [parent row]
-              [label "Type: Article"])]
-        [(#f)
-         (new no-book/article-canvas%
-              [parent row])]))
+              [label "Type: Article"])]))
     ;; Date
     (let ([sect (new vertical-pane%
                      [parent this]

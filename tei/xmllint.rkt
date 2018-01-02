@@ -5,12 +5,12 @@
          racket/system
          racket/contract
          setup/matching-platform
+         ricoeur/lib/xml-path
          )
 
 (provide xmllint-available?
+         xml-path?
          (contract-out
-          [xml-path?
-           (-> path-string? any)]
           [valid-xml-file?
            (->* {path-string?}
                 {#:quiet? any/c}
@@ -36,10 +36,6 @@
 
 (define (xmllint-available?)
   xmllint)
-
-(define (xml-path? pth)
-  (let ([ext (path-get-extension pth)])
-    (and ext (regexp-match? #rx"^(?i:\\.xml)$" ext))))
 
 (define (valid-xml-file? #:quiet? [quiet? #t] . l-pths)
   (or (not xmllint)

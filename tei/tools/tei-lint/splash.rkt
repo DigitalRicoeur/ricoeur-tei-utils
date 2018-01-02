@@ -10,14 +10,15 @@
          "lib.rkt"
          )
 
-(provide abstract-splash-frame%)
+(provide abstract-splash-frame%
+         splash-frame/no-button%
+         )
 
-(define abstract-splash-frame%
+(define splash-frame/no-button%
   (class frame%
     (super-new)
-    (init subtitle bitmap)
+    (init subtitle bitmap message)
     (inherit show)
-    (abstract on-choose-directory)
     (let ([row (new horizontal-pane% [parent this])])
       (new message%
            [parent row]
@@ -41,19 +42,36 @@
              [style '(transparent no-border no-hscroll auto-vscroll no-focus)]))
       (define para
         (new text% [auto-wrap #t]))
-      (send para insert "To begin, choose a directory containing TEI XML files.")
+      (send para insert message)
       (send para lock #t)
       (send e-c set-editor para)
+      (on-initialize-col col))
+    (define/public (on-initialize-col col)
+      (void))
+    (show #t)
+    #|END abstract-splash-frame/no-button%|#))
+
+
+
+
+(define abstract-splash-frame%
+  (class splash-frame/no-button%
+    (unless (xmllint-available?)
+      (show-xmllint-warning this))
+    (super-new 
+     [message "To begin, choose a directory containing TEI XML files."])    
+    (abstract on-choose-directory)
+    (define/override (on-initialize-col col)
       (new button%
            [parent col]
            [label "Choose Directory …"]
            [callback (λ (b e) (choose-directory))]))
-    (show #t)
-    (unless (xmllint-available?)
-      (show-xmllint-warning this))
     (define/private (choose-directory)
       (let ([dir (get-xml-directory this)])
         (when dir
           (on-choose-directory dir))))))
+
+
+
 
 

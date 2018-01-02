@@ -281,9 +281,6 @@ implemented by broad categories of TEI elements.
  }
  @defmethod[(get-book/article) (or/c 'book 'article)]{
   Indicates whether @(this-obj) represents a book or an article.
-                    
-  @bold{Note} that currently, during a transition perion, this method
-  may also return @racket[#f].
  }
  @defmethod[(get-resp-string [resp symbol?])
             string?]{

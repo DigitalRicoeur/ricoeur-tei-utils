@@ -14,6 +14,11 @@ They are not specifically related to processing TEI XML files,
 but they are used in the implementation of @racketmodname[ricoeur/tei],
 and they may also be useful in other contexts.
 
+@defproc[(xml-path? [pth path-string?]) any/c]{
+ Tests whether @racket[pth] is syntactically a path to an XML file, without
+ checking the validity of the file or even its existance.
+}
+
 @defproc[(with-output-to-file/unless-exn [path path-string?]
            [thunk (-> any/c)]
            [#:mode mode-flag (or/c 'binary 'text) 'binary]

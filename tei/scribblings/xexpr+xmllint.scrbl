@@ -23,12 +23,7 @@
                      gregor
                      ))
 
-@defproc[(xml-path? [pth path-string?]) any/c]{
- Tests whether @racket[pth] is syntactically a path to an XML file, without
- checking the validity of the file or even its existance.
-}
-
-@subsection{X-Expression Contracts}
+@section{X-Expression Contracts}
 
 @defthing[any-tei-xexpr/c flat-contract?]{
  Similar to @racket[(and/c list? xexpr/c)], but
@@ -63,6 +58,9 @@ They depend on the
 external command-line utility @tt{xmllint} (which is part
 of @tt{libxml2}) to work. If @tt{xmllint} can not be found,
 a warning is logged to @racket[(current-logger)].
+
+In addition, for historical reasons, @racketmodname[ricoeur/tei/xmllint]
+etc. also provide @racket[xml-path?] from @racketmodname[ricoeur/lib].
 
 @defproc[(xmllint-available?) any/c]{
  Detects whether @tt{xmllint} is available at runtime.

@@ -3,7 +3,7 @@ setup:
 	raco setup --doc-index ricoeur
 
 fast:
-	raco setup --no-docs --no-pkg-deps ricoeur
+	raco setup --no-docs --no-pkg-deps ricoeur/lib ricoeur/tei
 
 install:
 	raco pkg install -i

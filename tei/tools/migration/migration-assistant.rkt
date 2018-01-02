@@ -1,8 +1,6 @@
 #lang racket/gui
 
 (require ricoeur/tei
-         (submod ricoeur/tei/oop/objects
-                 add-book/article)
          "icon.rkt"
          "../tei-lint/splash.rkt"
          "../tei-lint/lib.rkt"
@@ -14,17 +12,23 @@
   (void (new splash%)))
 
 (define splash%
-  (class abstract-splash-frame%
+  (class splash-frame/no-button%
     (super-new [label "DR Migration Assistant"]
                [subtitle "Migration Assistant"]
+               [message "Nothing needs to be migrated right now."]
                [bitmap (make-DR-bitmap 150 make-screen-bitmap
                                        #:transparent? #t)])
-    (inherit show)
-    (define/override-final (on-choose-directory dir)
+    (define/override (on-initialize-col col)
+      (new button%
+           [parent col]
+           [label "Quit"]
+           [callback (λ (b e) (exit))]))
+    #|(define/override-final (on-choose-directory dir)
       (new loading-frame% [dir dir])
-      (show #f))))
+      (show #f))|#
+    #|END splash%|#))
 
-
+#|
 (define document%
   (class* object% {TEI-info<%>}
     (super-new)
@@ -43,6 +47,7 @@
         #:exists 'replace
         (λ () (send updated write-TEI)))
       (set! doc (send updated get-teiHeader)))))
+
 
 (define loading-frame%
   (class frame%
@@ -110,7 +115,7 @@
                [books books]
                [articles articles]
                [maybe-loading-frame this])))))
-
+|#
 
 (define (sort-documents docs)
   (sort docs title<? #:key (λ (doc) (send doc get-title))))
@@ -137,7 +142,7 @@
            [label "Refresh"]
            [callback (λ (b e) (refresh-dir))]))
     (define/public (refresh-dir)
-      (new loading-frame%
+      (new (error 'loading-frame%) ;loading-frame%
            [dir dir]
            [dir-string dir-string])
       (show #f))))

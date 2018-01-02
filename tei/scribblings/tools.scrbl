@@ -12,6 +12,9 @@ which should be installed as described under
         #:doc '(lib "ricoeur/tei/scribblings/tei-utils.scrbl")]
 in @other-doc['(lib "ricoeur/tei/scribblings/tei-utils.scrbl")].
 
+All of our command-line tools will accept the flags
+@DFlag{help} or @Flag{h} to print usage information.
+
 @section{TEI Lint}
 
 Most comprehensively, the GUI program "TEI Lint" is a "linter" for
@@ -31,10 +34,8 @@ documents are valid in terms of the DTD.
 
 @section{DR Migration Assistant}
 
-The a GUI program "DR Migration Assistant" is a tool to help make
+The GUI program "DR Migration Assistant" is a tool to help make
 batch updates to TEI XML documents.
-Currently, it supports tagging documents as books or articles
-without manually editing the text files.
 
 @section{encode-xml-entities}
 
@@ -70,16 +71,6 @@ in the @tt{texts} repository.
 They are included as @exec{raco} subcommands to ensure they are
 in the @tt{PATH} under most circumstances.
 @itemlist[
- @item{@exec{raco tei to-plain-text} writes a
-  TEI XML file to STDOUT as plain text.
-  It is primarily intended to be used by invoking @exec{make}
-  (or @exec{make all}) in the @tt{texts} repository,
-  which will populate the
-  @tt{plain-text} directory with plain text versions of
-  every TEI XML file in the @tt{TEI} directory.
-  If for some reason you want to use it directly,
-  run @exec{raco tei-to-plain-text -h} for usage information.
-  }
   @item{@exec{raco tei validate-directory} validates all of
   the XML files in some directory, enforcing both the DTD
   (when @exec{xmllint} is available) and the additional requirements
@@ -90,4 +81,29 @@ in the @tt{PATH} under most circumstances.
   Running @exec{make validate} in the root directory of the @tt{texts}
   repository validates the contents of the @tt{TEI} directory
   of that repository.
+  }
+ @item{@exec{raco tei directory-clean-filenames} renames all XML files in
+  some directory (or the current directory, if none is provided)
+  as needed to ensure that all start with a lower-case letter and that
+  none have contain spaces.
+  When given the @DFlag{git} or @Flag{g} flag, it uses @exec{git mv} to
+  move files (if it is available).
+
+  Running @exec{make rename} in the root directory of the @tt{texts}
+  repository renames files as needed (using @exec{git mv})
+  in the @tt{TEI} directory.
+
+  A bug in the implementation of @racketmodname[ricoeur/tei/xmllint]
+  (or perhaps in @exec{xmllint} itself) sometimes causes files
+  that do not conform to these naming requirements to fail validation.
+ }
+ @item{@exec{raco tei to-plain-text} writes a
+  TEI XML file to STDOUT as plain text.
+  It is primarily intended to be used by invoking @exec{make}
+  (or @exec{make all}) in the @tt{texts} repository,
+  which will populate the
+  @tt{plain-text} directory with plain text versions of
+  every TEI XML file in the @tt{TEI} directory.
+  If for some reason you want to use it directly,
+  run @exec{raco tei-to-plain-text -h} for usage information.
   }]

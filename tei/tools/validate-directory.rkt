@@ -1,13 +1,12 @@
-#!/usr/bin/env racket
 #lang racket/base
 
 (require ricoeur/tei/oop/objects
          ricoeur/tei/xmllint
          racket/cmdline)
 
-(provide validate-directory)
+(provide validate-directory-command)
 
-(define (validate-directory [argv (current-command-line-arguments)])
+(define (validate-directory-command [argv (current-command-line-arguments)])
   (command-line
    #:program "raco tei to-plain-text"
    #:argv argv
@@ -23,5 +22,3 @@
          #:when (xml-path? pth))
      (void (file->TEI pth)))))
 
-(module+ main
-  (validate-directory))

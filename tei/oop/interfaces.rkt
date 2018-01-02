@@ -224,11 +224,11 @@
 
 (define classification<%>
   (interface ()
-    ;; TODO: remove #f
-    [get-book/article (->m (or/c #f 'book 'article))]))
+    [get-book/article (->m (or/c 'book 'article))]))
 
 (define TEI-info<%>
   (interface (get-title<%> get-citation<%> classification<%>)
+    ;; TODO get-timestamp
     [get-full-path (->m (or/c #f (and/c path-string? absolute-path?)))]
     [get-filename (->m (or/c #f string?))]))
 

@@ -7,8 +7,10 @@
            )
 
   (lazy-require
-   ["to-plain-text.rkt" (to-plain-text)]
-   ["validate-directory.rkt" (validate-directory)]
+   ["to-plain-text.rkt" (to-plain-text-command)]
+   ["validate-directory.rkt" (validate-directory-command)]
+   [(submod "directory-clean-filenames.rkt" cmd)
+    (directory-clean-filenames-command)]
    )
 
   (command-line
@@ -17,12 +19,15 @@
    "Available Commands:"
    "  to-plain-text"
    "  validate-directory"
+   "  directory-clean-filenames"
    #:args (command . option/arg)
    (case command
      [("to-plain-text")
-      (to-plain-text option/arg)]
+      (to-plain-text-command option/arg)]
      [("validate-directory")
-      (validate-directory option/arg)]
+      (validate-directory-command option/arg)]
+     [("directory-clean-filenames")
+      (directory-clean-filenames-command option/arg)]
      [else
       (error '|raco tei|
              "unknown command: ~e"

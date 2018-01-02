@@ -83,7 +83,7 @@ It must have the attributes
 
 @section{The teiHeader Element}
 
-The @deftag{teiHeader} element contains one
+The @deftag{teiHeader} element contains (in order) one
 @tag{fileDesc} element followed by one
 @tag{profileDesc} element.
 
@@ -104,9 +104,7 @@ The @deftag{profileDesc} element contains only the
           'teiHeader
           #:required-order '(fileDesc profileDesc)
           #:children `([1 fileDesc]
-                       (code:comment
-                        @#,elem{Soon, exactly 1 @tag{profileDesc} will be required.})
-                       [0-1 profileDesc])))
+                       [1 profileDesc])))
 
        (define fileDesc/c
          (make-element-contract

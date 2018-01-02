@@ -178,7 +178,27 @@ ultimately @racket[term-search].
  A @tech{searchable document set} that never finds any results.
 }
 
-@subsubsection{Implementing Search Backends}
+@;{
+ ;                                                                  
+ ;                                                                  
+ ;                                                                  
+ ;                                                                  
+ ;   ;;                      ;;                          ;;         
+ ;   ;;                      ;;                          ;;         
+ ;   ;;;;      ;;       ;;;  ;;   ;;   ;;;   ;; ;     ;;;;;    ;;   
+ ;   ;;  ;    ;  ;    ;;   ; ;;  ;   ;;   ;  ;;; ;   ;   ;;  ;;  ;  
+ ;   ;;  ;       ;;   ;      ;; ;    ;    ;  ;;  ;;  ;   ;;   ;     
+ ;   ;;  ;;    ;;;;  ;;      ;;;;   ;;;;;;;; ;;  ;; ;;   ;;    ;;   
+ ;   ;;  ;    ;  ;;   ;      ;;  ;   ;       ;;  ;;  ;   ;;      ;; 
+ ;   ;;  ;   ;;  ;;   ;;   ; ;;   ;  ;;   ;  ;;  ;;  ;   ;;  ;   ;  
+ ;   ; ;;     ;;; ;     ;;;  ;;   ;;   ;;;   ;;  ;;   ;;; ;   ;;;   
+ ;                                                                  
+ ;                                                                  
+ ;                                                                  
+ ;                                                                  
+}
+
+@subsection{Implementing Search Backends}
 @defmodule[(submod ricoeur/tei/search/common private)]
 
 The low-level bindings documented in this section are used to implement new kinds

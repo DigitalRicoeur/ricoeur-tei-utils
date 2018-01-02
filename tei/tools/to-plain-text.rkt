@@ -5,9 +5,11 @@
          racket/class
          racket/cmdline)
 
-(provide to-plain-text)
+(provide to-plain-text-command)
 
-(define (to-plain-text [argv (current-command-line-arguments)])
+;; Would be nice to avoid Racket startup costs for each file ...
+
+(define (to-plain-text-command [argv (current-command-line-arguments)])
   (command-line
    #:program "raco tei to-plain-text"
    #:argv argv
@@ -16,7 +18,4 @@
    (void (write-string
           (send (file->TEI TEI-XML-path)
                 to-plain-text)))))
-
-(module+ main
-  (to-plain-text))
 

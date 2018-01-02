@@ -55,10 +55,6 @@
          current-full-path
          )
 
-(define-local-member-name TMP-add-profileDesc)
-(module+ TMP-add-profileDesc
-  (provide TMP-add-profileDesc))
-
 (define current-filename
   (make-parameter #f))
 
@@ -102,14 +98,13 @@
   (is-a?/c classification<%>))
 
 (define classification-mixin
-  ;; TODO eliminate #f case
   (mixin {element<%>} {classification<%>}
     (super-new)
     (inherit get-body)
     (define target
       (findf classification? (get-body)))
     (define/public (get-book/article)
-      (and target (send target get-book/article)))))
+      (send target get-book/article))))
 
 (define (TEI-info-mixin %)
   (class* (classification-mixin (get-title-mixin (get-citation-mixin %)))
@@ -133,7 +128,7 @@
              get-body/elements-only)
     (match-define (list teiHeader text)
       (get-body/elements-only))
-    (define/public-final (TMP-add-profileDesc profileDesc-elem)
+    #|(define/public-final (TMP-add-profileDesc profileDesc-elem)
       (define new-header
         (send teiHeader TMP-add-profileDesc profileDesc-elem))
       (new this%
@@ -144,8 +139,7 @@
                      [(cons (? classification?) more)
                       (cons new-header more)]
                      [(cons other more)
-                      (cons other (loop more))]))]))
-                       
+                      (cons other (loop more))]))]))|#
     (define/TEI-info teiHeader)
     (define pr:md5
       (delay/thread
@@ -156,7 +150,7 @@
        (md5 in-from-pipe)))
     (define/public-final (get-md5)
       (force pr:md5))
-    (define/public (get-teiHeader)
+    (define/public-final (get-teiHeader)
       teiHeader)
     (define/override-final (to-pre-segments pred
                                             call-with-metadata
@@ -179,7 +173,7 @@
       acc)
     (define/override (get-page-breaks)
       (send text get-page-breaks))
-    (define/public (write-TEI [out (current-output-port)])
+    (define/public-final (write-TEI [out (current-output-port)])
       (parameterize ([current-output-port out])
         (call/prettyprint-xml-out
          (λ () 
@@ -192,12 +186,7 @@
   (class* (TEI-info-mixin (elements-only-mixin element%)) {teiHeader<%>}
     (super-new)
     (inherit get-attributes get-body)
-    (define/public-final (TMP-add-profileDesc profileDesc-elem)
-      (new this%
-           [name 'teiHeader]
-           [attributes (get-attributes)]
-           [body (append (get-body)
-                         (list profileDesc-elem))]))))
+    #|END teiHeader%|#))
 
 (define fileDesc%
   ;; no longer a tei-info<%> 

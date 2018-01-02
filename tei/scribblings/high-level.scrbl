@@ -166,9 +166,27 @@ The bindings documented in this section are provided by
  }
 }
 
+@;{
+ ;                                                  
+ ;                                                  
+ ;                                                  
+ ;                                                  
+ ;                                           ;;     
+ ;                                           ;;     
+ ;     ;;      ;;;     ;;    ;; ;;;     ;;;  ;; ;   
+ ;   ;;  ;   ;;   ;   ;  ;   ;;;      ;;   ; ;;; ;  
+ ;    ;      ;    ;      ;;  ;;       ;      ;;  ;; 
+ ;     ;;   ;;;;;;;;   ;;;;  ;;      ;;      ;;  ;; 
+ ;       ;;  ;        ;  ;;  ;;       ;      ;;  ;; 
+ ;   ;   ;   ;;   ;  ;;  ;;  ;;       ;;   ; ;;  ;; 
+ ;    ;;;      ;;;    ;;; ;  ;;         ;;;  ;;  ;; 
+ ;                                                  
+ ;                                                  
+ ;                                                  
+ ;                                                  
+}
 
-
-@subsection{Search}
+@section{Search}
 
 @deftogether[
  (@defproc[(term-search [term term/c]
