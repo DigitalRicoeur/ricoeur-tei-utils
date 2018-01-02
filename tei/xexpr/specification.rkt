@@ -30,6 +30,8 @@ into a module as follows:
        (require racket/unit
                 racket/contract
                 racket/match
+                racket/string
+                ricoeur/tei/xexpr/normalize
                 ricoeur/tei/xexpr/signatures)
 
        (provide element-contracts@)
@@ -130,6 +132,7 @@ elements indicates first author vs. second author,
 main title vs. subtitle, etc.
 
 The @deftag{title} element contains free-form text.
+It must not be empty.
 
 The @deftag{author} element contains free-form text and may have
 an optional @attr{xml:id} attribute. As a special case,
@@ -156,8 +159,20 @@ of @racket["editor"].
                        [0+ editor])))
 
        (define title/c
-         (make-element-contract 'title #:text? #t))
-
+         (make-element-contract 'title #:text? #t
+                                #:extra-check
+                                (λ (val maybe-blame neg-party)
+                                  (or (non-empty-string?
+                                       (non-element-body->plain-text (get-body val)))
+                                      (and maybe-blame
+                                           (raise-blame-error
+                                            maybe-blame #:missing-party neg-party
+                                            val
+                                            '("title element may not be empty"
+                                              given: "~e")
+                                            val))))))
+                      
+                
        (define author/c
          (make-element-contract 'author #:text? #t))
 
@@ -331,15 +346,17 @@ Only the @litchar{todo} value should be entered manually.
           #:text? #t
           #:extra-check
           (λ (val maybe-blame neg-party)
-            (code:comment @#,elem{We filter to allow XML comments.})
-            (match (filter string? (get-body val))
-              [(list (or "todo"
-                         "line-breaks"
-                         "blank-lines"
-                         "done"
-                         "skip"))
+            (define body-string
+              (non-element-body->plain-text
+               (get-body val)))
+            (case body-string
+              [("todo"
+                "line-breaks"
+                "blank-lines"
+                "done"
+                "skip")
                #t]
-              [bad
+              [else
                (and maybe-blame
                     (raise-blame-error
                      maybe-blame #:missing-party neg-party
@@ -348,7 +365,7 @@ Only the @litchar{todo} value should be entered manually.
                        expected: "(list/c (or/c \"todo\" \"line-breaks\" \"blank-lines\" \"done\" \"skip\"))"
                        given: "~e"
                        "\n  term element...:\n   ~e")
-                     bad
+                     body-string
                      val))]))))]
 
 

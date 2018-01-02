@@ -1,7 +1,7 @@
 #lang racket
 
 (require xml 
-         ricoeur/tei/oop/xml-entity-utils
+         ricoeur/tei/xexpr/normalize
          ricoeur/tei/xexpr/tei-xexpr-contracts
          data/maybe
          gregor
@@ -50,17 +50,6 @@
            location-stack-entry:div/c
            location-stack-entry:note/c
            ))
-
-(define/contract (cdata->plain-text it)
-  (-> cdata? string?)
-  (match (cdata-string it)
-    [(regexp #rx"<!\\[CDATA\\[(.*)\\]\\]>" (list _ content))
-     content]
-    [content content]))
-
-(define/contract (valid-char->plain-text num)
-  (-> valid-char? string?)
-  (string (integer->char num)))
 
 ;                                                                  
 ;                                                                  
@@ -130,20 +119,9 @@
 
 (define/contract (element-or-xexpr->plain-text child)
   (-> element-or-xexpr/c string?)
-  (cond [(string? child)
-         child]
-        [(tei-element? child)
-         (send child to-plain-text)]
-        [(or (comment? child)
-             (p-i? child))
-         ""]
-        [(cdata? child)
-         (cdata->plain-text child)]
-        [(valid-char? child)
-         (valid-char->plain-text child)]
-        [(symbol? child) 
-         (string (entity-symbol->char child))]))
-
+  (if (tei-element? child)
+      (send child to-plain-text)
+      (non-element-xexpr->plain-text child)))
 
 (define element<%>
   (class->interface element%))
