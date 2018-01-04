@@ -89,11 +89,34 @@
   ;shown in excerpts
   18/100)
 
-(define exact?-px-prefix-str ;; unicode???
-  "(?:^|[^[:alpha:]])")
+(define-values (exact?-px-prefix-str exact?-px-suffix-str)
+  ;; Old versions: "(?:^|[^[:alpha:]])" and "(?:[^[:alpha:]]|$)"
+  ;; allowed any character but a-z or A-Z to terminate an exact match.
+  ;; This could be inadequite with non-ASCII characters e.g. accent marks.
+  ;; In new version, only the following unicode categories
+  ;; can terminate an exact match:
+  ;;   P :: Punctuation
+  ;;   Z :: Separator
+  ;;   N :: Number ;; allowing b/c this could be an unencoded footnote
+  ;;   Sc :: Symbol, currency
+  ;;   Sm :: Symbol, math
+  ;;   Cc :: Other, control
+  ;; There may be other categories that would be ok to allow, but
+  ;; these definitely exclude all the troublesome ones.
+  (let ([categories "\\p{P}|\\p{Z}|\\p{N}|\\p{Sc}|\\p{Sm}|\\p{Cc}"])
+    (values (string-append "(?:^|" categories ")")
+            (string-append "(?:" categories "|$)"))))
 
-(define exact?-px-suffix-str ;; unicode???
-  "(?:[^[:alpha:]]|$)")
+
+(module+ test
+  (let ([exact-apple-px (pregexp (string-append exact?-px-prefix-str
+                                                (regexp-quote "apple" #f)
+                                                exact?-px-suffix-str))])
+    (check-true (regexp-match? exact-apple-px "apple"))
+    (check-true (regexp-match? exact-apple-px "apPle"))
+    (check-true (regexp-match? exact-apple-px " apPle."))
+    (check-true (regexp-match? exact-apple-px "$apPle1"))
+    (check-false (regexp-match? exact-apple-px "appleé"))))
 
 (struct pre-segment (title counter body meta resp))
 
@@ -172,17 +195,18 @@
 (define pre-segment-meta/c
   (opt/c
    (and/c jsexpr?
-          (hash/dc [k (or/c 'resp 'location-stack 'page)]
-                   [v (k) (case k
-                            [(resp) #rx"#.+"]
-                            [(location-stack) location-stack-jsexpr/c]
-                            [(page) (or/c #f
-                                          string?
-                                          (list/c (or/c #f string?)
-                                                  (or/c #f string?)))]
-                            [else none/c])]
-                   #:immutable #t
-                   #:kind 'flat)
+          (let ([page/c (or/c #f
+                              string?
+                              (list/c (or/c #f string?)
+                                      (or/c #f string?)))])
+            (hash/dc [k (or/c 'resp 'location-stack 'page)]
+                     [v (k) (case k
+                              [(resp) #rx"#.+"]
+                              [(location-stack) location-stack-jsexpr/c]
+                              [(page) page/c]
+                              [else none/c])]
+                     #:immutable #t
+                     #:kind 'flat))
           (λ (hsh)
             (hash-keys-subset? #hasheq([resp . #t]
                                        [location-stack . #t]
