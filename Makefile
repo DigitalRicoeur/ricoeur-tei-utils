@@ -12,3 +12,5 @@ reinstall:
 	git pull --ff-only
 	-raco pkg remove --force tei-utils
 	raco pkg install -i
+
+.PHONY: setup fast install reinstall

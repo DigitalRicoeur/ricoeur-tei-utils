@@ -11,6 +11,7 @@
          (super-new)
          (define/override-final (do-search-documents term
                                                      #:ricoeur-only? [ricoeur-only? #t]
+                                                     #:book/article [book/article 'any]
                                                      #:exact? [exact? #f])
            '()))))
 

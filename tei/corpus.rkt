@@ -29,6 +29,7 @@
           [term-search
            (->* {term/c}
                 {#:ricoeur-only? any/c
+                 #:book/article (or/c 'any 'book 'article)
                  #:exact? any/c}
                 (listof (is-a?/c document-search-results<%>)))]
           [list-TEI-info
@@ -57,6 +58,7 @@
                      [•term-search
                       (->*m {term/c}
                             {#:ricoeur-only? any/c
+                             #:book/article (or/c 'any 'book 'article)
                              #:exact? any/c}
                             (listof (is-a?/c document-search-results<%>)))])]
     (super-new)
@@ -100,11 +102,13 @@
       headers)
     (define/public-final (•term-search raw-term
                                        #:ricoeur-only? [ricoeur-only? #t]
+                                       #:book/article [book/article 'any]
                                        #:exact? [exact? #f])
       (define term
         (string-normalize-spaces raw-term))
       (search-documents term (force pr:searchable-document-set)
                         #:exact? exact?
+                        #:book/article book/article
                         #:ricoeur-only? ricoeur-only?))
     (define/private (deduplicate-docs docs)
       (remove-duplicates docs
@@ -149,11 +153,13 @@
 
 (define (term-search term
                      #:ricoeur-only? [ricoeur-only? #t]
+                     #:book/article [book/article 'any]
                      #:exact? [exact? #f])
   (send (current-corpus)
         •term-search
         term
         #:ricoeur-only? ricoeur-only?
+        #:book/article book/article
         #:exact? exact?))
 
 (define (list-TEI-info)

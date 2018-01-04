@@ -156,6 +156,7 @@ ultimately @racket[term-search].
 @defproc[(search-documents [term term/c]
                            [docs searchable-document-set?]
                            [#:exact? exact? any/c #f]
+                           [#:book/article book/article (or/c 'any 'book 'article) 'any]
                            [#:ricoeur-only? ricoeur-only? any/c #t])
          (listof (is-a?/c document-search-results<%>))]{
  Used to implement @racket[term-search].
@@ -214,6 +215,18 @@ of @tech{searchable document sets} to support new @tech{search backends}.
  constructor.
 }
 
+@deftogether[
+ (@defthing[exact?-px-prefix-str string?]
+   @defthing[exact?-px-suffix-str string?])]{
+Strings for constructing a regular expression to exclude lexical variants.
+For some @racket[term], a regular expression constructed using:
+@racketblock[(pregexp (string-append exact?-px-prefix-str
+                                 (regexp-quote term #f)
+                                 exact?-px-suffix-str))]
+will match only strings that contain @racket[term] exactly
+(in the sense of the @racket[#:exact?] argument to @racket[term-search].
+}
+
 @defproc[(make-search-result [#:counter counter natural-number/c]
                              [#:sub-counter sub-counter natural-number/c]
                              [#:meta meta pre-segment-meta/c]
@@ -244,12 +257,17 @@ of @tech{searchable document sets} to support new @tech{search backends}.
  @racket[document-search-results%] class, which is the only class to implement
  the @racket[document-search-results<%>] interface.
  @defconstructor[([info (is-a?/c TEI-info<%>)]
-                  [results (listof search-result?)])]{
+                  [results (non-empty-listof search-result?)])]{
   Constructs a @tech{document search results} object. Note that the
   @tech{searchable document set} implementation is responsible for
   sanatizing @tech{search result} values as documented under
   @racket[EXCERPT_RATIO] before passing them as the @racket[results]
   argument to this constructor.
+  
+  Also note that @racket[results] must not be @racket['()] —
+  it makes life easier for clients of this library to be able to rely on
+  the guarantee that a @racket[document-search-results%] object
+  means there are actually some results.
  }
 }
 
@@ -314,6 +332,7 @@ of @tech{searchable document sets} to support new @tech{search backends}.
  }
  @defmethod[(do-search-documents [term term/c]
                                  [#:ricoeur-only? ricoeur-only? any/c #t]
+                                 [#:book/article book/article (or/c 'any 'book 'article) 'any]
                                  [#:exact? exact? any/c #f])
             (listof (is-a?/c document-search-results<%>))]{
   Used to implement @racket[search-documents].
@@ -322,6 +341,16 @@ of @tech{searchable document sets} to support new @tech{search backends}.
   the concrete implementation should exclude portions of the document
   not written by Paul Ricœur.
 
+  When the @racket[exact?] argument is non-false,
+  the concrete implementation should exclude lexical variants,
+  perhaps by using @racket[exact?-px-prefix-str] and
+  @racket[exact?-px-suffix-str].
+
+  When the @racket[book/article] argument is @racket['book] or @racket['article],
+  the concrete implementation should only include results from documents for
+  which @racket[(eq? book/article (send doc #,(method TEI-info<%> get-book/article)))]
+  would return @racket[#t].
+  
   @bold{This is an abstract method.} Concrete subclasses @bold{must}
   override it with an implementation that actually searches
   the documents encapsulated by @(this-obj).

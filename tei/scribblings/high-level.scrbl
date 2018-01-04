@@ -191,33 +191,45 @@ The bindings documented in this section are provided by
 @deftogether[
  (@defproc[(term-search [term term/c]
                         [#:ricoeur-only? ricoeur-only? any/c #t]
+                        [#:book/article book/article (or/c 'any 'book 'article) 'any]
                         [#:exact? exact? any/c #f])
            (listof (is-a?/c document-search-results<%>))]
    @defthing[term/c flat-contract?
              #:value (and/c non-empty-string? (not/c #px"^\\s*$"))])]{
  Searches the @tech{corpus} object determined by @racket[current-corpus]
- for @racket[term]
+ for @racket[term].
 
  When @racket[ricoeur-only?] is non-false, @racket[term-search]
  omits results from passages not by Paul Ricœur.
+ 
  When @racket[exact?] is non-false, only matches containing @racket[term]
  exactly (but in a case-insensitive manner that normalizes whitespace)
  are returned. Otherwise (and by default), the @tech{search backend}
  attempts to match lexical variants of the given @racket[term],
  though the details of this behavior are backend-specific and unspecified.
+
+ When @racket[book/article] is @racket['book] or @racket['article],
+ only searches documents for which
+ @racket[(eq? book/article (send doc #,(method TEI-info<%> get-book/article)))]
+ would return @racket[#t].
+ When @racket[book/article] is @racket['any] (the default),
+ all documents in the @racket[current-corpus] are searched.
 }
 
 @definterface[document-search-results<%> (TEI-info<%>)]{
  The results of @racket[term-search] for each document in the @tech{corpus}
  are encapsulated in a @deftech{document search results} object.
+
+ A @tech{document search results} object may only be created for documents
+ which return at least one @tech{search result} value.
  @margin-note{The @racket[document-search-results<%>]
   interface contains additional,
   private methods which prevent it from being implemented by clients of
   this library.}
- @defmethod[(get-results) (listof search-result?)]{
+ @defmethod[(get-results) (non-empty-listof search-result?)]{
   Returns the @tech{search result} values contained by @(this-obj).
  }
- @defmethod[(count-results) natural-number/c]{
+ @defmethod[(count-results) exact-positive-integer?]{
   Returns the number of @tech{search result} values contained by @(this-obj)
   in a way that is cached across repeated calls
  }
@@ -226,7 +238,7 @@ The bindings documented in this section are provided by
  (@defproc[(document-search-results-title [dsr (is-a?/c document-search-results<%>)])
            string?]
    @defproc[(document-search-results-results [dsr (is-a?/c document-search-results<%>)])
-            (listof search-result?)]
+            (non-empty-listof search-result?)]
    @defform[#:kind "match expander"
             (document-search-results title-pat results-pat
                                      optional-pat ...)

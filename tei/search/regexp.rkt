@@ -32,10 +32,10 @@
   (pregexp
    (string-append "(?:^|\\s).{,80}"
                   (string-when exact?
-                    "(?:^|[^[:alpha:]])")
+                    exact?-px-prefix-str)
                   (regexp-quote (string-normalize-spaces term) #f)
                   (string-when exact?
-                    "(?:[^[:alpha:]]|$)")
+                    exact?-px-suffix-str)
                   ".{,80}(?:\\s|$)")))
 
 (define EXCERPT_MAX_PEEK
@@ -51,11 +51,22 @@
       (map prepare-searchable-document docs))
     (define/override-final (do-search-documents term
                                                 #:ricoeur-only? [ricoeur-only? #t]
+                                                #:book/article [book/article 'any]
                                                 #:exact? [exact? #f])
       (let ([term-len (string-length term)]
             [excerpt-px (term->excerpt-pregexp term exact?)])
-        (map (λ (doc) (send doc do-term-search term-len excerpt-px ricoeur-only?))
-             searchable)))))
+        (filter-map (λ (doc)
+                      (send doc
+                            do-term-search
+                            term-len
+                            excerpt-px
+                            ricoeur-only?))
+                    (case book/article
+                      [(any) searchable]
+                      [else (filter (λ (it)
+                                      (eq? book/article
+                                           (send it get-book/article)))
+                                    searchable)]))))))
 
 (define (regexp-searchable-document-set [docs '()])
   (new regexp-searchable-document-set%
@@ -110,9 +121,9 @@
 
 (define searchable-document%
   (class* object% [(interface (TEI-info<%>)
-                                      [do-term-search
-                                       (->m natural-number/c pregexp? any/c
-                                            (is-a?/c document-search-results<%>))])]
+                     [do-term-search
+                      (->m natural-number/c pregexp? any/c
+                           (or/c #f (is-a?/c document-search-results<%>)))])]
     (super-new)
     (init obj
           [(:segments segments)])
@@ -125,14 +136,20 @@
                                        (send obj to-plain-text)))])
         (* EXCERPT_RATIO doc-chars)))
     (define/public (do-term-search term-len excerpt-px ricoeur-only?)
-      (new document-search-results%
-           [info teiHeader]
-           [results
-            (limit-excess
-             term-len
-             (flatten
-              (for/list ([seg (in-list segments)])
-                (send seg do-term-search/segment excerpt-px ricoeur-only?))))]))
+      (define init-rslts
+        (flatten
+         (for/list ([seg (in-list segments)])
+           (send seg do-term-search/segment excerpt-px ricoeur-only?))))
+      (cond
+        [(null? init-rslts)
+         #f]
+        [else
+         (new document-search-results%
+              [info teiHeader]
+              [results
+               (limit-excess
+                term-len
+                init-rslts)])]))
     (define/private (term-len->max-excerpts term-len)
       (define excerpt-max-length
         (+ EXCERPT_MAX_PEEK term-len))

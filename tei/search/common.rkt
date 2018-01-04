@@ -26,6 +26,7 @@
           [search-documents
            (->* {term/c searchable-document-set?}
                 (#:ricoeur-only? any/c
+                 #:book/article (or/c 'any 'book 'article)
                  #:exact? any/c)
                 (listof (is-a?/c document-search-results<%>)))]
           [document-search-results-title
@@ -33,7 +34,7 @@
                string?)]
           [document-search-results-results
            (-> (is-a?/c document-search-results<%>)
-               (listof search-result?))]
+               (non-empty-listof search-result?))]
           [search-result<?
            (-> search-result? search-result? any/c)]
           [search-result>?
@@ -52,12 +53,14 @@
 
 (module+ private
   (provide EXCERPT_RATIO
+           exact?-px-prefix-str
+           exact?-px-suffix-str
            abstract-searchable-document-set%
            pre-segment-meta/c
            (contract-out
             [document-search-results%
              (class/c (init [info (is-a?/c TEI-info<%>)]
-                            [results (listof search-result?)]))]
+                            [results (non-empty-listof search-result?)]))]
             [struct pre-segment ([title string?]
                                  [counter natural-number/c]
                                  [body string?]
@@ -76,8 +79,7 @@
             [nullify-search-result-excerpt
              (-> search-result? search-result?)])
            ))
-           
-
+          
 
 (define term/c
   (and/c non-empty-string? #px"\\S"))
@@ -86,6 +88,12 @@
   ;the maximum portion of the document that may be
   ;shown in excerpts
   18/100)
+
+(define exact?-px-prefix-str ;; unicode???
+  "(?:^|[^[:alpha:]])")
+
+(define exact?-px-suffix-str ;; unicode???
+  "(?:[^[:alpha:]]|$)")
 
 (struct pre-segment (title counter body meta resp))
 
@@ -260,8 +268,8 @@
 
 (define document-search-results<%>
   (interface (TEI-info<%>)
-    [get-results (->m (listof (recursive-contract search-result?)))]
-    [count-results (->m natural-number/c)]
+    [get-results (->m (non-empty-listof (recursive-contract search-result?)))]
+    [count-results (->m exact-positive-integer?)]
     private-method))
 
 (define document-search-results%
@@ -453,6 +461,7 @@
                      [do-search-documents
                       (->*m {term/c}
                             (#:ricoeur-only? any/c
+                             #:book/article (or/c 'any 'book 'article)
                              #:exact? any/c)
                             (listof (is-a?/c document-search-results<%>)))])]
     (super-new)
@@ -464,10 +473,12 @@
 (define (search-documents term
                           sds
                           #:ricoeur-only? [ricoeur-only? #t]
+                          #:book/article [book/article 'any]
                           #:exact? [exact? #f])
   (send sds do-search-documents
         term
         #:ricoeur-only? ricoeur-only?
+        #:book/article book/article
         #:exact? exact?))
 
 
