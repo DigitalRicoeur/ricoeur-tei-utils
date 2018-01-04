@@ -15,9 +15,9 @@
 
 (define-runtime-path png-path
   "migration-assistant.png")
-(define icns-path
+(define-runtime-path icns-path
   "migration-assistant.icns")
-(define ico-path
+(define-runtime-path ico-path
   "migration-assistant.ico")
 
 (define (pre-installer parent-of-collects-dir
