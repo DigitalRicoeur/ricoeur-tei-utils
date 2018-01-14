@@ -185,11 +185,29 @@
             (define dir-valid?
               (directory-validate-xml #:quiet? #t
                                       dir))
-            (for/list ([pth (in-list pths)])
+            ;; Doing a lot of file->TEI seems to be slow.
+            ;; I think threads are helping with the IO bottleneck,
+            ;; but I haven't rigorously tested.
+            (define val-promises
+              (for/list ([pth (in-list pths)])
+                (delay/thread
+                (let ([xmllint-out (open-output-string)])
+                   (cond
+                     [(not (or dir-valid?
+                               (parameterize ([current-output-port xmllint-out]
+                                              [current-error-port xmllint-out])
+                                 (valid-xml-file? #:quiet? #f pth))))
+                      (xmllint-error (get-output-string xmllint-out))]
+                     [else
+                      (with-handlers ([exn:fail? values])
+                        (file->TEI pth))])))))
+            (for/list ([pth (in-list pths)]
+                       [pr:val (in-list val-promises)])
               (begin0 (new file-snip%
                            [pth pth]
                            [dir dir]
                            [dir-valid? dir-valid?]
+                           [val (force pr:val)]
                            [progress-frame progress]
                            [dir-frame this])
                       (send progress ++)))))
@@ -265,8 +283,9 @@
     (init-field dir
                 pth
                 dir-frame
+                val
                 [dir-valid? #f]
-                [val
+                #|[val
                  (let ([xmllint-out (open-output-string)])
                    (cond
                      [(not (or dir-valid?
@@ -276,7 +295,7 @@
                       (xmllint-error (get-output-string xmllint-out))]
                      [else
                       (with-handlers ([exn:fail? values])
-                        (file->TEI pth))]))]
+                        (file->TEI pth))]))]|#
                 [frame
                  (new (if (or (xmllint-error? val)
                               (exn? val))
@@ -442,7 +461,7 @@
 (define abstract-proto-frame%
   (class object%
     (super-new)
-    (init-field dir pth val widget dir-frame diverge-seconds)
+    (init-field dir pth widget dir-frame diverge-seconds)
     (abstract get-status
               get-title
               do-make-frame)
@@ -462,7 +481,8 @@
 (define error-proto-frame%
   (class abstract-proto-frame%
     (super-new)
-    (inherit-field dir pth val widget dir-frame)
+    (init-field val)
+    (inherit-field dir pth widget dir-frame)
     (define/override-final (do-make-frame)
       (new error-frame%
            [dir dir]
@@ -542,9 +562,11 @@
 ;                                  
 
 (define file-proto-frame%
+  ;; This is acceptably fast.
   (class abstract-proto-frame%
     (super-new)
-    (inherit-field dir pth val widget dir-frame diverge-seconds)
+    (init-field val)
+    (inherit-field dir pth widget dir-frame diverge-seconds)
     (define title
       (send val get-title))
     (define-values (pages-ok? page-descriptions)
