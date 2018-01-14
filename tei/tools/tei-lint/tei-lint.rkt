@@ -285,9 +285,8 @@
                       [dir dir]
                       [pth pth]
                       [val val]
-                      [diverge-seconds (if (infix: val is-a? TEI<%>)
-                                           (check-diverge val progress-frame)
-                                           #f)]
+                      [diverge-seconds (and (infix: val is-a? TEI<%>)
+                                            (diverges? val progress-frame))]
                       [dir-frame dir-frame]
                       [widget this])]
                 [status (send frame get-status)]

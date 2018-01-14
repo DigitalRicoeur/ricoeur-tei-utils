@@ -5,34 +5,60 @@
          "lib.rkt"
          )
 
-(provide check-diverge)
+(provide diverges?)
 
 (define suspicious-seconds
   3)
 
-(define (check-diverge doc progress-frame)
+(define (diverges? doc progress-frame)
   ;; Returns #f if (prepare-pre-segments doc) does not diverge
   ;; or else the number of seconds after which we gave up
-  (if (doc-quickly-succeeds? doc)
-      #f
-      (send (new diverge-notice%
-                 [doc doc]
-                 [parent progress-frame])
-            get-diverge-seconds)))
+  (define cust
+    (make-custodian))
+  (define seconds-counter
+    (new seconds-counter%))
+  (define maybe-notice
+    #f)
+  (define worker-th
+    (parameterize ([current-custodian cust])
+      (define update-th
+        (thread (λ ()
+                  (let loop ()
+                    (send seconds-counter update)
+                    (sleep 0.5)
+                    (loop)))))
+      (thread (λ ()
+                (prepare-pre-segments doc)
+                (when maybe-notice
+                  (send maybe-notice show #f))
+                (kill-thread update-th)))))
+  (define quickly-succeeds?
+    (sync/timeout suspicious-seconds worker-th))
+  (cond
+    [quickly-succeeds?
+     (custodian-shutdown-all cust)
+     #f]
+    [else
+     (set! maybe-notice
+           (new diverge-notice%
+                [doc doc]
+                [worker-th worker-th]
+                [cust cust]
+                [seconds-counter seconds-counter]
+                [parent progress-frame]))
+     (send* maybe-notice
+       (show #t)
+       (get-diverge-seconds))]))
 
-(define (doc-quickly-succeeds? doc)
-  (let ([cust (make-custodian)])
-    (define th
-      (parameterize ([current-custodian cust])
-        (thread (λ () (prepare-pre-segments doc)))))
-    (define rslt
-      (sync/timeout suspicious-seconds th))
-    (custodian-shutdown-all cust)
-    rslt))
+
               
 (define diverge-notice%
+  ;; Must be explicitly told to show
   (class dialog%
-    (init-field doc)
+    (init-field doc
+                worker-th
+                cust
+                seconds-counter)
     (super-new [label "Warning! - TEI Lint"]
                [alignment '(left top)])
     (inherit show)
@@ -88,73 +114,79 @@
       (new vertical-pane%
            [alignment '(center center)]
            [parent this]))
+    (send seconds-counter
+          reparent
+          main)
     (new button%
          [parent main]
-         [label "Start"]
-         [callback (λ (b e) (start))])
-    (show #t)
+         [label "Give Up"]
+         [callback (λ (b e)
+                     (custodian-shutdown-all cust)
+                     (show #f)
+                     (thread (λ () 
+                               (channel-put ch (send seconds-counter
+                                                     get-seconds)))))])
+    (parameterize ([current-custodian cust])
+      (thread (λ ()
+                (sync worker-th)
+                (thread (λ () 
+                          (channel-put ch #f))))))
     (define/public-final (get-diverge-seconds)
       (sync ch))
     (define/augment-final (can-close?)
       #f)
     (define/override-final (can-exit?)
       #t)
-    (define/private (start)
-      (send main change-children (λ (_) '()))
-      (define cust
-        (make-custodian))
-      (define seconds-counter
-        (new seconds-counter%
-             [parent main]))
-      (new button%
-           [parent main]
-           [label "Give Up"]
-           [callback (λ (b e)
-                       (custodian-shutdown-all cust)
-                       (show #f)
-                       (thread (λ () 
-                                 (channel-put ch (send seconds-counter get-seconds)))))])
-      (parameterize ([current-custodian cust])
-        (define update-th
-          (thread (λ ()
-                    (let loop ()
-                      (send seconds-counter update)
-                      (sleep 0.5)
-                      (loop)))))
-        (thread (λ ()
-                  (prepare-pre-segments doc)
-                  (show #f)
-                  (kill-thread update-th)
-                  (thread (λ () 
-                            (channel-put ch #f)))))))
     #|END diverge-notice%|#))
 
 
 (define seconds-counter%
-  (class horizontal-pane%
-    (super-new [alignment '(left top)])
+  (class object%
+    (super-new)
+    (init [parent #f])
     (define init-ms
       (current-inexact-milliseconds))
     (define latest-ms
       init-ms)
-    (new message%
-         [label "Elapsed Time (Seconds): "]
-         [parent this])
     (define msg
-      (new message%
-           [label (get-label)]
-           [font bold-system-font]
-           [auto-resize #t]
-           [parent this]))
+      (make-msg parent))
     (define/public-final (get-seconds)
       (/ (- latest-ms init-ms)
          1000))
-    (define/private (get-label)
-      (real->decimal-string (get-seconds)))
     (define/public-final (update)
       (set! latest-ms (current-inexact-milliseconds))
-      (send msg set-label (get-label)))))
-
-
-
+      (when msg
+        (send msg set-label (get-label))))
+    (define/public-final (reparent new-parent)
+      (cond
+        [(and msg new-parent)
+         (send+ msg
+                (get-parent)
+                (reparent new-parent))]
+        [new-parent
+         (set! msg (make-msg new-parent))]
+        [msg
+         (define panel
+           (send msg get-parent))
+         (send+ panel
+                (get-parent)
+                (delete-child panel))
+         (set! msg #f)]
+        [else
+         (void)]))
+    (define/private (get-label)
+      (real->decimal-string (get-seconds)))
+    (define/private (make-msg parent)
+      (and parent
+           (let ([container (new horizontal-panel%
+                                 [alignment '(left top)]
+                                 [parent parent])])
+             (new message%
+                  [label "Elapsed Time (Seconds): "]
+                  [parent container])
+             (new message%
+                  [label (get-label)]
+                  [font bold-system-font]
+                  [auto-resize #t]
+                  [parent container]))))))
 
