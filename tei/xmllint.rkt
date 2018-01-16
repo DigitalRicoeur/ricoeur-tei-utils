@@ -29,17 +29,21 @@
       (and (matching-platform? "win32\\x86_64")
            (collection-file-path "xmllint.exe"
                                  "xmllint-win32-x86_64"
-                                 #:fail not))))
-
-(unless xmllint
-  (log-warning "xmllint not found"))
+                                 #:fail not))
+      (begin 
+        (log-warning "xmllint not found")
+        #f)))
 
 (define (xmllint-available?)
-  xmllint)
+  (not (not xmllint)))
+
+(define empty-input-port
+  (open-input-string ""))
 
 (define (valid-xml-file? #:quiet? [quiet? #t] . l-pths)
   (or (not xmllint)
-      (parameterize ([current-error-port
+      (parameterize ([current-input-port empty-input-port]
+                     [current-error-port
                       (if quiet?
                           (open-output-nowhere)
                           (current-error-port))])
