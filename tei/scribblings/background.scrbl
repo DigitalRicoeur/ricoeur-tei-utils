@@ -39,7 +39,7 @@ Consider the following example:
   #:style 'inset
   @litchar{<bibl>}@tt{Paul Ricoeur, "The Function Of Fiction In
  Shaping Reality", in Man and World 12:2
- (}@litchar{<date when="1979">}@tt{1979}@litchar{</date>}@tt{),
+ (}@litchar{<date subtype="thisIsOriginal" type="publication" when="1979">}@tt{1979}@litchar{</date>}@tt{),
  123-141}@litchar{</bibl>})
 
 In this example, the portions typeset like @tt{this} are
@@ -71,7 +71,7 @@ as specifying a publication date.
 
 @margin-note{Readers will notice the close relationship between
 @tech{elements}, the abstract, logical entities, and @tech{tags},
-the notations in XML's @tech{concrete syntax} that marks them.
+the notations in XML's @tech{concrete syntax} that mark them.
 In practice, "element" and "tag" are often used synonymously.}
 
 In addition to its contents, an @tech{element} may have
