@@ -53,8 +53,8 @@ and that the most recently opened @tech{tag} must always be
 closed before an outer @tech{tag} can be closed.
 @margin-note{XML provides a shorthand for writing tags that
  are immediately closed: for example, writing
- @litchar{<pb n=0 />} is equivalent to
- @litchar{<pb n=0></pb>}.}
+ @litchar{<pb n="0" />} is equivalent to
+ @litchar{<pb n="0"></pb>}.}
 
 While the @tech{concrete syntax} of an XML document looks like
 a sequence of characters, much of the power of XML derives
