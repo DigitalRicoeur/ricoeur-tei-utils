@@ -23,6 +23,7 @@
                 searchable-document-set?)]
           ))
 
+
 (define postgresql-searchable-document-set%
   (class abstract-searchable-document-set%
     (super-new)
@@ -33,7 +34,9 @@
         (virtual-connection
          (connection-pool
           (λ () (dsn-connect dsn))))))
-    (initialize db docs)
+    (call-with-transaction
+     db
+     (λ () (initialize db docs)))
     (define hsh:title->teiHeader+excerpt-max-allow-chars
       (for/hash ([doc (in-list docs)])
         (define doc-chars
@@ -199,19 +202,23 @@
   "AND segDocumentIsBook = $2")
 
 (define select-statement:all
-  (make-select-statement))
+  (virtual-statement
+   (make-select-statement)))
 
 (define select-statement:ricoeur-only
-  (make-select-statement
-   where:ricoeur-only))
+  (virtual-statement
+   (make-select-statement
+    where:ricoeur-only)))
 
 (define select-statement:all+book/article
-  (make-select-statement
-   where:book/article))
+  (virtual-statement
+   (make-select-statement
+    where:book/article)))
 
 (define select-statement:ricoeur-only+book/article
-  (make-select-statement
-   (string-append where:ricoeur-only " " where:book/article)))
+  (virtual-statement
+   (make-select-statement
+    (string-append where:ricoeur-only " " where:book/article))))
 
 ;                                                                                  
 ;                                                                                  
@@ -231,60 +238,155 @@
 ;                                                                                  
 ;                                                                                  
 
-
-(define (initialize db docs)
-  (query-exec db "DROP TABLE IF EXISTS tSegments")
-  (query-exec db ƒstring-append{
+;; If we need to make a backwards-incompatible change to the
+;; table schema, increment this constant to force the table to be rebuilt.
+(define/contract TABLE-FORMAT-VERSION
+  natural-number/c
+  0)
+       
+(define (create-table db)
+  (query-exec db ƒ~a{
  CREATE TABLE tSegments (
  segDocumentTitle text NOT NULL,
- segDocumentIsBook bool NOT NULL,
+ segDocumentIsBook bool NOT NULL, ƒ; This is denormalized, but it's simpler.
  segCounter int8 NOT NULL,
  segMeta jsonb NOT NULL,
  segBody text NOT NULL,
  segTSV tsvector NOT NULL,
- segResp text NOT NULL
+ segResp text NOT NULL,
+ ƒ; The following is denormalized, but it's simpler.
+ segDocumentHash text NOT NULL, 
+ segTableFormatVersion int2 NOT NULL DEFAULT ƒ|TABLE-FORMAT-VERSION|,
+ PRIMARY KEY (segDocumentTitle,segCounter)
  );
+ }))
+
+(define-syntax str
+  (syntax-parser
+    [(_ part:str ...)
+     (datum->syntax this-syntax
+                    (apply string-append
+                           (syntax->datum #'(part ...))))]))
+
+(define (table-format-version-ok? db)
+  (and (member "segTableFormatVersion"
+               (query-list db
+                           ƒstr{
+ SELECT column_name
+ FROM information_schema.columns
+ WHERE table_name='tsegments'
  })
-  (for ([l-seg+isBook? (in-slice 1000 (for/fold ([l-seg+isBook? '()])
-                                                ([doc (in-list docs)])
-                                        (define isBook?
-                                          (eq? 'book (send doc get-book/article)))
-                                        (append (map (λ (seg) (cons seg isBook?))
-                                                     (prepare-pre-segments doc))
-                                                l-seg+isBook?)))]
-        #:unless (null? l-seg+isBook?))
-    ;;Avoid:
-    ;; query-exec: wrong number of parameters for query
-    ;;   expected: 19494
-    ;;   given: 85030
-    (insert-pre-segments db l-seg+isBook?))
-  (query-exec db "CREATE INDEX tsv_idx ON tSegments USING gin(segTSV)")
-  db)
+               string-ci=?)
+       (= TABLE-FORMAT-VERSION
+          (query-value db
+                       ƒstr{
+ SELECT segTableFormatVersion
+ FROM tSegments
+ LIMIT 1
+ }))))
+
+(define (must-add-doc? db doc)
+  (define title
+    (send doc get-title))
+  (define maybe-old-md5
+    (query-maybe-value
+     db
+     ƒstr{
+ SELECT segDocumentHash
+ FROM tSegments
+ WHERE segDocumentTitle = $1
+ LIMIT 1
+}
+     title))
+  (cond
+    [(and maybe-old-md5
+          (equal? (send doc get-md5)
+                  maybe-old-md5))
+     #f]
+    [else
+     (when maybe-old-md5
+       (query-exec db
+                   "DELETE FROM tSegments WHERE segDocumentTitle = $1"
+                   title))
+     #t]))
+
+
+(define (build-l-seg+isBook+md5? db docs)
+  (for/fold ([l-seg+isBook+md5? '()])
+            ([doc (in-list docs)]
+             #:when (must-add-doc? db doc))
+    (define isBook?+md5
+      (list (eq? 'book (send doc get-book/article))
+            (send doc get-md5)))
+    (append (map (λ (seg) (cons seg isBook?+md5))
+                 (prepare-pre-segments doc))
+            l-seg+isBook+md5?)))
+
+
+
+(define (initialize db docs)
+  ;; Drop/Create table as needed
+  (cond
+    [(table-exists? db "tSegments")
+     (unless (table-format-version-ok? db)
+       (query-exec db "DROP TABLE tSegments")
+       (create-table db))]
+    [else
+     (create-table db)])
+  ;; Populate table as needed
+  (let* ([l-seg+isBook+md5? (build-l-seg+isBook+md5? db docs)]
+         [no-change? (null? l-seg+isBook+md5?)])
+    (unless no-change?
+      (query-exec db "DROP INDEX IF EXISTS tsv_idx")
+      (for ([l-seg+isBook+md5? (in-slice 1000 l-seg+isBook+md5?)]
+            #:unless (null? l-seg+isBook+md5?))
+        ;;Do in slices to avoid:
+        ;; query-exec: wrong number of parameters for query
+        ;;   expected: 19494
+        ;;   given: 85030
+        (insert-pre-segments db l-seg+isBook+md5?))
+      (query-exec db "CREATE INDEX tsv_idx ON tSegments USING gin(segTSV)"))))
+
+
+
 
 (define insert:base-str
-  "INSERT INTO tSegments (segDocumentTitle,segDocumentIsBook,segCounter,segMeta,segBody,segTSV,segResp) VALUES ")
+  ƒstr{
+ INSERT INTO tSegments (
+ segDocumentTitle,
+ segDocumentIsBook,
+ segCounter,
+ segMeta,
+ segBody,
+ segTSV,
+ segResp,
+ segDocumentHash
+ ) VALUES })
 
-(define (insert-pre-segments db l-seg+isBook?) ;must not be empty
+(define (insert-pre-segments db l-seg+isBook+md5?) ;must not be empty
   (for/fold/define ([l-query-strs null]
                     [backwards-l-args null])
-                   ([seg+isBook? (in-list l-seg+isBook?)]
+                   ([seg+isBook+md5? (in-list l-seg+isBook+md5?)]
                     [arg-counter (in-naturals)])
-    (match-define (cons (pre-segment title counter body meta resp)
-                        isBook?)
-      seg+isBook?)
+    (match-define (list (pre-segment title counter body meta resp)
+                        isBook?
+                        md5)
+      seg+isBook+md5?)
     (define base
-      (* 6 arg-counter))
+      (* 7 arg-counter))
     (values (cons ƒ~a{
- ($ƒ(+ 1 base),
- $ƒ(+ 2 base),
- $ƒ(+ 3 base),
- $ƒ(+ 4 base),
- $ƒ(+ 5 base),
- to_tsvector($ƒ(+ 5 base)),
- $ƒ(+ 6 base))
+ ($ƒ|(+ 1 base)|,
+ $ƒ|(+ 2 base)|,
+ $ƒ|(+ 3 base)|,
+ $ƒ|(+ 4 base)|,
+ $ƒ|(+ 5 base)|,
+ to_tsvector($ƒ|(+ 5 base)|),
+ $ƒ|(+ 6 base)|,
+ $ƒ|(+ 7 base)|)
 }
                   l-query-strs)
-            (list* resp
+            (list* md5
+                   resp
                    body
                    meta
                    counter
