@@ -6,6 +6,7 @@ fast:
 	raco setup --no-docs --no-pkg-deps ricoeur/lib ricoeur/tei
 
 install:
+	-git pull --ff-only
 	raco pkg install -i
 
 reinstall:
