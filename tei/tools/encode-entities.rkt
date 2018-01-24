@@ -21,7 +21,8 @@
                                "not a valid path")
                            (format "\n  given: ~e" pth))))
    (for ([pth (in-list paths)])
-     (let ([raw (file->string pth)])
+     (let ([raw (file->string pth #:mode 'text)])
        (with-output-to-file pth
          #:exists 'replace
+         #:mode 'text
          (λ () (write-xexpr raw)))))))

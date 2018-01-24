@@ -24,9 +24,11 @@
        (error "either \"--line-breaks\" or \"--blank-lines\" must be given"))
      (define obj
        (call-with-input-file path
+         #:mode 'text
          read-TEI))
      (with-output-to-file/unless-exn path
        #:exists 'replace
+       #:mode 'text
        (λ ()
          (send (send obj guess-paragraphs #:mode mode)
                write-TEI))))))

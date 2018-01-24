@@ -122,6 +122,7 @@
   (parameterize ([current-object-modify-seconds
                   (file-or-directory-modify-seconds pth-str)])
     (call-with-input-file  pth-str
+      #:mode 'text
       (λ (in) (read-TEI in #:filename pth-str)))))
 
 

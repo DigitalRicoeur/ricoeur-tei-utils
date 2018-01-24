@@ -66,7 +66,7 @@
         (send doc write-TEI))
       (close-output-port out-to-pipe)
       (begin-edit-sequence)
-      (for ([ln (in-lines in-from-pipe 'linefeed)])
+      (for ([ln (in-lines in-from-pipe 'linefeed)]) ; or 'any ? but I think this is handled by file->TEI
         (insert ln)
         (insert "\n"))
       (end-edit-sequence))

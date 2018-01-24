@@ -561,7 +561,7 @@
              (values (add1 num-pbs) child))
            (define new-acc
              (cond
-               [[2 . > . num-pbs]
+               [(infix: 2 > num-pbs)
                 ;; Good case: there are fewer than two pb%s in plain-children,
                 ;; so we treat plain-children as a segment.
                 (acc #:body (string-normalize-spaces
@@ -665,7 +665,7 @@
                       acc
                       the-pb)])))))
 
-(define-member-name set-filename! (generate-member-key))
+
 
 (define TEI<%>
   (interface (element<%>

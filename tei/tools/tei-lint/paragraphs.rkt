@@ -266,6 +266,7 @@
              (send doc get-modify-seconds))
      (with-output-to-file/unless-exn pth
        #:exists 'truncate/replace
+       #:mode 'text
        (λ () (send new-doc write-TEI)))
      (refresh-directory-box
       "Changes Saved Successfully - TEI Lint"
