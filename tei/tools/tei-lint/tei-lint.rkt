@@ -283,6 +283,7 @@
   (define gutter (/ STATUS_DOT_SIZE 2))
   (define path-pict
     (path->wrapped-pict path
+                        #:max-width 600
                         #:font (if title
                                    normal-control-font
                                    bold-system-font)))
@@ -648,7 +649,7 @@
     (let ([row (new horizontal-pane%
                     [parent this]
                     [alignment '(left center)])]
-          [status
+          [paragraph-status
            (send val get-guess-paragraphs-status)])
       (new message%
            [label "Paragraphs: "]
@@ -662,11 +663,11 @@
                               [doc val]
                               [parent this]
                               [maybe-dir-frame dir-frame]))]))
-      (case status
+      (case paragraph-status
         [(line-breaks blank-lines done)
          (new message%
               [parent row]
-              [label (case status
+              [label (case paragraph-status
                        [(done) "Done"]
                        [(line-breaks) "Line Breaks"]
                        [(blank-lines) "Blank Lines"])])]
