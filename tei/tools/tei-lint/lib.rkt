@@ -58,12 +58,13 @@
     read-bitmap))
 
 (define (insert-message-row parent l r
+                            #:alignment [alignment '(left top)]
                             #:right-message% [right-message% message%]
                             #:left-font [left-font bold-system-font])
   (define row
     (new horizontal-pane%
          [parent parent]
-         [alignment '(left top)]))
+         [alignment alignment]))
   (new message%
        [label l]
        [font left-font]

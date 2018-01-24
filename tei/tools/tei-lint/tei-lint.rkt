@@ -616,18 +616,13 @@
            [parent row]
            [content (string-trim (send val get-citation))]))
     ;; Type
-    (let ([row (new horizontal-pane%
-                    [parent this]
-                    [alignment '(left top)])])
-      (case (send val get-book/article)
-        [(book)
-         (new message%
-              [parent row]
-              [label "Type: Book"])]
-        [(article)
-         (new message%
-              [parent row]
-              [label "Type: Article"])]))
+    (insert-message-row this
+                        "Type: "
+                        (case (send val get-book/article)
+                          [(book)
+                           "Book"]
+                          [(article)
+                           "Article"]))
     ;; Date
     (let ([sect (new vertical-pane%
                      [parent this]
@@ -653,6 +648,7 @@
            (send val get-guess-paragraphs-status)])
       (new message%
            [label "Paragraphs: "]
+           [font bold-system-font]
            [parent row])
       (define (add-button label)
         (new button%
