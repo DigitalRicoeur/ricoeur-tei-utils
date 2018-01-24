@@ -60,15 +60,10 @@
     (init doc)
     (define initializing? #t)
     (let ()
-      (define-values {in-from-pipe out-to-pipe}
-        (make-pipe))
-      (parameterize ([current-output-port out-to-pipe])
-        (send doc write-TEI))
-      (close-output-port out-to-pipe)
       (begin-edit-sequence)
-      (for ([ln (in-lines in-from-pipe 'linefeed)]) ; or 'any ? but I think this is handled by file->TEI
-        (insert ln)
-        (insert "\n"))
+      (insert
+       (with-output-to-string
+        (λ () (send doc write-TEI))))
       (end-edit-sequence))
     (set! initializing? #f)
     (scroll-editor-to-top this)
