@@ -75,11 +75,11 @@
     (define/public (get-natural-width)
       (define-values (w h)
         (get-text-extent))
-      (+ w (* 2 (horizontal-inset))))
+      (+ w (* 2 (horizontal-inset)) 5))
     (define/public (get-natural-height)
       (define-values (w h)
         (get-text-extent))
-      (+ h (* 2 (vertical-inset))))
+      (+ h (* 2 (vertical-inset)) 5)) ; don't know why 5, but it fixes problems
     (define/public (get-text-extent)
       (let ([w (box 0)]
             [h (box 0)])
@@ -103,11 +103,14 @@
     (super-new)
     (inherit set-natural-height
              get-parent
+             get-top-level-window
              )
-    (let ([parent (get-parent)])
+    (let ([parent (get-top-level-window)])
       (when parent
-        (send parent reflow-container)))
-    (set-natural-height)))
+        (send parent reflow-container))
+      (set-natural-height)
+      (when parent
+        (send parent reflow-container)))))
 
 (define editor-message%
   (class (natural-height-mixin constant-editor-canvas%)
