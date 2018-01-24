@@ -7,6 +7,7 @@
          gregor
          adjutor
          pict
+         pict/snip
          "lib.rkt"
          "splash.rkt"
          "check-diverge.rkt"
@@ -274,9 +275,36 @@
 (define hand-cursor
   (make-object cursor% 'hand))
 
+(define (file-snip-pict #:status status
+                        #:path path
+                        #:title [title #f])
+  (define padding 1.0)
+  (define line-padding 1.0)
+  (define gutter (/ STATUS_DOT_SIZE 2))
+  (define path-pict
+    (path->wrapped-pict path
+                        #:font (if title
+                                   normal-control-font
+                                   bold-system-font)))
+  (define rhs-pict
+    (cond
+      [title
+       (define title-pict
+         (text title (cons 'aligned bold-system-font)))
+       (vl-append line-padding
+                  title-pict
+                  path-pict)]
+      [else
+       path-pict]))
+  (define base
+    (hc-append gutter (status-dot-pict status) rhs-pict))
+  (cc-superimpose
+   (blank (+ (* 2 padding) (pict-width base))
+          (+ (* 2 padding) (pict-height base)))
+   base))
+
 (define file-snip%
-  (class snip%
-    (super-new)
+  (class pict-snip%
     (inherit get-flags
              set-flags)
     (init progress-frame)
@@ -310,6 +338,9 @@
                       [widget this])]
                 [status (send frame get-status)]
                 [maybe-title (send frame get-title)])
+    (super-new [pict (file-snip-pict #:status status
+                                     #:path pth
+                                     #:title (from-just #f maybe-title))])
     (set-flags (list* 'handles-events
                       'handles-all-mouse-events
                       'hard-newline
@@ -321,97 +352,6 @@
                                     editory	 
                                     event)
       hand-cursor)
-    (define pth-str (path->string pth))
-    (define quasi-title
-      (if (or (xmllint-error? val)
-              (exn? val))
-          pth-str
-          (send val get-title)))
-    (define padding 1.0)
-    (define line-padding 1.0)
-    (define gutter (/ STATUS_DOT_SIZE 2))
-    (define extent-cache (make-hasheq))
-    (define/override-final (size-cache-invalid)
-      (hash-clear! extent-cache))
-    (define/private (lookup-width dc)
-      (hash-ref extent-cache
-                'w
-                (λ ()
-                  (populate-extent-cache! dc)
-                  (lookup-width dc))))
-    (define/private (lookup-height dc)
-      (hash-ref extent-cache
-                'h
-                (λ ()
-                  (populate-extent-cache! dc)
-                  (lookup-height dc))))
-    (define/private (lookup-line1-height dc)
-      (hash-ref extent-cache
-                'line1-h
-                (λ ()
-                  (populate-extent-cache! dc)
-                  (lookup-line1-height dc))))
-    (define/private (populate-extent-cache! dc)
-      (match maybe-title
-        [(nothing)
-         (define-values {pth-w pth-h desc vspace}
-           (send dc get-text-extent pth-str bold-system-font #t))
-         (hash-set! extent-cache 'line1-h pth-h)
-         (hash-set! extent-cache
-                    'w
-                    (+ (* 2 padding) STATUS_DOT_SIZE gutter pth-w))
-         (hash-set! extent-cache
-                    'h
-                    (+ (* 2 padding) (max STATUS_DOT_SIZE pth-h)))]
-        [(just title)
-         (define-values {pth-w pth-h desc vspace}
-           (send dc get-text-extent pth-str normal-control-font #t))
-         (define-values {title-w title-h title-desc title-vspace}
-           (send dc get-text-extent title bold-system-font #t))
-         (hash-set! extent-cache 'line1-h title-h)
-         (hash-set! extent-cache
-                    'w
-                    (+ (* 2 padding) STATUS_DOT_SIZE gutter (max pth-w title-w)))
-         (hash-set! extent-cache
-                    'h
-                    (+ (* 2 padding) (max STATUS_DOT_SIZE
-                                          (+ pth-h title-h line-padding))))]))
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    (define/override-final (draw dc x y left top right bottom dx dy draw-caret)
-      (draw-status-dot dc status (+ x padding) (+ y padding))
-      (define old-font
-        (send dc get-font))
-      (define text-x
-        (+ x padding STATUS_DOT_SIZE gutter))
-      (match maybe-title
-        [(nothing)
-         (send dc set-font bold-system-font)
-         (send dc draw-text pth-str text-x (+ y padding))]
-        [(just title)
-         (send dc set-font bold-system-font)
-         (send dc draw-text title text-x (+ y padding))
-         (send dc set-font normal-control-font)
-         (send dc draw-text pth-str text-x (+ y
-                                              padding
-                                              (lookup-line1-height dc)
-                                              line-padding))])
-      (send dc set-font old-font))
-    (define/override-final (get-extent dc x y	 	 	 	 
-                                       [w #f]
-                                       [h #f]
-                                       [descent #f]
-                                       [space #f]
-                                       [lspace #f]
-                                       [rspace #f])
-      (define-syntax-rule (maybe-set-boxes! [b v] ...)
-        (begin (when b (set-box! b v)) ...))
-      (maybe-set-boxes!
-       [w (lookup-width dc)]
-       [h (lookup-height dc)]
-       [descent padding]
-       [space padding]
-       [lspace padding]
-       [rspace padding]))
     (define mouse-state #f)
     (define/override-final (on-event dc x y ed-x ed-y evt)
       (case (send evt get-event-type)
@@ -433,12 +373,18 @@
            [frame frame]
            [status status]
            [maybe-title maybe-title]))
+    (define quasi-title
+      (if (or (xmllint-error? val)
+              (exn? val))
+          (path->string pth)
+          (send val get-title)))
     (define/public-final (get-title)
       quasi-title)
     (define/public-final (get-status)
       status)
     (define/public-final (revoke)
       (send frame show #f))))
+
 
 ;                                          
 ;                                          

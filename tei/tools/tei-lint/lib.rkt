@@ -22,6 +22,8 @@
          STATUS_DOT_SIZE
          insert-message-row
          (contract-out
+          [status-dot-pict
+           (-> (or/c 'ok 'error 'warning) pict?)]
           [get-xml-directory
            (->* {}
                 {(or/c (is-a?/c frame%)
@@ -108,7 +110,7 @@
       (init-drawer (get-dc) 0 0))))
 
 (define (red-text-pict txt)
-  (colorize (text txt '(bold . system)) "red"))
+  (colorize (text txt '(aligned bold . system)) "red"))
 
 
 (def
@@ -134,6 +136,27 @@
      (send dc set-pen old-pen)
      (send dc set-brush old-brush))])
 
+(define status-dot-pict-cache
+  (make-hasheq))
+
+(define (status-dot-pict status)
+  (hash-ref status-dot-pict-cache
+            status
+            (λ ()
+              (define rslt
+                (dc (λ (dc x y) (draw-status-dot dc status x y))
+                    STATUS_DOT_SIZE
+                    STATUS_DOT_SIZE))
+              (hash-set! status-dot-pict-cache status rslt)
+              rslt)))
+
+(define status-canvas%
+  (class message%
+    (init status)
+    (super-new [label
+                (pict->bitmap (status-dot-pict status)
+                              #:make-bitmap make-screen-bitmap)])))
+#|
 (define/contract status-canvas%
   (class/c (init [status (or/c 'ok 'warning 'error)])
            [set-status (->m (or/c 'ok 'warning 'error) any)])
@@ -153,6 +176,7 @@
       (refresh-now))
     (define/override (on-paint)
       (draw-status-dot (get-dc) status))))
+|#
 
 (struct xmllint-error (str))
 
