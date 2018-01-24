@@ -9,6 +9,10 @@
          pict
          )
 
+(require-provide "ed.rkt"
+                 "long-path.rkt"
+                 )
+
 (provide photo-bitmap
          status-canvas%
          progress-gauge%
@@ -18,8 +22,6 @@
          STATUS_DOT_SIZE
          insert-message-row
          (contract-out
-          [scroll-editor-to-top
-           (-> (is-a?/c editor<%>) any)]
           [get-xml-directory
            (->* {}
                 {(or/c (is-a?/c frame%)
@@ -53,26 +55,18 @@
   (call-with-input-file photo-path
     read-bitmap))
 
-(define (scroll-editor-to-top ed)
-  (let loop ([wait 1])
-    (cond
-      [(send ed locked-for-flow?)
-       (unless [wait . > . 5]
-         (sleep wait)
-         (loop (add1 wait)))]
-      [else
-       (send ed scroll-to-position 0)])))
-
-(define (insert-message-row parent l r #:left-font [left-font bold-system-font])
+(define (insert-message-row parent l r
+                            #:right-message% [right-message% message%]
+                            #:left-font [left-font bold-system-font])
   (define row
     (new horizontal-pane%
          [parent parent]
-         [alignment '(left bottom)]))
+         [alignment '(left top)]))
   (new message%
        [label l]
        [font left-font]
        [parent row])
-  (new message%
+  (new right-message%
        [label r]
        [parent row])
   (void))
@@ -186,3 +180,19 @@
   (interface [(class->interface frame%)]
     [get-status (->m (or/c 'ok 'warning 'error))]
     [get-title (->m (maybe/c string?))]))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -191,7 +191,7 @@
             (define val-promises
               (for/list ([pth (in-list pths)])
                 (delay/thread
-                (let ([xmllint-out (open-output-string)])
+                 (let ([xmllint-out (open-output-string)])
                    (cond
                      [(not (or dir-valid?
                                (parameterize ([current-output-port xmllint-out]
@@ -509,28 +509,21 @@
       (new status-canvas%
            [status 'error]
            [parent row])
-      (new message%
+      (new path-message%
            [parent row]
            [font bold-system-font]
-           [label (path->string pth)]))
+           [path (path->string pth)]))
     (new message%
          [parent this]
          [label (if (xmllint-error? val)
                     "xmllint found an error."
                     "The file is invalid.")])
-    (let ([e-c (new editor-canvas%
-                    [parent this]
-                    [min-height 400]
-                    [style '(auto-hscroll auto-vscroll)])])
-      (define para
-        (new text% [auto-wrap #t]))
-      (send para
-            insert
-            (match val
-              [(xmllint-error str) str]
-              [(exn:fail msg _) msg]))
-      (send para lock #t)
-      (send e-c set-editor para))
+    (new constant-editor-canvas%
+         [parent this]
+         [min-height 400]
+         [content (match val
+                    [(xmllint-error str) str]
+                    [(exn:fail msg _) msg])])
     ;;;;;;;;;;;;;;;;;;;
     (let ([mb (new menu-bar% [parent this])])
       (add-file-menu mb dir-frame)
@@ -622,11 +615,10 @@
            [status-dot-canvas (new status-canvas%
                                    [status status]
                                    [parent row])])
-      (new message%
+      (new path-message%
            [parent row]
            [font bold-system-font]
-           [label (path->string pth)])
-      status-dot-canvas)
+           [path (path->string pth)]))
     ;; Title
     (define title
       (send val get-title))
@@ -673,17 +665,9 @@
            [parent row]
            [font bold-system-font]
            [label "Citation:"])
-      (define e-c
-        (new editor-canvas%
-             [parent row]
-             [style '(auto-hscroll auto-vscroll)]))
-      (define para
-        (new text% [auto-wrap #t]))
-      (send para
-            insert
-            (send val get-citation))
-      (send para lock #t)
-      (send e-c set-editor para))
+      (new (natural-height-mixin constant-editor-canvas%)
+           [parent row]
+           [content (string-trim (send val get-citation))]))
     ;; Type
     (let ([row (new horizontal-pane%
                     [parent this]
@@ -762,17 +746,10 @@
          (new none-message%
               [parent row])]
         [else
-         (define e-c
-           (new editor-canvas%
-                [parent row]
-                [min-height 300]
-                [style '(auto-hscroll auto-vscroll)]))
-         (define para
-           (new text% [auto-wrap #t]))
-         (for ([str (in-list page-descriptions)])
-           (send para insert str))
-         (send para lock #t)
-         (send e-c set-editor para)]))
+         (new constant-editor-canvas%
+              [parent row]
+              [content page-descriptions]
+              [min-height 300])]))
     ;;;;;;;;;;;;;;;;;;;
     (let ([mb (new menu-bar% [parent this])])
       (add-file-menu mb dir-frame)

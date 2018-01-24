@@ -5,7 +5,14 @@
          "lib.rkt"
          )
 
-(provide diverges?)
+(provide (contract-out
+          [diverges?
+           (-> (is-a?/c TEI<%>)
+               (or/c (is-a?/c frame%)
+                     (is-a?/c dialog%)
+                     #f)
+               (or/c #f (>=/c 0)))]
+          ))
 
 (define suspicious-seconds
   3)
@@ -78,36 +85,30 @@
       (insert-message-row col
                           "Title: "
                           (send doc get-title))
-      (insert-message-row col
-                          "Path: "
-                          (let ([pth (send doc get-full-path)])
-                            (cond
-                              [(string? pth)
-                               pth]
-                              [(path? pth)
-                               (path->string pth)]
-                              [else
-                               "<unknown>"]))))
-    (let ([para (new text% [auto-wrap #t])])
-      (new editor-canvas%
-           [parent this]
-           [style '(transparent no-border no-hscroll auto-vscroll no-focus)]
-           [min-height 150]
-           [editor para])
-      (send para
-            insert
-            "Attempting to split this document into segments for search is taking a suspiciously long time.\n\n")
-      (send para
-            insert
-            "It may be affected by a bug which can cause the segmentation function to run forever.\n\n")
-      (send para
-            insert
-            "Please try running it now, and be prepared to give up if it seems to be running forever.")
-      (scroll-editor-to-top para)
-      (send para lock #t))
-    (new message%
-         [label "This window will close automatically if the function finishes."]
-         [parent this])
+      (let ([pth (send doc get-full-path)])
+        (if (path-string? pth)
+            (insert-message-row col
+                                "Path: "
+                                #:right-message% path-message%
+                                (cond
+                                  [(string? pth)
+                                   pth]
+                                  [(path? pth)
+                                   (path->string pth)]))
+            (insert-message-row col
+                                "Path: "
+                                "<unknown>"))))
+    (new editor-message%
+         [parent this]
+         [content '("Attempting to split this document into segments"
+                    " for search is taking a suspiciously long time.\n\n"
+                    "It may be affected by a bug which can cause the"
+                    " segmentation function to run forever.\n\n"
+                    "Please try running it now, and be prepared"
+                    " to give up if it seems to be running forever.\n\n"
+                    "This window will close automatically if"
+                    " the function finishes."
+                    )])
     (define ch
       (make-channel))
     (define main

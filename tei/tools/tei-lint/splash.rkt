@@ -36,16 +36,9 @@
            [font (make-font #:family 'system
                             #:size 36
                             #:weight 'bold)])
-      (define e-c
-        (new editor-canvas%
-             [parent col]
-             [style '(transparent no-border no-hscroll auto-vscroll no-focus)]))
-      (define para
-        (new text% [auto-wrap #t]))
-      (send para insert message)
-      (scroll-editor-to-top para)
-      (send para lock #t)
-      (send e-c set-editor para)
+      (new editor-message%
+           [parent col]
+           [content message])
       (on-initialize-col col))
     (define/public (on-initialize-col col)
       (void))
@@ -59,8 +52,10 @@
   (class splash-frame/no-button%
     (unless (xmllint-available?)
       (show-xmllint-warning this))
+    (init 
+     [message "To begin, choose a directory containing TEI XML files."])
     (super-new 
-     [message "To begin, choose a directory containing TEI XML files."])    
+     [message message])
     (abstract on-choose-directory)
     (define/override (on-initialize-col col)
       (new button%

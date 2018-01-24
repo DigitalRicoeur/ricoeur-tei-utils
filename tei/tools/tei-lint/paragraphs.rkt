@@ -12,6 +12,8 @@
 (provide paragraphs:prompt%
          )
 
+;; TODO: Replace message-box/custom with something using editor-message%
+
 (define paragraphs:prompt%
   (class frame%
     (init-field doc
@@ -133,6 +135,9 @@
         [else
          (super on-traverse-char evt)]))))
 
+(define narrower-path-message%
+  (class path-message%
+    (super-new [max-width 375])))
 
 (define (add-title+path parent doc)
   (let ([sub-col
@@ -147,6 +152,7 @@
     (insert-message-row
      sub-col
      "Path: "
+     #:right-message% narrower-path-message%
      (let ([p (send doc get-full-path)])
        (cond
          [(string? p)
