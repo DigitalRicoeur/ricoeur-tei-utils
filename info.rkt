@@ -13,6 +13,7 @@
                "db-lib"
                "draw-lib"
                "parser-tools-lib"
+               "pict-snip-lib"
                ("xmllint-win32-x86_64" #:platform "win32\\x86_64") 
                ))
 (define build-deps '("scribble-lib"
