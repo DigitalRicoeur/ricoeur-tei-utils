@@ -14,7 +14,8 @@
                "draw-lib"
                "parser-tools-lib"
                "pict-snip-lib"
-               ("xmllint-win32-x86_64" #:platform "win32\\x86_64") 
+               ("xmllint-win32-x86_64" #:platform "win32\\x86_64"
+                                       #:version "0.1") 
                ))
 (define build-deps '("scribble-lib"
                      "racket-doc"

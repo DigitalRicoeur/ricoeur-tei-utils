@@ -6,7 +6,10 @@
          racket/contract
          setup/matching-platform
          ricoeur/lib/xml-path
-         )
+         racket/runtime-path
+         (for-syntax racket/base
+                     setup/matching-platform
+                     ))
 
 (provide xmllint-available?
          xml-path?
@@ -24,12 +27,17 @@
            (-> (-> any/c) any/c)]
           ))
 
+(define-runtime-path-list list:xmllint-win32-x86_64
+  (if (matching-platform? "win32\\x86_64" #:cross? #t)
+      '((module xmllint-win32-x86_64 #f))
+      null))
+
 (define xmllint
   (or (find-executable-path "xmllint")
-      (and (matching-platform? "win32\\x86_64")
-           (collection-file-path "xmllint.exe"
-                                 "xmllint-win32-x86_64"
-                                 #:fail not))
+      (and (not (null? list:xmllint-win32-x86_64))
+           (dynamic-require (car list:xmllint-win32-x86_64)
+                            'xml-lint
+                            (λ () #f)))
       (begin 
         (log-warning "xmllint not found")
         #f)))
