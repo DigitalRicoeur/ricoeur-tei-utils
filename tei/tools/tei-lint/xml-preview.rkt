@@ -38,13 +38,20 @@
           tag-style)
     "Standard"))
 
-
+(define show-overview?
+  #false)
 
 (define xml-preview-text%
   (class (color:text-mixin
-          (text:line-numbers-mixin
-           (editor:standard-style-list-mixin
-            text:basic%)))
+          ((if show-overview?
+               text:inline-overview-mixin
+               (mixin () ()
+                 (super-new)
+                 (define/public (set-inline-overview-enabled? _)
+                   (void))))
+           (text:line-numbers-mixin
+            (editor:standard-style-list-mixin
+             text:basic%))))
     (super-new [auto-wrap #t]
                [line-spacing 1.0])
     (inherit show-line-numbers!
@@ -53,6 +60,7 @@
              end-edit-sequence
              insert
              start-colorer
+             set-inline-overview-enabled?
              )
     ;; do a dance with show-line-numbers! to prevent them
     ;; from covering things
@@ -70,7 +78,8 @@
     (start-colorer token-sym->style tokenize-xml null)
     (define/public (after-show)
       ;; Only works (though odly) after showing the frame
-      (show-line-numbers! #t))
+      (show-line-numbers! #t)
+      (set-inline-overview-enabled? #t))
     ;(send ed lock #t) ;blocks colorer
     (define/augment (can-delete? start len)
       #f)

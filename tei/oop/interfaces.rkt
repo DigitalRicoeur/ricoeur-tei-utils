@@ -11,6 +11,9 @@
                      racket/syntax
                      ))
 
+(require-provide "interfaces/element.rkt"
+                 )
+
 (provide element-or-xexpr->plain-text
          element<%>
          tei-element?
@@ -53,83 +56,6 @@
            location-stack-entry:note/c
            ))
 
-;                                                                  
-;                                                                  
-;                                                                  
-;                                                                  
-;           ;;;;                                     ;;      ;     
-;             ;;                                     ;;     ; ;   ;
-;     ;;;     ;;      ;;;  ; ;; ;;    ;;;   ;; ;   ;;;;;;; ;; ;; ; 
-;   ;;   ;    ;;    ;;   ; ;; ;; ;  ;;   ;  ;;; ;    ;;     ; ;  ; 
-;   ;    ;    ;;    ;    ; ;; ;; ;; ;    ;  ;;  ;;   ;;      ;     
-;  ;;;;;;;;   ;;   ;;;;;;;;;; ;; ;;;;;;;;;; ;;  ;;   ;;         ;  
-;   ;         ;;    ;      ;; ;; ;; ;       ;;  ;;   ;;     ; ;; ;;
-;   ;;   ;     ;    ;;   ; ;; ;; ;; ;;   ;  ;;  ;;    ;     ;  ; ; 
-;     ;;;       ;;    ;;;  ;; ;; ;;   ;;;   ;;  ;;     ;;; ;;   ;  
-;                                                                  
-;                                                                  
-;                                                                  
-;                                                                  
-
-(define-values {element% element-or-xexpr/c}
-  (let ([element<%> (interface ())])
-    (define element-or-xexpr/c
-      (or/c (is-a?/c element<%>)
-            string?
-            symbol?
-            valid-char?
-            cdata?
-            comment?
-            p-i?))
-    (define-member-name private-method (generate-member-key))
-    (define/contract element%
-      (class/c (init [name symbol?]
-                     [attributes (listof (list/c symbol? string?))]
-                     [body (listof element-or-xexpr/c)]))
-      (class* object% ((interface (element<%>)
-                         [to-xexpr (->m any-tei-xexpr/c)]
-                         [to-plain-text (->m string?)]
-                         [get-name (->m symbol?)]
-                         [get-attributes (->m (listof (list/c symbol? string?)))]
-                         [get-body (->m (listof element-or-xexpr/c))]
-                         private-method
-                         ))
-        (super-new)
-        (init [(:name name)]
-              [(:attributes attributes) null]
-              [(:body body) null])
-        (def
-          [name :name]
-          [attributes :attributes]
-          [body :body])
-        (define/public (to-xexpr)
-          (list* name attributes (for/list ([child (in-list body)])
-                                   (if (xexpr? child)
-                                       child
-                                       (send child to-xexpr)))))
-        (define/public (to-plain-text)
-          (string-join (map element-or-xexpr->plain-text
-                            body)
-                       ""))
-        (public-final*
-         [private-method (λ () (void))]
-         [get-name (λ () name)]
-         [get-attributes (λ () attributes)]
-         [get-body (λ () body)])
-        #|END element%|#))
-    (values element% element-or-xexpr/c)))
-
-(define/contract (element-or-xexpr->plain-text child)
-  (-> element-or-xexpr/c string?)
-  (if (tei-element? child)
-      (send child to-plain-text)
-      (non-element-xexpr->plain-text child)))
-
-(define element<%>
-  (class->interface element%))
-
-(define tei-element?
-  (is-a?/c element<%>))
 
 
 ;                                                                                  

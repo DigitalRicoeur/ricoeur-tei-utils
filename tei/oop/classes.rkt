@@ -66,9 +66,6 @@
 (define current-object-modify-seconds
   (make-parameter #f))
 
-(define (concrete-element%)
-  (class element% (super-new)))
-
 (define get-title?
   (is-a?/c get-title<%>))
 
@@ -258,7 +255,8 @@
   (is-a?/c can-have-id<%>))
 
 (define title%
-  (concrete-element%))
+  (class element%
+    (super-new)))
 
 (define title?
   (is-a?/c title%))
@@ -331,7 +329,8 @@
   (elements-only-mixin element%))
 
 (define authority%
-  (concrete-element%))
+  (class element%
+    (super-new)))
 
 (define availability%
   (elements-only-mixin element%))
@@ -709,3 +708,12 @@
   ;TODO: specialize to-plain-text
   (content-containing-element-mixin
    guess-paragraphs-element%))
+
+
+
+
+
+
+
+
+

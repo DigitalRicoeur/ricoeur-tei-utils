@@ -130,8 +130,8 @@
   (order 'maybe-date-order
          (maybe/c date?)
          (match-lambda** 
-             [{(nothing) (nothing)}
-              '=]
+           [{(nothing) (nothing)}
+            '=]
            [{(nothing) (just _)}
             '<]
            [{(just _) (nothing)}
