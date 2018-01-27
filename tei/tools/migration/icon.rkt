@@ -2,28 +2,22 @@
 
 (require racket/draw
          racket/class
-         file/ico
-         racket/port
-         racket/system
-         racket/runtime-path
          )
 
-(provide pre-installer
-         draw-DR
+(provide draw-DR
          make-DR-bitmap
          )
 
-(define-runtime-path png-path
-  "migration-assistant.png")
-(define-runtime-path icns-path
-  "migration-assistant.icns")
-(define-runtime-path ico-path
-  "migration-assistant.ico")
+(module+ write
+  (require racket/runtime-path
+           file/ico
+           racket/system
+           racket/port
+           )
+  (provide write-icons))
 
-(define (pre-installer parent-of-collects-dir
-                       this-collection-dir
-                       user-specific?
-                       avoid-modifying-installation?)
+(module+ main
+  (require (submod ".." write))
   (write-icons))
 
 (define (draw-DR size dc [transparent? #f])
@@ -61,34 +55,42 @@
   (draw-DR size dc transparent?)
   bmp)
 
-(define sips
-  (find-executable-path "sips"))
+(module+ write
+  (define-runtime-path png-path
+    "migration-assistant.png")
+  (define-runtime-path icns-path
+    "migration-assistant.icns")
+  (define-runtime-path ico-path
+    "migration-assistant.ico")
+  (define sips
+    (find-executable-path "sips"))
 
 
+  (define (write-icons)
+    (define big
+      (make-DR-bitmap 256))
+    (send big
+          save-file
+          png-path
+          'png)
+    (write-icos
+     (for/list ([size (in-list '(256 128 64 48 32 16))]
+                [bmp (in-list (cons big
+                                    (map make-DR-bitmap
+                                         '(128 64 48 32 16))))])
+       (argb->ico size size
+                  (let ([pixels (make-bytes (* size size 4))])
+                    (send bmp get-argb-pixels 0 0 size size pixels)
+                    pixels)))
+     ico-path
+     #:exists 'replace)
+    (when sips
+      (void
+       (parameterize ([current-output-port (open-output-nowhere)])
+         (system* sips
+                  "-s" "format" "icns"
+                  ico-path
+                  "--out" icns-path)))))
+  #|END module+ write|#)
 
-(define (write-icons)
-  (define big
-    (make-DR-bitmap 256))
-  (send big
-        save-file
-        png-path
-        'png)
-  (write-icos
-   (for/list ([size (in-list '(256 128 64 48 32 16))]
-              [bmp (in-list (cons big
-                                  (map make-DR-bitmap
-                                       '(128 64 48 32 16))))])
-     (argb->ico size size
-                (let ([pixels (make-bytes (* size size 4))])
-                  (send bmp get-argb-pixels 0 0 size size pixels)
-                  pixels)))
-   ico-path
-   #:exists 'replace)
-  (when sips
-    (void
-     (parameterize ([current-output-port (open-output-nowhere)])
-       (system* sips
-                "-s" "format" "icns"
-                ico-path
-                "--out" icns-path)))))
 

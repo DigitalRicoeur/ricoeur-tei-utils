@@ -40,15 +40,13 @@
                          (submod ricoeur/tei/tools/raco-tei main)
                          "run Digital Ricoeur TEI commands"
                          #f)))
-(define pre-install-collection
-  "tei/tools/migration/icon.rkt")
 (define gracket-launcher-names
   '("TEI Lint"
-    "DR Migration Assistant"
+    ;"DR Migration Assistant" ; now managed by tei/tools/migration/info.rkt
     ))
 (define gracket-launcher-libraries
   '("tei/tools/tei-lint/tei-lint.rkt"
-    "tei/tools/migration/migration-assistant.rkt"
+    ;"tei/tools/migration/migration-assistant.rkt"
     ))
 (define racket-launcher-names
   (list "tei-guess-paragraphs"
