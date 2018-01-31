@@ -1,8 +1,6 @@
 #lang at-exp racket
 
 (require xml 
-         ricoeur/tei/oop/interfaces
-         (submod ricoeur/tei/oop/interfaces private)
          ricoeur/tei/xmllint
          ricoeur/tei/xexpr/normalize
          roman-numeral
@@ -12,6 +10,7 @@
          gregor
          openssl/md5
          adjutor
+         ricoeur/tei/oop/interfaces
          )
 
 (provide TEI%
@@ -66,106 +65,56 @@
 (define current-object-modify-seconds
   (make-parameter #f))
 
-(define get-title?
-  (is-a?/c get-title<%>))
 
-(define get-title-mixin
-  (mixin {element<%>} {get-title<%>}
-    (super-new)
-    (inherit get-body)
-    (define target
-      (findf get-title? (get-body)))
-    (define/public (get-resp-string resp)
-      (send target get-resp-string resp))
-    (define/public (get-title)
-      (send target get-title))))
 
-(define get-citation?
-  (is-a?/c get-citation<%>))
 
-(define get-citation-mixin
-  (mixin {element<%>} {get-citation<%>}
-    (super-new)
-    (inherit get-body)
-    (define target
-      (findf get-citation? (get-body)))
-    (define/public (get-citation)
-      (send target get-citation))
-    (define/public (get-original-publication-date)
-      (send target get-original-publication-date))
-    (define/public (get-publication-date)
-      (send target get-publication-date))))
 
-(define classification?
-  (is-a?/c classification<%>))
-
-(define classification-mixin
-  (mixin {element<%>} {classification<%>}
-    (super-new)
-    (inherit get-body)
-    (define target
-      (findf classification? (get-body)))
-    (define/public (get-book/article)
-      (send target get-book/article))))
-
-(define guess-paragraphs-status?
-  (is-a?/c tei-guess-paragraphs-status<%>))
+  
+(define-local-member-name update-guess-paragraphs-status)
 
 (define update-guess-paragraphs-status-mixin
-  (mixin {element<%>} {}
-    (super-new)
-    (inherit get-name get-attributes get-body)
-    (define/public (update-guess-paragraphs-status new-status)
-      (new this%
-           [name (get-name)]
-           [attributes (get-attributes)]
-           [body (list/pred/update (get-body)
-                                   guess-paragraphs-status?
-                                   (λ (target)
-                                     (send target
-                                           update-guess-paragraphs-status
-                                           new-status)))]))))
+  (let ([guess-paragraphs-status?
+         (is-a?/c tei-guess-paragraphs-status<%>)])
+    (mixin {element<%>} {}
+      (super-new)
+      (inherit get-name get-attributes get-body)
+      (define/public (update-guess-paragraphs-status new-status)
+        (new this%
+             [name (get-name)]
+             [attributes (get-attributes)]
+             [body (list/pred/update (get-body)
+                                     guess-paragraphs-status?
+                                     (λ (target)
+                                       (send target
+                                             update-guess-paragraphs-status
+                                             new-status)))])))))
 
 (define (list/pred/update lst pred? update)
-  (let loop ([lst lst])
-    (match lst
-      [(cons (? pred? target)
-             more)
-       (cons (update target) more)]
-      [(cons a more)
-       (cons a (loop more))])))
+  (map (λ (v)
+         (if (pred? v)
+             (update v)
+             v))
+       lst))
+
+(define guess-paragraphs-status-mixin
+  (let ([guess-paragraphs-status? tei-guess-paragraphs-status<%>])
+    (λ (%) 
+      (class* (update-guess-paragraphs-status-mixin %)
+        {tei-guess-paragraphs-status<%>}
+        (super-new)
+        (inherit get-body)
+        (define target
+          (findf guess-paragraphs-status? (get-body)))
+        (define/public-final (get-guess-paragraphs-status)
+          (send target get-guess-paragraphs-status))))))
 
 
-(define (guess-paragraphs-status-mixin %)
-  (class* (update-guess-paragraphs-status-mixin %) {tei-guess-paragraphs-status<%>}
-    (super-new)
-    (inherit get-body)
-    (define target
-      (findf guess-paragraphs-status? (get-body)))
-    (define/public-final (get-guess-paragraphs-status)
-      (send target get-guess-paragraphs-status))))
-
-(define (TEI-info-mixin %)
-  (class* (guess-paragraphs-status-mixin
-           (classification-mixin (get-title-mixin (get-citation-mixin %))))
-    {TEI-info<%>}
-    (super-new)
-    (define full-path
-      (current-full-path))
-    (define filename
-      (current-filename))
-    (define secs
-      (current-object-modify-seconds))
-    (define/public-final (get-modify-seconds)
-      secs)
-    (define/public-final (get-full-path)
-      full-path)
-    (define/public-final (get-filename)
-      filename)))
 
 (define TEI%
   (class* (update-guess-paragraphs-status-mixin
-           (elements-only-mixin guess-paragraphs-element%))
+           (elements-only-mixin
+            (guess-paragraphs-mixin
+             (get-page-breaks-mixin element%))))
     {TEI<%> TEI-info<%>}
     (super-new)
     (inherit to-xexpr
@@ -190,6 +139,7 @@
       (send (super guess-paragraphs #:mode mode)
             update-guess-paragraphs-status
             mode))
+    #|
     (define/override-final (to-pre-segments pred
                                             call-with-metadata
                                             acc
@@ -209,6 +159,7 @@
                          (title->pre-segment-accumulator (get-title))
                          (new pb% [name 'pb])))
       acc)
+|#
     (define/override (get-page-breaks)
       (send text get-page-breaks))
     (define/public-final (write-TEI [out (current-output-port)])
@@ -219,19 +170,48 @@
  <?xml version="1.0" encoding="utf-8"?>
  <!DOCTYPE TEI SYSTEM "DR-TEI.dtd">})
            (write-xexpr (to-xexpr))))))))
-    
+
+
+
+
+
+
 (define teiHeader%
-  (class* (TEI-info-mixin (elements-only-mixin element%)) {teiHeader<%>}
+  (class* (guess-paragraphs-status-mixin
+           (classification-mixin
+            (get-title-mixin
+             (get-citation-mixin (elements-only-mixin element%)))))
+    {teiHeader<%>}
     (super-new)
     (inherit get-attributes get-body)
+    (define full-path
+      (current-full-path))
+    (define filename
+      (current-filename))
+    (define secs
+      (current-object-modify-seconds))
+    (define/public-final (get-modify-seconds)
+      secs)
+    (define/public-final (get-full-path)
+      full-path)
+    (define/public-final (get-filename)
+      filename)
     #|END teiHeader%|#))
+
+
 
 (define fileDesc%
   ;; no longer a tei-info<%> 
-  (get-title-mixin (get-citation-mixin (elements-only-mixin element%))))
+  (get-title-mixin
+   (get-citation-mixin
+    (elements-only-mixin element%))))
+
+
 
 (define profileDesc%
-  (guess-paragraphs-status-mixin (classification-mixin (elements-only-mixin element%))))
+  (guess-paragraphs-status-mixin
+   (classification-mixin
+    (elements-only-mixin element%))))
 
 ;                                                                          
 ;                                                                          
@@ -364,21 +344,21 @@
     (inherit get-body)
     (define/public (get-citation)
       (string-normalize-spaces (to-plain-text)))
-    (define pr:publication-date
-      (delay (for/first ([c (in-list (get-body))]
+    (define publication-date
+      (for/first ([c (in-list (get-body))]
                          #:when (date-obj? c)
                          #:unless (equal? "original" (send c get-subtype)))
-               (send c get-when))))
-    (define pr:orig-date
-      (delay (or (for/first ([c (in-list (get-body))]
+               (send c get-when)))
+    (define orig-date
+      (or (for/first ([c (in-list (get-body))]
                              #:when (date-obj? c)
                              #:when (equal? "original" (send c get-subtype)))
                    (send c get-when))
-                 (force pr:publication-date))))
+          publication-date))
     (define/public (get-publication-date)
-      (force pr:publication-date))
+      publication-date)
     (define/public (get-original-publication-date)
-      (force pr:orig-date))))
+      orig-date)))
 
 (define-member-name get-subtype (generate-member-key))
 (define-member-name get-when (generate-member-key))
@@ -494,37 +474,52 @@
 ;                                  
 
 (define text%
-  (class element:elements-only+guess-paragraphs+to-pre-segments%
+  (class (elements-only-mixin
+          (guess-paragraphs-mixin
+           (get-page-breaks-mixin element%)))
     (super-new)))
 
 (define body% 
-  (class element:elements-only+guess-paragraphs+to-pre-segments%
+  (class (elements-only-mixin
+          (guess-paragraphs-mixin
+           (get-page-breaks-mixin element%)))
     (super-new)))
 
 (define front% 
-  (class element:elements-only+guess-paragraphs+to-pre-segments%
-    (super-new)
+  (class (elements-only-mixin
+          (guess-paragraphs-mixin
+           (get-page-breaks-mixin element%)))
+    (super-new)))
+#|
     (define/augment-final (to-pre-segments/add-metadata pred
                                                         call-with-metadata
                                                         thunk)
       (call-with-metadata #:location 'front thunk))))
-      
+      |#
+
 (define back% 
-  (class element:elements-only+guess-paragraphs+to-pre-segments%
-    (super-new)
-    (define/augment-final (to-pre-segments/add-metadata pred
-                                                        call-with-metadata
-                                                        thunk)
-      (call-with-metadata #:location 'back thunk))))
+  (class (elements-only-mixin
+          (guess-paragraphs-mixin
+           (get-page-breaks-mixin element%)))
+    (super-new)))
+#|
+(define/augment-final (to-pre-segments/add-metadata pred
+                                                    call-with-metadata
+                                                    thunk)
+  (call-with-metadata #:location 'back thunk))))
+|#
 
 (define div%
-  (class element:elements-only+guess-paragraphs+to-pre-segments%
+  (class (elements-only-mixin
+          (guess-paragraphs-mixin 
+           (get-page-breaks-mixin element%)))
     (super-new)
     (inherit get-attributes)
     (define n
       (fmap car (false->maybe (dict-ref (get-attributes) 'n #f))))
     (define type
       (car (dict-ref (get-attributes) 'type)))
+    #|
     (define/augment-final (to-pre-segments/add-metadata pred
                                                         call-with-metadata
                                                         thunk)
@@ -541,7 +536,7 @@
                 pred
                 call-with-metadata
                 acc
-                init-pb)]))))
+                init-pb)]))|#))
   
 (define pb%
   (class* (elements-only-mixin element%) {pb<%>}
@@ -572,19 +567,24 @@
 
 (define list%
   ;TODO: specialize to-plain-text
-  (class element:elements-only+guess-paragraphs+to-pre-segments%
+  (class (elements-only-mixin
+          (guess-paragraphs-mixin 
+           (get-page-breaks-mixin element%)))
     (super-new)))
 
 (define sp%
-  (class element:elements-only+guess-paragraphs+to-pre-segments%
-    (super-new)
+  (class (elements-only-mixin
+          (guess-paragraphs-mixin
+           (get-page-breaks-mixin element%)))
+    (super-new)))
+#|
     (inherit get-attributes)
     (define/augment-final (to-pre-segments/add-metadata pred
                                                         call-with-metadata
                                                         thunk)
       (call-with-metadata #:resp (car (dict-ref (get-attributes) 'who))
                           thunk))))
-
+    |#
 
 ;                                                          
 ;                                                          
@@ -608,7 +608,8 @@
 (define ab%
   (let ()
     (struct parbreak ())
-    (class* (ab-to-pre-segments-mixin body-element%) {ab<%>}
+    ;(ab-to-pre-segments-mixin body-element%)
+    (class* (get-page-breaks-mixin element%) {ab<%>}
       (super-new)
       (inherit get-body)
       (define/private (insert-parbreaks #:mode [mode 'blank-lines])
@@ -651,7 +652,9 @@
       #|END ab%|#)))
 
 (define p%
-  (class* (content-containing-element-mixin guess-paragraphs-element%)
+  ;(content-containing-element-mixin guess-paragraphs-element%)
+  (class* (guess-paragraphs-mixin
+           (get-page-breaks-mixin element%))
     {p<%>}
     (super-new)
     (inherit get-body)
@@ -686,13 +689,17 @@
                         #:after-last "\n"))]))))
 
 (define head%
-  (content-containing-element-mixin
-   guess-paragraphs-element%))
+  ;content-containing-element-mixin
+  (guess-paragraphs-mixin
+   (get-page-breaks-mixin element%)))
 
 (define note%
-  (class (content-containing-element-mixin
-          guess-paragraphs-element%)
-    (super-new)
+  ;(content-containing-element-mixin
+  ;guess-paragraphs-element%)
+  (class (guess-paragraphs-mixin
+          (get-page-breaks-mixin element%))
+    (super-new)))
+    #|
     (inherit get-attributes)
     (define/augment-final (to-pre-segments/add-metadata pred
                                                         call-with-metadata
@@ -702,13 +709,14 @@
             [transl (car (dict-ref (get-attributes) 'transl '(#f)))])
         (call-with-metadata #:location (list 'note place n transl)
                             thunk)))))
-                     
+    |#
         
 (define item%
   ;TODO: specialize to-plain-text
-  (content-containing-element-mixin
-   guess-paragraphs-element%))
-
+  ;(content-containing-element-mixin
+  ;guess-paragraphs-element%))
+  (guess-paragraphs-mixin
+   (get-page-breaks-mixin element%)))
 
 
 

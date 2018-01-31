@@ -7,7 +7,8 @@
          racket/string
          )
 
-(provide (contract-out
+(provide non-element-xexpr/c
+         (contract-out
           [non-element-xexpr->plain-text
            (-> non-element-xexpr/c string?)]
           [non-element-body->plain-text

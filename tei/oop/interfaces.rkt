@@ -12,278 +12,69 @@
                      ))
 
 (require-provide "interfaces/element.rkt"
+                 "interfaces/elements-only.rkt"
+                 "interfaces/info-interfaces.rkt"
+                 "interfaces/pb.rkt"
+                 "interfaces/guess-paragraphs.rkt"
                  )
 
-(provide element-or-xexpr->plain-text
-         element<%>
-         tei-element?
-         element-or-xexpr/c
-         elements-only<%>
-         TEI-info<%>
-         define/TEI-info
-         teiHeader<%>
-         get-page-breaks<%>
-         TEI-body<%>
-         pb<%>
-         guess-paragraphs<%>
-         guess-paragraphs?
-         p<%>
-         ab<%>
+(provide teiHeader<%> 
          TEI<%>
-         )
-
-(module+ private
-  (provide element%
-           elements-only-mixin
-           can-have-id<%>
-           get-title<%>
-           get-publication-date<%>
-           get-citation<%>
-           classification<%>
-           tei-guess-paragraphs-status<%>
-           update-guess-paragraphs-status
-           body-element%
-           guess-paragraphs-element%
-           ab?
-           content-containing-element-mixin
-           ab-to-pre-segments-mixin
-           element:elements-only+guess-paragraphs+to-pre-segments%
-           ))
-
-(module+ search
-  (provide location-stack-entry/c
-           location-stack-entry:div/c
-           location-stack-entry:note/c
-           ))
-
-
-
-;                                                                                  
-;                                                                                  
-;                                                                                  
-;                                                                                  
-;           ;;;;                                                    ;;;;           
-;             ;;                                                      ;;           
-;     ;;;     ;;      ;;;  ; ;; ;;    ;;             ;;;    ;; ;      ;;   ;     ; 
-;   ;;   ;    ;;    ;;   ; ;; ;; ;  ;;  ;           ;   ;   ;;; ;     ;;    ;   ;  
-;   ;    ;    ;;    ;    ; ;; ;; ;;  ;              ;   ;   ;;  ;;    ;;    ;   ;  
-;  ;;;;;;;;   ;;   ;;;;;;;;;; ;; ;;   ;;           ;;   ;;  ;;  ;;    ;;     ;  ;  
-;   ;         ;;    ;      ;; ;; ;;     ;;          ;   ;   ;;  ;;    ;;     ; ;   
-;   ;;   ;     ;    ;;   ; ;; ;; ;; ;   ;           ;   ;   ;;  ;;     ;     ; ;   
-;     ;;;       ;;    ;;;  ;; ;; ;;  ;;;             ;;;    ;;  ;;      ;;    ;    
-;                                                                             ;    
-;                                                                            ;     
-;                                                                          ;;      
-;                                                                                  
-
-(define elements-only<%>
-  (interface (element<%>)
-    [get-body/elements-only (->m (listof tei-element?))]))
-
-(define elements-only-mixin
-  (mixin {element<%>} {elements-only<%>}
-    (init [body null])
-    (super-new [body (filter (or/c tei-element?
-                                   comment?
-                                   p-i?)
-                             body)])
-    (define pr:body/elements-only
-      (delay (filter tei-element? body)))
-    (define/public-final (get-body/elements-only)
-      (force pr:body/elements-only))))
-
-;                                  
-;                                  
-;                                  
-;                                  
-;   ;;                          ;; 
-;   ;;                          ;; 
-;   ;; ;      ;;;     ;;     ;;;;; 
-;   ;;; ;   ;;   ;   ;  ;   ;   ;; 
-;   ;;  ;;  ;    ;      ;;  ;   ;; 
-;   ;;  ;; ;;;;;;;;   ;;;; ;;   ;; 
-;   ;;  ;;  ;        ;  ;;  ;   ;; 
-;   ;;  ;;  ;;   ;  ;;  ;;  ;   ;; 
-;   ;;  ;;    ;;;    ;;; ;   ;;; ; 
-;                                  
-;                                  
-;                                  
-;                                  
-
-(define can-have-id<%>
-  (interface ()
-    [get-id-or-false (->m (or/c symbol? #f))]))
-
-(define get-title<%>
-  (interface ()
-    [get-title (->m string?)]
-    [get-resp-string (->m symbol? string?)]))
-
-(define get-publication-date<%>
-  (interface ()
-    [get-publication-date (->m date?)]
-    [get-original-publication-date (->m date?)]))
-
-(define get-citation<%>
-  (interface (get-publication-date<%>)
-    [get-citation (->m string?)]))
-
-(define classification<%>
-  (interface ()
-    [get-book/article (->m (or/c 'book 'article))]))
-
-(define-local-member-name update-guess-paragraphs-status)
-
-(define tei-guess-paragraphs-status<%>
-  (interface ()
-    [get-guess-paragraphs-status
-     (->m (or/c 'todo
-                'line-breaks
-                'blank-lines
-                'done
-                'skip))]))
-
-(define TEI-info<%>
-  (interface {get-title<%>
-              get-citation<%>
-              classification<%>
-              tei-guess-paragraphs-status<%>}
-    [get-modify-seconds (->m (or/c #f exact-integer?))]
-    [get-full-path (->m (or/c #f (and/c path-string? absolute-path?)))]
-    [get-filename (->m (or/c #f string?))]))
+         )                       
 
 (define teiHeader<%>
   (interface (TEI-info<%> element<%>)))
 
-(define-syntax defgenerics
-  (syntax-parser
-    [(_ if:expr name:id)
-     #:with gen-name (format-id #'name "gen:~a" #'name #:source #'name)
-     #`(define gen-name (generic if name))]
-    [(_ if:expr name:id more:id ...+)
-     #'(begin (defgenerics if name)
-              (defgenerics if more ...))]))
-
-(defgenerics
- TEI-info<%>
- get-title
- get-resp-string ;1 arg
- get-publication-date
- get-original-publication-date
- get-citation
- get-book/article
- get-filename
- get-full-path
- get-modify-seconds
- get-guess-paragraphs-status
- )
-
-(define-for-syntax (make-methods-syntaxes target-stx context-stx)
-  (with-syntax ([name target-stx]
-                [(get-title
-                  get-resp-string ;1 arg
-                  get-publication-date
-                  get-original-publication-date
-                  get-citation
-                  get-book/article
-                  get-guess-paragraphs-status
-                  get-full-path
-                  get-modify-seconds
-                  get-filename)
-                 (map (λ (it) (datum->syntax context-stx it))
-                      '(get-title
-                        get-resp-string ;1 arg
-                        get-publication-date
-                        get-original-publication-date
-                        get-citation
-                        get-book/article
-                        get-guess-paragraphs-status
-                        get-full-path
-                        get-modify-seconds
-                        get-filename))])
-    (syntax-e
-     #'((define/public (get-title)
-          (send-generic name gen:get-title))
-        (define/public (get-resp-string arg)
-          (send-generic name gen:get-resp-string arg))
-        (define/public (get-publication-date)
-          (send-generic name gen:get-publication-date))
-        (define/public (get-original-publication-date)
-          (send-generic name gen:get-original-publication-date))
-        (define/public (get-citation)
-          (send-generic name gen:get-citation))
-        (define/public (get-guess-paragraphs-status)
-          (send-generic name gen:get-guess-paragraphs-status))
-        (define/public (get-book/article)
-          (send-generic name gen:get-book/article))
-        (define/public (get-full-path)
-          (send-generic name gen:get-full-path))
-        (define/public (get-modify-seconds)
-          (send-generic name gen:get-modify-seconds))
-        (define/public (get-filename)
-          (send-generic name gen:get-filename))))))
-
-(define-syntax define/TEI-info 
-  (syntax-parser
-    [(_ name:id val-expr)
-     #:declare val-expr (expr/c #'(is-a?/c TEI-info<%>)
-                                #:name "TEI-info<%> expression")
-     #`(begin
-         (define real-name val-expr.c)
-         (define-syntax name
-           (make-set!-transformer
-            (syntax-parser
-              #:literals {set!}
-              [(set! _ v)
-               #:declare v (expr/c #'(is-a?/c TEI-info<%>)
-                                   #:name "TEI-info<%> expression")
-               #'(set! real-name v.c)]
-              [_:id
-               #'real-name])))
-         #,@(make-methods-syntaxes #'real-name #'name))]
-    [(_ val-expr)
-     #:declare val-expr (expr/c #'(is-a?/c TEI-info<%>)
-                                #:name "TEI-info<%> expression")
-     #:with (name) (generate-temporaries '(TEI-info))
-     #`(begin (define name val-expr.c)
-              #,@(make-methods-syntaxes #'name #'val-expr))]
-    [(_ #:each-time val-expr)
-     #:declare val-expr (expr/c #'(is-a?/c TEI-info<%>)
-                                #:name "TEI-info<%> expression")
-     #`(begin #,@(make-methods-syntaxes #'val-expr.c #'val-expr))]))
-
-;                                  
-;                                  
-;                                  
-;                                  
-;   ;;                  ;;         
-;   ;;                  ;;         
-;   ;;;;     ;;;     ;;;;; ;     ; 
-;   ;;  ;   ;   ;   ;   ;;  ;   ;  
-;   ;;  ;   ;   ;   ;   ;;  ;   ;  
-;   ;;  ;; ;;   ;; ;;   ;;   ;  ;  
-;   ;;  ;   ;   ;   ;   ;;   ; ;   
-;   ;;  ;   ;   ;   ;   ;;   ; ;   
-;   ; ;;     ;;;     ;;; ;    ;    
-;                             ;    
-;                            ;     
-;                          ;;      
-;                                  
-
-(define get-page-breaks<%>
-  (interface (element<%>)
-    [get-page-breaks (->m (listof (recursive-contract (is-a?/c pb<%>))))]))
-
-(define pb<%>
-  (interface (get-page-breaks<%>)
-    [get-page-string (->m (maybe/c string?))]
-    [get-kind (->m (or/c 'none 'number 'roman 'other))]
-    [get-numeric (->m (maybe/c number?))]
+(define TEI<%>
+  (interface (element<%>
+              TEI-info<%>
+              get-page-breaks<%>
+              guess-paragraphs<%>
+              elements-only<%>)
+    [get-md5 (->m string?)]
+    [get-teiHeader (->m (is-a?/c teiHeader<%>))]
+    [write-TEI (->*m {} {output-port?} any)]
+    #|[do-prepare-pre-segments
+     (->i {[this any/c]
+           [pre-segment-accumulator? (-> any/c any/c)]
+           [call-with-metadata
+            (->* {(-> any)}
+                 {#:resp #rx"#.+"
+                  #:location location-stack-entry/c}
+                 any)]
+           [title->pre-segment-accumulator
+            {pre-segment-accumulator?}
+            (-> string?
+                (letrec ([acc/c (and/c pre-segment-accumulator?
+                                       (-> #:body string?
+                                           #:page (or/c (maybe/c string?)
+                                                        (list/c (maybe/c string?)
+                                                                (maybe/c string?)))
+                                           (recursive-contract acc/c)))])
+                  acc/c))]}
+          [_ {pre-segment-accumulator?}
+             pre-segment-accumulator?])]|#
     ))
 
-(define pb?
-  (is-a?/c pb<%>))
+;                                                  
+;                                                  
+;                                                  
+;                                                  
+;                                           ;;     
+;                                           ;;     
+;     ;;      ;;;     ;;    ;; ;;;     ;;;  ;; ;   
+;   ;;  ;   ;;   ;   ;  ;   ;;;      ;;   ; ;;; ;  
+;    ;      ;    ;      ;;  ;;       ;      ;;  ;; 
+;     ;;   ;;;;;;;;   ;;;;  ;;      ;;      ;;  ;; 
+;       ;;  ;        ;  ;;  ;;       ;      ;;  ;; 
+;   ;   ;   ;;   ;  ;;  ;;  ;;       ;;   ; ;;  ;; 
+;    ;;;      ;;;    ;;; ;  ;;         ;;;  ;;  ;; 
+;                                                  
+;                                                  
+;                                                  
+;                                                  
 
+#|
 (define location-stack-entry:div/c
   (list/c 'div
           (or/c "chapter" "part" "section" "dedication"
@@ -337,16 +128,16 @@
                      pre-segment-accumulator?]
                   [_ (is-a?/c pb<%>)]))]
     ))
+|#
 
-(define can-get-page-breaks?
-  (is-a?/c get-page-breaks<%>))
 
+#;
 (define body-element?
   (is-a?/c TEI-body<%>))
-
+#;
 (define not-body-element?
   (not/c body-element?))
-
+#;
 (define body-element%
   (class* (class element%
             (super-new)
@@ -397,7 +188,7 @@
       (send init-pb get-page-string)
       (list (send init-pb get-page-string)
             (send latest-pb get-page-string))))
-
+#;
 (define content-containing-element-mixin
   ;; for elements that contain textual data EXCEPT ab% (see below)
   (mixin {TEI-body<%>} {}
@@ -447,7 +238,7 @@
                  acc
                  init-pb
                  latest-pb)])))))
-
+#;
 (define ab-to-pre-segments-mixin
   (mixin {TEI-body<%>} {}
     (super-new)
@@ -524,53 +315,7 @@
            ;; Continue with new-acc and latest-pb (which may be init-pb).
            (loop more new-acc latest-pb)])))))
 
-
-
-
-
-
-
-(define guess-paragraphs<%>
-  (interface (TEI-body<%>)
-    [guess-paragraphs (->i {[this any/c]}
-                           {#:mode [mode (or/c 'blank-lines 'line-breaks)]}
-                           [_ (this) (is-a?/c (object-interface this))])]))
-
-(define guess-paragraphs?
-  (is-a?/c guess-paragraphs<%>))
-
-(define p<%>
-  (interface (TEI-body<%>)))
-
-(define ab<%>
-  (interface (TEI-body<%>)
-    [do-guess-paragraphs (->*m {}
-                               {#:mode (or/c 'blank-lines 'line-breaks)}
-                               (listof (or/c (is-a?/c pb<%>)
-                                             (is-a?/c p<%>))))]))
-
-(define ab?
-  (is-a?/c ab<%>))
-
-(define guess-paragraphs-element%
-  (class* body-element% {guess-paragraphs<%>}
-    (super-new)
-    (inherit get-name get-attributes get-body)
-    (define/public (guess-paragraphs #:mode [mode 'blank-lines])
-      (new this%
-           [name (get-name)]
-           [attributes (get-attributes)]
-           [body (flatten
-                  (for/list ([child (in-list (get-body))])
-                    (cond
-                      [(ab? child)
-                       (send child do-guess-paragraphs #:mode mode)]
-                      [(guess-paragraphs? child)
-                       (send child guess-paragraphs #:mode mode)]
-                      [else
-                       child])))]))))
-
-
+#;
 (define element:elements-only+guess-paragraphs+to-pre-segments%
   (class (elements-only-mixin guess-paragraphs-element%)
     (super-new)
@@ -593,33 +338,21 @@
 
 
 
-(define TEI<%>
-  (interface (element<%>
-              TEI-info<%>
-              TEI-body<%>
-              guess-paragraphs<%>
-              elements-only<%>)
-    [get-md5 (->m string?)]
-    [do-prepare-pre-segments
-     (->i {[this any/c]
-           [pre-segment-accumulator? (-> any/c any/c)]
-           [call-with-metadata
-            (->* {(-> any)}
-                 {#:resp #rx"#.+"
-                  #:location location-stack-entry/c}
-                 any)]
-           [title->pre-segment-accumulator
-            {pre-segment-accumulator?}
-            (-> string?
-                (letrec ([acc/c (and/c pre-segment-accumulator?
-                                       (-> #:body string?
-                                           #:page (or/c (maybe/c string?)
-                                                        (list/c (maybe/c string?)
-                                                                (maybe/c string?)))
-                                           (recursive-contract acc/c)))])
-                  acc/c))]}
-          [_ {pre-segment-accumulator?}
-             pre-segment-accumulator?])]
-    [get-teiHeader (->m (is-a?/c teiHeader<%>))]
-    [write-TEI (->*m {} {output-port?} any)]))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

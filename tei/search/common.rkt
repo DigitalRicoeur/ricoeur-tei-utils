@@ -102,7 +102,7 @@
   ;;   Sm :: Symbol, math
   ;;   Cc :: Other, control
   ;; There may be other categories that would be ok to allow, but
-  ;; these definitely exclude all the troublesome ones.
+  ;; these seem to exclude all the troublesome ones.
   (let ([categories "\\p{P}|\\p{Z}|\\p{N}|\\p{Sc}|\\p{Sm}|\\p{Cc}"])
     (values (string-append "(?:^|" categories ")")
             (string-append "(?:" categories "|$)"))))
