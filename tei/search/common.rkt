@@ -1,11 +1,13 @@
 #lang _-exp racket
 
 (require ricoeur/tei/base
-         (submod ricoeur/tei/oop/interfaces search)
          data/maybe
          json
          racket/serialize
          adjutor
+         "common/pre-segments.rkt"
+         "common/location-stack.rkt"
+         (submod "common/location-stack.rkt" private)
          (for-syntax syntax/parse
                      adjutor
                      ))
@@ -57,19 +59,12 @@
            exact?-px-suffix-str
            abstract-searchable-document-set%
            pre-segment-meta/c
+           prepare-pre-segments
+           (struct-out pre-segment)
            (contract-out
             [document-search-results%
              (class/c (init [info (is-a?/c TEI-info<%>)]
                             [results (non-empty-listof search-result?)]))]
-            [struct pre-segment ([title string?]
-                                 [counter natural-number/c]
-                                 [body string?]
-                                 [meta pre-segment-meta/c]
-                                 [resp #rx"^#.+"])
-             #:omit-constructor]
-            [prepare-pre-segments
-             (-> (is-a?/c TEI<%>)
-                 (listof pre-segment?))]
             [make-search-result
              (-> #:counter natural-number/c
                  #:sub-counter natural-number/c
@@ -118,156 +113,13 @@
     (check-true (regexp-match? exact-apple-px "$apPle1"))
     (check-false (regexp-match? exact-apple-px "appleé"))))
 
-(struct pre-segment (title counter body meta resp))
 
-(define current-resp
-  (make-parameter "#ricoeur"))
 
-(define location-stack/c
-  (opt/c
-   (flat-murec-contract ([tail/c (or/c (list/c)
-                                       (list/c 'front)
-                                       (list/c 'back))]
-                         [with-divs/c
-                          (or/c tail/c
-                                (cons/c location-stack-entry:div/c
-                                        with-divs/c))]
-                         [location-stack/c
-                          (or/c with-divs/c
-                                (cons/c location-stack-entry:note/c
-                                        location-stack/c))])
-                        location-stack/c)))
 
-(define location-stack-jsexpr/c
-  (opt/c
-   (flat-murec-contract ([tail/c (or/c (list/c)
-                                       (list/c "front")
-                                       (list/c "back"))]
-                         [with-divs/c
-                          (or/c tail/c
-                                (cons/c (list/c "div"
-                                                (or/c "chapter" "part" "section" "dedication"
-                                                      "contents" "intro" "bibl" "ack" "index")
-                                                (or/c #f string?))
-                                        with-divs/c))]
-                         [location-stack-js/c
-                          (or/c with-divs/c
-                                (cons/c (list/c "note" (or/c "foot" "end") string? (or/c "transl" #f))
-                                        location-stack-js/c))])
-                        (and/c jsexpr? location-stack-js/c))))
 
-(define/contract current-location-stack
-  (parameter/c location-stack/c)
-  (make-parameter '()))
-
-(define (call-with-metadata thunk
-                            #:resp [resp #f]
-                            #:location [location #f])
-  (parameterize ([current-resp (or resp (current-resp))]
-                 [current-location-stack (if location
-                                             (cons location
-                                                   (current-location-stack))
-                                             (current-location-stack))])
-    (thunk)))
-
-(define/contract (location-stack->jsexpr stack)
-  (-> location-stack/c location-stack-jsexpr/c)
-  (map (match-lambda
-         ['front "front"]
-         ['back "back"]
-         [(list 'div type n)
-          (list "div" type (from-just #f n))]
-         [(list 'note place n transl)
-          (list "note" place n transl)])
-       stack))
-
-(define/contract (jsexpr->location-stack stack)
-  (-> location-stack-jsexpr/c location-stack/c)
-  (map (match-lambda
-         ["front" 'front]
-         ["back" 'back]
-         [(list "div" type n)
-          (list 'div type (false->maybe n))]
-         [(list "note" place n transl)
-          (list 'note place n transl)])
-       stack))
-
-(define pre-segment-meta/c
-  (opt/c
-   (and/c jsexpr?
-          (let ([page/c (or/c #f
-                              string?
-                              (list/c (or/c #f string?)
-                                      (or/c #f string?)))])
-            (hash/dc [k (or/c 'resp 'location-stack 'page)]
-                     [v (k) (case k
-                              [(resp) #rx"#.+"]
-                              [(location-stack) location-stack-jsexpr/c]
-                              [(page) page/c]
-                              [else none/c])]
-                     #:immutable #t
-                     #:kind 'flat))
-          (λ (hsh)
-            (hash-keys-subset? #hasheq([resp . #t]
-                                       [location-stack . #t]
-                                       [page . #t])
-                               hsh)))))
-
-(define/contract (make-pre-segment #:title title
-                                   #:counter counter
-                                   #:body body
-                                   #:page page) 
-  (-> #:title string?
-      #:counter natural-number/c
-      #:body string?
-      #:page (or/c (maybe/c string?)
-                   (list/c (maybe/c string?) (maybe/c string?)))
-      pre-segment?)
-  (let ([resp (current-resp)])
-    (pre-segment title counter body
-                 (hasheq 'resp resp
-                         'location-stack (location-stack->jsexpr
-                                          (current-location-stack))
-                         'page (match page
-                                 [(list a b)
-                                  (list (from-just #f a)
-                                        (from-just #f b))]
-                                 [it
-                                  (from-just #f it)]))
-                 resp)))
-
-(struct pre-segment-accumulator (title next-counter so-far)
-  #:property prop:procedure
-  (λ (this #:body body
-           #:page page) 
-    (cond
-      [(regexp-match? #px"^\\s*$"  body)
-       this]
-      [else
-       (match-define (pre-segment-accumulator title next-counter so-far)
-         this)
-       (pre-segment-accumulator title
-                                (add1 next-counter)
-                                (cons (make-pre-segment #:title title
-                                                        #:counter next-counter
-                                                        #:body body
-                                                        #:page page)
-                                      so-far))])))
-
-(define (title->pre-segment-accumulator t)
-  (pre-segment-accumulator t 0 null))
 
 
                  
-
-(define (prepare-pre-segments doc)
-  (reverse
-   (pre-segment-accumulator-so-far
-    (send doc
-          do-prepare-pre-segments
-          pre-segment-accumulator?
-          call-with-metadata
-          title->pre-segment-accumulator))))
 
 ;                                                          
 ;                                                          
@@ -373,34 +225,35 @@
                          sub-counter
                          excerpt
                          meta
-                         [promise:page
-                          (delay
-                            (match (hash-ref meta 'page)
-                              [(list a b)
-                               (list (false->maybe a)
-                                     (false->maybe b))]
-                              [plain
-                               (false->maybe plain)]))]
+                         [page
+                          (match (hash-ref meta 'page)
+                            [(list a b)
+                             (list (false->maybe a)
+                                   (false->maybe b))]
+                            [plain
+                             (false->maybe plain)])]
                          [promise:location-stack
-                          (delay (jsexpr->location-stack
-                                  (hash-ref meta 'location-stack)))]
+                          (delay/sync
+                           (jsexpr->location-stack
+                            (hash-ref meta 'location-stack)))]
                          [resp-string-field #f]
                          )
-    (define/public (initialize-search-result info)
+    (define/public-final (initialize-search-result info)
       (set! resp-string-field
-            (delay (let ([ptr (hash-ref meta 'resp)])
-                     (if (equal? ptr "#ricoeur")
-                         "Paul Ricœur"
-                         (send info
-                               get-resp-string
-                               (string->symbol (substring ptr 1))))))))
+            (delay/sync
+             (let ([ptr (hash-ref meta 'resp)])
+               (if (equal? ptr "#ricoeur")
+                   "Paul Ricœur"
+                   (send info
+                         get-resp-string
+                         (string->symbol (substring ptr 1))))))))
     (define/public (nullify-excerpt)
       (new this%
            [counter counter]
            [sub-counter sub-counter]
            [excerpt (nothing)]
            [meta meta]
-           [promise:page promise:page]
+           [page page]
            [promise:location-stack promise:location-stack]
            [resp-string-field resp-string-field]
            ))
@@ -414,7 +267,7 @@
     (define/public-final (get-excerpt)
       excerpt)
     (define/public-final (get-page)
-      (force promise:page))
+      page)
     (define/public-final (get-location-stack)
       (force promise:location-stack))
     #|END search-result%|#))
@@ -448,11 +301,11 @@
 (define ((make-search-result-cf cf) a b)
   (let ([a:counter (send a get-counter)]
         [b:counter (send b get-counter)])
-    (or [a:counter . cf . b:counter]
+    (or (infix: a:counter cf b:counter)
         (and (= a:counter b:counter)
              (let ([a:sub-counter (send a get-sub-counter)]
                    [b:sub-counter (send b get-sub-counter)])
-               [a:sub-counter . cf . b:sub-counter])))))
+               (infix: a:sub-counter cf b:sub-counter))))))
 
 (define (nullify-search-result-excerpt raw)
   (send raw nullify-excerpt))

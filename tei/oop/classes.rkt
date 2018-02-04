@@ -519,24 +519,7 @@
       (fmap car (false->maybe (dict-ref (get-attributes) 'n #f))))
     (define type
       (car (dict-ref (get-attributes) 'type)))
-    #|
-    (define/augment-final (to-pre-segments/add-metadata pred
-                                                        call-with-metadata
-                                                        thunk)
-      (call-with-metadata #:location (list 'div type n) thunk))
-    (define/override-final (to-pre-segments pred
-                                            call-with-metadata
-                                            acc
-                                            init-pb)
-      (case (dict-ref (get-attributes) 'type #f)
-        [(("contents")("index"))
-         (values acc init-pb)]
-        [else
-         (super to-pre-segments
-                pred
-                call-with-metadata
-                acc
-                init-pb)]))|#))
+    ))
   
 (define pb%
   (class* (elements-only-mixin element%) {pb<%>}
@@ -577,14 +560,7 @@
           (guess-paragraphs-mixin
            (get-page-breaks-mixin element%)))
     (super-new)))
-#|
-    (inherit get-attributes)
-    (define/augment-final (to-pre-segments/add-metadata pred
-                                                        call-with-metadata
-                                                        thunk)
-      (call-with-metadata #:resp (car (dict-ref (get-attributes) 'who))
-                          thunk))))
-    |#
+
 
 ;                                                          
 ;                                                          
@@ -608,7 +584,6 @@
 (define ab%
   (let ()
     (struct parbreak ())
-    ;(ab-to-pre-segments-mixin body-element%)
     (class* (get-page-breaks-mixin element%) {ab<%>}
       (super-new)
       (inherit get-body)
@@ -652,7 +627,6 @@
       #|END ab%|#)))
 
 (define p%
-  ;(content-containing-element-mixin guess-paragraphs-element%)
   (class* (guess-paragraphs-mixin
            (get-page-breaks-mixin element%))
     {p<%>}
@@ -689,32 +663,16 @@
                         #:after-last "\n"))]))))
 
 (define head%
-  ;content-containing-element-mixin
   (guess-paragraphs-mixin
    (get-page-breaks-mixin element%)))
 
 (define note%
-  ;(content-containing-element-mixin
-  ;guess-paragraphs-element%)
   (class (guess-paragraphs-mixin
           (get-page-breaks-mixin element%))
     (super-new)))
-    #|
-    (inherit get-attributes)
-    (define/augment-final (to-pre-segments/add-metadata pred
-                                                        call-with-metadata
-                                                        thunk)
-      (let ([n (car (dict-ref (get-attributes) 'n))]
-            [place (car (dict-ref (get-attributes) 'place))]
-            [transl (car (dict-ref (get-attributes) 'transl '(#f)))])
-        (call-with-metadata #:location (list 'note place n transl)
-                            thunk)))))
-    |#
         
 (define item%
   ;TODO: specialize to-plain-text
-  ;(content-containing-element-mixin
-  ;guess-paragraphs-element%))
   (guess-paragraphs-mixin
    (get-page-breaks-mixin element%)))
 

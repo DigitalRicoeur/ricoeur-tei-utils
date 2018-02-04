@@ -12,7 +12,6 @@
 ;;   - Contract on elements-only-mixin including
 ;;     initialization arg contract on range
 ;;   - More efficient filter ?
-;;   - Is delay really good?
 
 (define elements-only<%>
   (interface (element<%>)
@@ -22,11 +21,12 @@
 (define elements-only-mixin
   (mixin {element<%>} {elements-only<%>}
     (init [body null])
-    (super-new [body (filter (or/c tei-element?
-                                   comment?
-                                   p-i?)
+    (super-new [body (filter (λ (v)
+                               (or (tei-element? v)
+                                   (comment? v)
+                                   (p-i? v)))
                              body)])
-    (define pr:body/elements-only
-      (delay/sync (filter tei-element? body))) 
+    (define body/elements-only
+      (filter tei-element? body))
     (define/public-final (get-body/elements-only)
-      (force pr:body/elements-only))))
+      body/elements-only)))
