@@ -9,7 +9,6 @@ ECHO It is normal to see warnings after the uninstall step.
 ECHO This batch file does not handle pulling updates to the git repository.
 ECHO Press enter to begin.
 PAUSE
-ECHO ON
 cd ..
 "C:\Program Files\Racket\raco.exe" pkg remove --force tei-utils
 "C:\Program Files\Racket\raco.exe" pkg install
