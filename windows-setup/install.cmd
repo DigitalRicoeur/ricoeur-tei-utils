@@ -10,6 +10,6 @@ ECHO If the repository is already installed, you will see an error message.
 ECHO Press enter to begin.
 PAUSE
 cd ..
-'C:\Program Files\Racket\raco.exe' pkg install -i
+"C:\Program Files\Racket\raco.exe" pkg install
 ECHO Press enter to close this window.
 PAUSE
