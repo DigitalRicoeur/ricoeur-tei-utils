@@ -8,6 +8,6 @@ ECHO It does not handle pulling updates to the git repository.
 ECHO Press enter to begin.
 PAUSE
 cd ..
-'C:\Program Files\Racket\raco.exe' setup --doc-index ricoeur
+"C:\Program Files\Racket\raco.exe" setup --doc-index ricoeur
 ECHO Press enter to close this window.
 PAUSE
