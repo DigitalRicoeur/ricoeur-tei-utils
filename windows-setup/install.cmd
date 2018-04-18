@@ -10,6 +10,6 @@ ECHO If the repository is already installed, you will see an error message.
 ECHO Press enter to begin.
 PAUSE
 cd ..
-"C:\Program Files\Racket\raco.exe" pkg install
+"C:\Program Files\Racket\raco.exe" pkg install --name tei-utils
 ECHO Press enter to close this window.
 PAUSE

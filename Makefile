@@ -9,14 +9,13 @@ fast:
 
 .PHONY: install
 install:
-	raco pkg install -i
+	raco pkg install --name tei-utils -i
 
 .PHONY: reinstall
 reinstall:
 	git pull --ff-only
 	-raco pkg remove --force tei-utils
-	raco pkg install -i
-
+	raco pkg install --name tei-utils -i
 
 
 .PHONY: gui-icons
@@ -40,3 +39,5 @@ tei-lint-icons: \
 tei/tools/tei-lint/%icns tei/tools/tei-lint/%ico: \
   tei/tools/tei-lint/tei-lint.png tei/tools/tei-lint/convert-icon.rkt
 	racket -l ricoeur/tei/tools/tei-lint/convert-icon.rkt
+
+

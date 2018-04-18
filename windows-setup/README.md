@@ -10,8 +10,6 @@ All of these batch files assume that you have `raco` (the Racket
 command-line tool) installed in the default location:
 'C:\Program Files\Racket\raco.exe'
 
-??? Should these be "run as administrator" ???
-
 ## Batch Files: ##
 
 - __install.cmd__ Run this to install tei-utils for the first time
