@@ -97,7 +97,7 @@
        lst))
 
 (define guess-paragraphs-status-mixin
-  (let ([guess-paragraphs-status? tei-guess-paragraphs-status<%>])
+  (let ([guess-paragraphs-status? (is-a?/c tei-guess-paragraphs-status<%>)])
     (λ (%) 
       (class* (update-guess-paragraphs-status-mixin %)
         {tei-guess-paragraphs-status<%>}

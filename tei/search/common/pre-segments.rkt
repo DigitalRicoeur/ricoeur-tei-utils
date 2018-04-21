@@ -32,12 +32,12 @@
 (define current-resp
   (make-parameter "#ricoeur"))
 
-(define current-location-stack
-  (make-parameter '()))
-
 (define page-spec/c
   (or/c (maybe/c string?)
         (list/c (maybe/c string?) (maybe/c string?))))
+
+(define-syntax (eprintf* stx)
+  #'(begin))
 
 (define pre-segment-meta/c
   (opt/c
@@ -65,7 +65,7 @@
                                               #:i counter
                                               #:page page)
   (-> string?
-      #:seg (listof pre-segment?)
+      #:segs (listof pre-segment?)
       #:i natural-number/c
       #:page page-spec/c
       (listof pre-segment?))
@@ -129,12 +129,17 @@
       (current-resp)))
 
 (define (get-updated-location-stack child)
-  (case (send child get-name)
-    [(front)
-     (cons 'front (current-location-stack))]
-    [(back)
-     (cons 'back (current-location-stack))]
-    [(div)
+  ;; TODO
+  ;; This has nothing to do with whether prepare-pre-segments diverges overall.
+  'body
+  #;
+  (match (send child get-name)
+    [(and sym (or 'front 'body 'back))
+     (when (current-location-stack)
+       (error 'get-updated-location-stack ;; TODO: better message
+              "can't add root element to non-empty location stack"))
+     sym]
+    ['div
      ; should I add methods to div% or
      ; rely on knowing about its attributes?
      #|
@@ -143,8 +148,11 @@
                                                         thunk)
       (call-with-metadata #:location (list 'div type n) thunk))
 |#
-     (error 'TODO)]
-    [(note)
+     (error 'TODO)
+     (location-stack-entry:div '|TODO: type|
+                               '|TODO: n|
+                               (current-location-stack))]
+    ['note
      ; should probably add methods to note
      #|
 (define/augment-final (to-pre-segments/add-metadata pred
@@ -155,8 +163,12 @@
             [transl (car (dict-ref (get-attributes) 'transl '(#f)))])
         (call-with-metadata #:location (list 'note place n transl)
                             thunk)))))|#
-     (error 'TODO)]
-    [else
+     (error 'TODO)
+     (location-stack-entry:note '|TODO: place|
+                                '|TODO: n|
+                                '|TODO: transl?|
+                                (current-location-stack))]
+    [_
      (current-location-stack)]))
 
 
@@ -213,22 +225,27 @@
        (values (listof pre-segment?)
                natural-number/c
                (is-a?/c pb<%>)))
+  (eprintf* "do-prepare-segments\n")
   (parameterize ([current-resp (get-updated-resp child)]
                  [current-location-stack (get-updated-location-stack child)])
     (define name
       (send child get-name))
     (case name
       [(ab p head note item)
+       (eprintf* "\t~v\n" '(ab p head note item))
        (do-prepare-segments/content child #:segs segs #:i i #:pb pb)]
       [(pb)
+       (eprintf* "\tpb\n")
        (values segs i child)]
       [else
        (case (and (eq? 'div name) (dict-ref (send child get-attributes) 'type #f))
          [(("contents")("index"))
+          (eprintf* "\tignored div\n")
           (values segs i (or (for/last ([pb (in-list (send child get-page-breaks))])
                                pb)
                              pb))]
          [else
+          (eprintf* "\telse case\n")
           (for/fold ([segs segs]
                      [i i]
                      [pb pb])
@@ -252,6 +269,7 @@
        (values (listof pre-segment?)
                natural-number/c
                (is-a?/c pb<%>)))
+  (eprintf* "do-prepare-segments/content\n")
   (define name
     (send child get-name))
   (kw-loop prepare-content (#:to-go [to-go (send child get-body)]
@@ -260,6 +278,7 @@
                             #:i [i i]
                             #:init-pb [init-pb init-pb]
                             #:latest-pb [latest-pb init-pb])
+    (eprintf* "prepare-content\n")
     (define (this-so-far->segs)
       (cons-pre-segment (string-normalize-spaces
                          (string-join (reverse this-so-far) " "))
@@ -269,6 +288,7 @@
     (match to-go
       ;; base case: finish up, accumulating the last round from this-so-far
       ['()
+       (eprintf* "\tbase case\n")
        (values (this-so-far->segs)
                (add1 i)
                latest-pb)]
@@ -276,6 +296,7 @@
       ;; then continue with new acc, i, and init-pb from child
       [(cons (? tei-element? child) to-go)
        #:when (not (eq? 'pb (send child get-name)))
+       (eprintf* "\telement (not pb)\n")
        (define-values {new-segs new-i new-pb}
          (do-prepare-segments child
                               #:segs (this-so-far->segs)
@@ -291,6 +312,7 @@
       ;; continue with new latest-pb
       [(cons (? pb? latest-pb) to-go)
        #:when (not (eq? 'ab name))
+       (eprintf* "\tpb (not in ab)\n")
        (prepare-content #:to-go to-go
                         #:this-so-far this-so-far
                         #:segs segs
@@ -301,6 +323,7 @@
       ;; continue, consing this child on to this-so-far
       [(cons str-or-misc to-go)
        #:when (not (eq? 'ab name))
+       (eprintf* "\tother child (not in ab)\n")
        (prepare-content #:to-go to-go
                         #:this-so-far (cons (element-or-xexpr->plain-text str-or-misc)
                                             this-so-far)
@@ -311,7 +334,8 @@
       ;; in an ab,
       ;; This case handles a bunch of things that are not child TEI-body<%>
       ;; elements, i.e. strings, pb%s, and comments etc, as plain-children.
-      [(list-rest (? not-body-element? plain-children) ... more)
+      [(list-rest (? not-body-element? plain-children) ... to-go)
+       (eprintf* "\tin an ab\n")
        ;; We start by counting how many pb%s we see here and keeping track
        ;; of the last (which may be init-pb).
        (for/fold/define ([num-pbs 0]
@@ -324,6 +348,7 @@
            ;; Good case: there are fewer than two pb%s in plain-children,
            ;; so we treat plain-children as a segment.
            [(infix: 2 > num-pbs)
+            (eprintf* "\t\tgood case\n")
             (values (cons-pre-segment
                      (string-normalize-spaces
                       (string-join
@@ -339,6 +364,7 @@
            ;; Ugly case: this handles massive ab%s that have not been segmented.
            ;; In this case, each page is used as a segment.
            [else
+            (eprintf* "\t\tugly case\n")
             (prepare-content/ugly-ab plain-children
                                      #:segs segs
                                      #:i i
@@ -363,13 +389,14 @@
                                           #:segs segs
                                           #:i i
                                           #:pb pb)
-  (-> tei-element?
+  (-> (listof not-body-element?)
       #:segs (listof pre-segment?)
       #:i natural-number/c
       #:pb (is-a?/c pb<%>)
       (values (listof pre-segment?)
               natural-number/c
               (is-a?/c pb<%>)))
+  (eprintf* "prepare-content/ugly-ab\n")
   ;; Ugly case: this handles massive ab%s that have not been segmented.
   ;; In this case, each page is used as a segment.
   (kw-loop loop (#:to-go [to-go to-go]
@@ -377,6 +404,7 @@
                  #:segs [segs segs]
                  #:pb [pb pb]
                  #:i [i i])
+    (eprintf* "loop: (length to-go) = ~v\n" (length to-go))
     (define (this-so-far->segs)
       (cons-pre-segment
        (string-normalize-spaces
@@ -386,16 +414,19 @@
        #:page (send pb get-page-string)))
     (match to-go
       ['()
+       (eprintf* "\t'()\n")
        (values (this-so-far->segs)
                (add1 i)
                pb)]
       [(cons (? pb? new-pb) to-go)
+       (eprintf* "\tpb\n")
        (loop #:to-go to-go
              #:i (add1 i)
              #:pb new-pb
              #:this-so-far null
              #:segs (this-so-far->segs))]
       [(cons child to-go)
+       (eprintf* "\tother child\n")
        (loop #:to-go to-go
              #:this-so-far (cons (element-or-xexpr->plain-text child)
                                  this-so-far)
@@ -409,16 +440,15 @@
 
 
 
+#|
+(define doc
+  (file->TEI
+   (build-path
+    "/Users/philip/code/ricoeur/texts/debug/"
+    "broken_philosophy_Ricoeur_anthology_of_work.xml")))
 
-
-
-
-
-
-
-
-
-
+(prepare-pre-segments doc)
+|#
 
 
 
