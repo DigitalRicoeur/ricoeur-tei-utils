@@ -1,8 +1,8 @@
 #lang info
 
 (define collection "ricoeur")
-(define deps '(("base" #:version "6.11")
-               "adjutor"
+(define deps '(("base" #:version "6.12")
+               ("adjutor" #:version "0.2")
                "functional-lib"
                "roman-numeral"
                "gregor-lib"
@@ -27,7 +27,7 @@
                      "db-doc"
                      ))
 (define pkg-desc "TEI utilities for Digital Ricoeur")
-(define version "0.2.1")
+(define version "0.3")
 (define pkg-authors '(philip))
 (define scribblings '(("tei/scribblings/tei-utils/tei-utils.scrbl"
                        (multi-page)

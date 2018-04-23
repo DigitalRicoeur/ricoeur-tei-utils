@@ -3,7 +3,8 @@
 @title{General Libraries}
 @defmodule[ricoeur/lib]
 
-@(require (for-label racket
+@(require ricoeur/lib
+          (for-label racket
                      ricoeur/lib))
 
 The bindings documented in this section are provided by
@@ -57,6 +58,8 @@ and they may also be useful in other contexts.
  If there is no @racket[runtime-expr], evaluating the @racket[TODO] form
  at runtime raises an error (based on the @racket[message]).
 
+ @(TODO/void find a nice way to degrade if the todo-list docs "aren't"
+             installed)
  If the @other-doc['(lib "todo-list/scribblings/todo-list.scrbl")]
  plugin is installed (via the @tt{todo-list} package),
  DrRacket will also highlight the placeholders specially.
@@ -68,4 +71,8 @@ and they may also be useful in other contexts.
  from the summary view, for example.
 }
 
+@defform[(TODO/void message)]{
+ Cooperates with DrRacket like @racket[TODO], but evaluates to
+ @void-const at runtime.
+}
 

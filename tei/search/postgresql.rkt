@@ -240,9 +240,11 @@
 
 ;; If we need to make a backwards-incompatible change to the
 ;; table schema, increment this constant to force the table to be rebuilt.
+;; History:
+;; Changed to version 1 after re-write of prepare-pre-segments
 (define/contract TABLE-FORMAT-VERSION
   natural-number/c
-  0)
+  1)
        
 (define (create-table db)
   (query-exec db ƒ~a{

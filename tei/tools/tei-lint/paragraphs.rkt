@@ -3,7 +3,6 @@
 (require framework
          ricoeur/tei
          ricoeur/lib
-         (submod ricoeur/tei/oop/interfaces private)
          ricoeur/tei/tools/tei-lint/lib
          ricoeur/tei/tools/tei-lint/xml-preview
          adjutor

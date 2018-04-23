@@ -2,7 +2,8 @@
 
 @title{Implementation Details}
 
-@(require (for-label (except-in racket
+@(require "for-manual.rkt"
+          (for-label (except-in racket
                                 date
                                 date?)
                      racket/unit
@@ -110,9 +111,7 @@ They are used in the implementation of contracts on TEI x-expressions.
   using @sigelem[tei-xexpr-contracts^ make-element-contract].
   The unit implementing this signature, @racket[element-contracts@], is
   documented in "literate programming" style
-  under @secref["Formal_Specification"
-                #:doc '(lib "ricoeur/tei/scribblings/guidelines.scrbl")]
-  in @other-doc['(lib "ricoeur/tei/scribblings/guidelines.scrbl")].
+  under @guidelines-secref["Formal_Specification"] in @(guidelines-doc).
   It must be linked with @racket[tei-xexpr-contracts@] prior to invokation.
 }}
 
@@ -150,7 +149,8 @@ ultimately @racket[term-search].
  to prepare a set of TEI documents to be searched using a specific
  @tech{search backend}. Constuct @tech{searchable document sets} using
  @racket[regexp-searchable-document-set] or
- @racket[postgresql-searchable-document-set].
+ @racket[postgresql-searchable-document-set], or use
+ @racket[noop-searchable-document-set].
 }
 
 @defproc[(search-documents [term term/c]
@@ -224,7 +224,7 @@ For some @racket[term], a regular expression constructed using:
                                  (regexp-quote term #f)
                                  exact?-px-suffix-str))]
 will match only strings that contain @racket[term] exactly
-(in the sense of the @racket[#:exact?] argument to @racket[term-search].
+(in the sense of the @racket[#:exact?] argument to @racket[term-search]).
 }
 
 @defproc[(make-search-result [#:counter counter natural-number/c]
@@ -282,7 +282,7 @@ will match only strings that contain @racket[term] exactly
  Current search implementations rely on splitting TEI documents
  into smaller segments that share the same meta-data (such as page
  numbers). While each @tech{searchable document set} implementation
- will likeley use its own representation of segments internally
+ will likely use its own representation of segments internally
  (e.g. by storing them as rows in a database), the shared functionality
  for segmenting a document is implemented by the
  function @racket[prepare-pre-segments], which returns its results
@@ -310,9 +310,9 @@ will match only strings that contain @racket[term] exactly
 }
 
 @defthing[pre-segment-meta/c flat-contract?]{
- An opaque contract recognizing valid @racket[pre-segment] meta-data,
- the precise specification of which is a private implementation,
- detail except that all values satisfying @racket[pre-segment-meta/c]
+ An opaque contract recognizing valid @racket[pre-segment] meta-data.
+ The precise specification this meta-data is a private implementation
+ detail, except that all values satisfying @racket[pre-segment-meta/c]
  will also satisfy @racket[jsexpr?].
 }
 

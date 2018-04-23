@@ -265,7 +265,7 @@ The bindings documented in this section are provided by
             (or/c (maybe/c string?)
                   (list/c (maybe/c string?) (maybe/c string?)))]
    @defproc[(search-result-location-stack [v search-result?])
-            location-stack/c]
+            location-stack-entry?]
    @defproc[(search-result-author-string [v search-result?])
             string?]
    @defproc[(search-result<? [a search-result?] [b search-result?])
@@ -284,27 +284,8 @@ The bindings documented in this section are provided by
  @tech{document search results} object.
 }
 
-@defthing[location-stack/c flat-contract?]{
- A contract similar to @racket[(listof location-stack-entry/c)],
- but which also enforces that any @racket['note] entries come
- before any @racket['div] entries and any @racket['div] entries
- come before any @racket['front] or @racket['back] entries:
- that is, that the location information added by the innermost
- element comes first.
-}
 
-@defthing[location-stack-entry/c flat-contract?
-          #:value
-          (or/c 'front 'back
-                (list/c 'div
-                        (or/c "chapter" "part" "section" "dedication"
-                              "contents" "intro" "bibl" "ack" "index")
-                        (maybe/c string?))
-                (list/c 'note
-                        (or/c "foot" "end")
-                        string?
-                        (or/c "transl" #f)))]{
- A contract recognizing values that can be supplied by
- @(xmethod TEI-body<%> to-pre-segments/add-metadata) to
- provide details about the location of a @racket[pre-segment] in a document.
+@defproc[(location-stack-entry? [v any/c]) any/c]{
+ A predicate recodnizing values that can represent details
+ about the location of a @tech{search-result} in a document.
 }

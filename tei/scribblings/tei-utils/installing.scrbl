@@ -2,16 +2,16 @@
 
 @title{Installing & Updating This Library}
 
-@(require (for-label ricoeur/lib))
+@(require "for-manual.rkt"
+          (for-label ricoeur/lib))
 
 @margin-note{Installing this library will also install
  the tools documented under
- @secref["Tools"
-         #:doc '(lib "ricoeur/tei/scribblings/guidelines.scrbl")].}
+ @guidelines-secref["Tools"].}
             
 To use this library, you must install the Racket programming
 language and runtime system for your platform from
-@url["https://racket-lang.org"]. Racket version 6.11 or later
+@url["https://racket-lang.org"]. Racket version 6.12 or later
 is currently required. If you use Mac OS, you are free to use the 
 "cask" for the Homebrew packacge manager (but note that the
 "minimal-racket" Homebrew formula is currently unmaintained and
@@ -26,7 +26,7 @@ You should also configure your @envvar{PATH} environment variable
 so that the @tt{racket} and @tt{raco} programs can be run
 from the command line. For example, on Mac OS, you should add a
 line like the following to @filepath{~/.bash_profile}:
-@verbatim[#:indent 2]{export PATH="/Applications/Racket v6.11/bin":$PATH}
+@verbatim[#:indent 2]{export PATH="/Applications/Racket v6.12/bin":$PATH}
 
 While it is not strictly required, some features of this library
 are implemented using the utility @tt{xmllint} from @tt{libxml2}.

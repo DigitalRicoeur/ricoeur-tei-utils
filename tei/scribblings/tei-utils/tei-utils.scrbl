@@ -5,7 +5,8 @@
                       "philip@philipmcgrath.com")]
 @defmodule[#:multi (ricoeur/tei ricoeur/tei/base)]
 
-@(require (for-label (except-in racket
+@(require "for-manual.rkt"
+          (for-label (except-in racket
                                 date
                                 date?)
                      racket/unit
@@ -30,7 +31,7 @@ This manual documents utilities and Racket libraries for
 working with TEI XML documents developed for Digital Ricœur.
 In addition to being valid and well-formed XML, the
 documents should conform to the structure specified in
-@other-doc['(lib "ricoeur/tei/scribblings/guidelines.scrbl")].
+@(guidelines-doc).
 
 This document is written for programmers intending either to
 use these libraries in their own programs (particularly in the case
