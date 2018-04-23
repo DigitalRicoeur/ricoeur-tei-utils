@@ -5,7 +5,11 @@
          )
 
 (provide location-stack-entry?
-         )
+         (contract-out
+          [location-stack->strings
+           (-> location-stack-entry?
+               (listof string?))]
+          ))
 
 (module+ private
   (provide location-stack-jsexpr/c
@@ -46,7 +50,7 @@
                [n string?]
                [transl? (or/c #f 'transl)]
                [rest (or/c location-stack-entry:root? ;; <note> tags might be added before <div> tags
-                           location-stack-entry:note? ;; ? do we really want to support nested notes ?
+                           location-stack-entry:note? 
                            location-stack-entry:div?)])]
             ))
                                                
@@ -131,10 +135,49 @@
                                (false->maybe n)
                                (jsexpr->location-stack rest))]
     [(list "note" place n transl? rest)
-     (location-stack-entry:div (string->symbol place)
-                               n
-                               (and transl? 'transl)
-                               (jsexpr->location-stack rest))]))
+     (location-stack-entry:note (string->symbol place)
+                                n
+                                (and transl? 'transl)
+                                (jsexpr->location-stack rest))]))
 
 
-        
+(define (location-stack->strings stk)
+  (reverse
+   (let to-strings ([stk stk])
+     (match stk
+       ['body null]
+       ['front '("Front-matter")]
+       ['back '("Back-matter")]
+       [(location-stack-entry:div type n rest)
+        (cons (string-append (case type
+                               [(chapter) "Chapter"]
+                               [(part) "Part"]
+                               [(section) "Section"]
+                               [(dedication) "Dedication"]
+                               [(contents) "Table of Contents"]
+                               [(intro) "Introduction"]
+                               [(bibl) "Bibliography"]
+                               [(ack) "Acknowledgements"]
+                               [(index) "Index"]
+                               [else (error 'location-stack->string
+                                            (format "unknown div type ~e"
+                                                    type))])
+                             (maybe ""
+                                    (λ (n) (string-append " " n))
+                                    n))
+              (to-strings rest))]
+       [(location-stack-entry:note place n transl? rest)
+        (cons (string-append (if transl?
+                                 "Translator's "
+                                 "")
+                             (case place
+                               [(foot) "Footnote "]
+                               [(end) "Endnote "]
+                               [else (error 'location-stack->string
+                                            (format "unknown note place ~e"
+                                                    place))])
+                             n)
+              (to-strings rest))]))))
+
+
+

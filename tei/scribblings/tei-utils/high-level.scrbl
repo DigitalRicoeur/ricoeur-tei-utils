@@ -289,3 +289,19 @@ The bindings documented in this section are provided by
  A predicate recodnizing values that can represent details
  about the location of a @tech{search-result} in a document.
 }
+
+@defproc[(location-stack-entry->strings [loc location-stack-entry?])
+         (listof string?)]{
+ Converts the location information encapsulated in @racket[loc]
+ to a (possibly empty) list of strings suitable for display
+ to end users.
+ The strings in the list begin with the broadest location
+ description (e.g. front-matter) and end with the narrowest
+ (e.g. some footnote).
+ Each string represents some logical level of location hierarchy:
+ returning them in a list allows clients of this library
+ to add separators or otherwise lay them out for display.
+}
+
+
+

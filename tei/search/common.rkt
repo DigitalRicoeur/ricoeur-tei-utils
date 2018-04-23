@@ -23,6 +23,7 @@
          search-result?
          search-result
          location-stack-entry?
+         location-stack->strings
          (contract-out
           [search-documents
            (->* {term/c searchable-document-set?}
