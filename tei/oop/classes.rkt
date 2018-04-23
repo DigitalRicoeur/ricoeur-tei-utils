@@ -139,27 +139,6 @@
       (send (super guess-paragraphs #:mode mode)
             update-guess-paragraphs-status
             mode))
-    #|
-    (define/override-final (to-pre-segments pred
-                                            call-with-metadata
-                                            acc
-                                            init-pb)
-      (send text
-            to-pre-segments
-            pred
-            call-with-metadata
-            acc
-            init-pb))
-    (define/public-final (do-prepare-pre-segments pred
-                                                  call-with-metadata
-                                                  title->pre-segment-accumulator)
-      (define-values {acc _}
-        (to-pre-segments pred
-                         call-with-metadata
-                         (title->pre-segment-accumulator (get-title))
-                         (new pb% [name 'pb])))
-      acc)
-|#
     (define/override (get-page-breaks)
       (send text get-page-breaks))
     (define/public-final (write-TEI [out (current-output-port)])
@@ -490,36 +469,29 @@
           (guess-paragraphs-mixin
            (get-page-breaks-mixin element%)))
     (super-new)))
-#|
-    (define/augment-final (to-pre-segments/add-metadata pred
-                                                        call-with-metadata
-                                                        thunk)
-      (call-with-metadata #:location 'front thunk))))
-      |#
 
 (define back% 
   (class (elements-only-mixin
           (guess-paragraphs-mixin
            (get-page-breaks-mixin element%)))
     (super-new)))
-#|
-(define/augment-final (to-pre-segments/add-metadata pred
-                                                    call-with-metadata
-                                                    thunk)
-  (call-with-metadata #:location 'back thunk))))
-|#
 
 (define div%
-  (class (elements-only-mixin
+  (class* (elements-only-mixin
           (guess-paragraphs-mixin 
            (get-page-breaks-mixin element%)))
+    {div<%>}
     (super-new)
     (inherit get-attributes)
     (define n
       (fmap car (false->maybe (dict-ref (get-attributes) 'n #f))))
     (define type
-      (car (dict-ref (get-attributes) 'type)))
-    ))
+      (string->symbol
+       (car (dict-ref (get-attributes) 'type))))
+    (public*
+     [get-n (λ () n)]
+     [get-type (λ () type)])
+    #|END div%|#))
   
 (define pb%
   (class* (elements-only-mixin element%) {pb<%>}
@@ -667,9 +639,24 @@
    (get-page-breaks-mixin element%)))
 
 (define note%
-  (class (guess-paragraphs-mixin
+  (class* (guess-paragraphs-mixin
           (get-page-breaks-mixin element%))
-    (super-new)))
+    {get-page-breaks<%>}
+    (super-new)
+    (inherit get-attributes)
+    (define n
+      (car (dict-ref (get-attributes) 'n)))
+    (define place
+      (string->symbol
+       (car (dict-ref (get-attributes) 'place))))
+    (define transl
+      (and (car (dict-ref (get-attributes) 'transl '(#f)))
+           'transl))
+    (public*
+     [get-n (λ () n)]
+     [get-place (λ () place)]
+     [get-transl? (λ () transl)])))
+    
         
 (define item%
   ;TODO: specialize to-plain-text

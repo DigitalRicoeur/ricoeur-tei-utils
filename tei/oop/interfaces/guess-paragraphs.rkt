@@ -6,14 +6,11 @@
          data/maybe
          gregor
          adjutor
+         "pb.rkt"
          (for-syntax racket/base
                      syntax/parse
                      racket/syntax
                      ))
-
-(require "element.rkt"
-         "pb.rkt"
-         )
 
 (provide guess-paragraphs<%>
          p<%>

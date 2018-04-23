@@ -1,21 +1,14 @@
 #lang racket
 
-(require xml 
-         ricoeur/tei/xexpr/normalize
-         ricoeur/tei/xexpr/tei-xexpr-contracts
-         data/maybe
-         gregor
-         adjutor
-         (for-syntax racket/base
-                     syntax/parse
-                     racket/syntax
-                     ))
+(require adjutor
+         )
 
 (require-provide "interfaces/element.rkt"
                  "interfaces/elements-only.rkt"
                  "interfaces/info-interfaces.rkt"
                  "interfaces/pb.rkt"
                  "interfaces/guess-paragraphs.rkt"
+                 "interfaces/specific.rkt"
                  )
 
 (provide teiHeader<%> 

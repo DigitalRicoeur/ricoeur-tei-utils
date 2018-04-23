@@ -22,8 +22,7 @@
          document-search-results
          search-result?
          search-result
-         location-stack-entry/c
-         location-stack/c
+         location-stack-entry?
          (contract-out
           [search-documents
            (->* {term/c searchable-document-set?}
@@ -50,7 +49,7 @@
                (or/c (maybe/c string?)
                      (list/c (maybe/c string?) (maybe/c string?))))]
           [search-result-location-stack
-           (-> search-result? location-stack/c)]
+           (-> search-result? location-stack-entry?)]
           ))
 
 (module+ private

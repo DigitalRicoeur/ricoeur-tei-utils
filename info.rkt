@@ -29,11 +29,11 @@
 (define pkg-desc "TEI utilities for Digital Ricoeur")
 (define version "0.2.1")
 (define pkg-authors '(philip))
-(define scribblings '(("tei/scribblings/tei-utils.scrbl"
+(define scribblings '(("tei/scribblings/tei-utils/tei-utils.scrbl"
                        (multi-page)
                        ("Digital Ricœur" 0)
                        )
-                      ("tei/scribblings/guidelines.scrbl"
+                      ("tei/scribblings/guidelines/guidelines.scrbl"
                        (multi-page)
                        ("Digital Ricœur" 0)
                        )))

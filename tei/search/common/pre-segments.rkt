@@ -350,18 +350,13 @@
 ;                                                          
 
 (define (get-updated-resp child)
-  ; maybe method ?
+  (TODO/void get-updated-resp maybe method for resp?)
   (or (car (dict-ref (send child get-attributes) 'resp '(#f)))
       (and (eq? 'sp (send child get-name))
            (car (dict-ref (send child get-attributes) 'who)))
       (current-resp)))
 
 (define (get-updated-location-stack child)
-  (let/ec return
-  (TODO #:expr (return 'body)
-        get-updated-location-stack: add methods to get info
-        #: This has nothing to do with whether
-        prepare-pre-segments diverges overall.)
   (match (send child get-name)
     [(and sym (or 'front 'body 'back))
      (when (current-location-stack)
@@ -371,34 +366,16 @@
                     "can't add root element to non-empty location stack")))
      sym]
     ['div
-     ; should I add methods to div% or
-     ; rely on knowing about its attributes?
-     #|
-    (define/augment-final (to-pre-segments/add-metadata pred
-                                                        call-with-metadata
-                                                        thunk)
-      (call-with-metadata #:location (list 'div type n) thunk))
-|#
-     (location-stack-entry:div (TODO location-stack-entry:div type)
-                               (TODO location-stack-entry:div n)
+     (location-stack-entry:div (send child get-type)
+                               (send child get-n)
                                (current-location-stack))]
-    ['note
-     ; should probably add methods to note
-     #|
-(define/augment-final (to-pre-segments/add-metadata pred
-                                                        call-with-metadata
-                                                        thunk)
-      (let ([n (car (dict-ref (get-attributes) 'n))]
-            [place (car (dict-ref (get-attributes) 'place))]
-            [transl (car (dict-ref (get-attributes) 'transl '(#f)))])
-        (call-with-metadata #:location (list 'note place n transl)
-                            thunk)))))|#
-     (location-stack-entry:note (TODO location-stack-entry:note place)
-                                (TODO location-stack-entry:note n)
-                                (TODO location-stack-entry:note transl?)
+    ['note 
+     (location-stack-entry:note (send child get-place)
+                                (send child get-n)
+                                (send child get-transl?)
                                 (current-location-stack))]
     [_
-     (current-location-stack)])))
+     (current-location-stack)]))
 
 (define/?contract (cons-pre-segment body
                                     #:segs segs 

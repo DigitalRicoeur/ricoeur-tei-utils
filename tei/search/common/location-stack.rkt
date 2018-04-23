@@ -31,13 +31,13 @@
 
 (module adt racket
   (require data/maybe
+           ricoeur/tei/base
            )
   (provide location-stack-entry?
            location-stack-entry:root?
            (contract-out
             [struct location-stack-entry:div
-              ([type (or/c 'chapter 'part 'section 'dedication
-                           'contents 'intro 'bibl 'ack 'index)]
+              ([type div-type/c]
                [n (maybe/c string?)]
                [rest (or/c location-stack-entry:div?
                            location-stack-entry:root?)])]

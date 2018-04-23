@@ -44,3 +44,28 @@ and they may also be useful in other contexts.
  (An additional difference from @racket[with-output-to-file] is that
  @racket[thunk] is currently limited to a single return value.)
 }
+
+@defform*[[(TODO message)
+           (TODO #:expr runtime-expr message)
+           (TODO message #:expr runtime-expr)]
+          #:grammar [(message (code:line msg-datum ...+ maybe-detail))
+                     (maybe-detail (code:line)
+                                   (code:line #: msg-datum ...+))]]{
+ The @racket[TODO] form is intended to be used as a placeholder during
+ development. When a @racket[runtime-expr] is given, the entier
+ form is equivalent to the @racket[runtime-expr] being used directly.
+ If there is no @racket[runtime-expr], evaluating the @racket[TODO] form
+ at runtime raises an error (based on the @racket[message]).
+
+ If the @other-doc['(lib "todo-list/scribblings/todo-list.scrbl")]
+ plugin is installed (via the @tt{todo-list} package),
+ DrRacket will also highlight the placeholders specially.
+
+ A @racket[msg-datum] is implicitly quoted and must me an literal
+ string, symbol, or number. These are converted to strings
+ with a @racket[" "] added between them to form the message.
+ If a @racket[maybe-detail] part is given, it is omited
+ from the summary view, for example.
+}
+
+

@@ -56,7 +56,7 @@
         ...)
      (make-todo-syntax
       (quasisyntax/loc this-syntax
-        #'runtime.runtime)
+        runtime.runtime)
       (attribute msg.full)
       (attribute msg.summary))]))
 

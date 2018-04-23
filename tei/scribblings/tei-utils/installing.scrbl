@@ -2,6 +2,8 @@
 
 @title{Installing & Updating This Library}
 
+@(require (for-label ricoeur/lib))
+
 @margin-note{Installing this library will also install
  the tools documented under
  @secref["Tools"
@@ -38,15 +40,34 @@ dependency through the Racket package system.
 To install this library, you must first obtain a copy of the source
 code by cloning its git repository from
 @url["https://bitbucket.org/digitalricoeur/tei-utils"].
-You then must install it as a Racket package. On platforms which
-provide the utility @tt{make}, this can be done by running
-@exec{make install} from the directory into which you have cloned
-the repository.
+You then must install it as a Racket package.
+Two methods are provided to streamline this process:
+@(itemlist
+  @item{@bold{Using @tt{make}}:
+ On platforms which provide the utility @tt{make},
+ this package can be installed by running
+ @exec{make install} from the directory into which you have cloned
+ the repository.
 
-Later, you can install updated versions of the repository simply
-by running @exec{make}, which also handles pulling updates from
-the server for you. More substantial changes may occasionally
-require you to reinstall the package by running
-@exec{make reinstall}.
+ Later, you can install updated versions of the repository simply
+ by running @exec{make}, which also handles pulling updates from
+ the server for you. More substantial changes may occasionally
+ require you to reinstall the package by running
+ @exec{make reinstall}.
+}
+  @item{@bold{Windows batch files}:
+ For Windows users, batch files are included in the
+ @filepath{windows-setup} directory of this repository.
+ The details are explained in @filepath{windows-setup/README.md}.
+
+ These files are still somewhat experimental.
+ Please report any problems.
+ })
+
+If you are developing (as oposed to merely using) this library,
+you may also wish to install the Racket package
+@hyperlink["https://pkgs.racket-lang.org/package/todo-list"]{todo-list},
+which provides a DrRacket plugin that cooperates with the
+@racket[TODO] macro.
 
 
