@@ -3,13 +3,13 @@
 (require adjutor
          data/maybe
          json
+         ricoeur/lib/todo
          ricoeur/tei/oop/objects
          ricoeur/tei/oop/interfaces
          "location-stack.rkt"
          (submod "location-stack.rkt" private)
          (for-syntax racket/base
                      syntax/parse
-                     racket/syntax
                      ))
 
 (provide pre-segment-meta/c
@@ -25,6 +25,21 @@
           ))
 
 (struct pre-segment (title counter body meta resp))
+
+;; prepare-pre-segments
+;; The outer function which sets everything up for a TEI<%> document
+(define (prepare-pre-segments doc)
+  (parameterize ([current-title (send doc get-title)])
+    (for/fold/define ([segs null]
+                      [i 0]
+                      [pb (tag->element '(pb))])
+                     ([child (in-list
+                              ;; the children of the text element,
+                              ;; i.e. body, perhaps with front and/or back
+                              (send (last (send doc get-body/elements-only))
+                                    get-body/elements-only))])
+      (do-prepare-segments child #:segs segs #:i i #:pb pb))
+    segs))
 
 (define current-title
   (make-parameter #f))
@@ -42,21 +57,13 @@
   ;; define/contract, define/no-contract, or define/check-args/contract
   (make-rename-transformer #'define/contract))
 
-;; prepare-pre-segments
-;; The outer function which sets everything up for a TEI<%> document
-(define (prepare-pre-segments doc)
-  (parameterize ([current-title (send doc get-title)])
-    (for/fold/define ([segs null]
-                      [i 0]
-                      [pb (tag->element '(pb))])
-                     ([child (in-list
-                              ;; the children of the text element,
-                              ;; i.e. body, perhaps with front and/or back
-                              (send (last (send doc get-body/elements-only))
-                                    get-body/elements-only))])
-      (do-prepare-segments child #:segs segs #:i i #:pb pb))
-    segs))
+(define (pb-or-non-element? v)
+  (or (not (tei-element? v))
+      (eq? 'pb (send v get-name))))
 
+(define page-spec/c
+  (or/c (maybe/c string?)
+        (list/c (maybe/c string?) (maybe/c string?))))
 
 ;                                  
 ;                                  
@@ -350,15 +357,18 @@
       (current-resp)))
 
 (define (get-updated-location-stack child)
-  ;; TODO
-  ;; This has nothing to do with whether prepare-pre-segments diverges overall.
-  'body
-  #;
+  (let/ec return
+  (TODO #:expr (return 'body)
+        get-updated-location-stack: add methods to get info
+        #: This has nothing to do with whether
+        prepare-pre-segments diverges overall.)
   (match (send child get-name)
     [(and sym (or 'front 'body 'back))
      (when (current-location-stack)
-       (error 'get-updated-location-stack ;; TODO: better message
-              "can't add root element to non-empty location stack"))
+       (TODO better error message
+             #:expr
+             (error 'get-updated-location-stack
+                    "can't add root element to non-empty location stack")))
      sym]
     ['div
      ; should I add methods to div% or
@@ -369,8 +379,8 @@
                                                         thunk)
       (call-with-metadata #:location (list 'div type n) thunk))
 |#
-     (location-stack-entry:div (error '|TODO: type|)
-                               (error '|TODO: n|)
+     (location-stack-entry:div (TODO location-stack-entry:div type)
+                               (TODO location-stack-entry:div n)
                                (current-location-stack))]
     ['note
      ; should probably add methods to note
@@ -383,12 +393,12 @@
             [transl (car (dict-ref (get-attributes) 'transl '(#f)))])
         (call-with-metadata #:location (list 'note place n transl)
                             thunk)))))|#
-     (location-stack-entry:note (error '|TODO: place|)
-                                (error '|TODO: n|)
-                                (error '|TODO: transl?|)
+     (location-stack-entry:note (TODO location-stack-entry:note place)
+                                (TODO location-stack-entry:note n)
+                                (TODO location-stack-entry:note transl?)
                                 (current-location-stack))]
     [_
-     (current-location-stack)]))
+     (current-location-stack)])))
 
 (define/?contract (cons-pre-segment body
                                     #:segs segs 
@@ -439,15 +449,6 @@
       (list (send init-pb get-page-string)
             (send latest-pb get-page-string))))
 
-(define (pb-or-non-element? v)
-  (or (not (tei-element? v))
-      (eq? 'pb (send v get-name))))
-
-
-(define page-spec/c
-  (or/c (maybe/c string?)
-        (list/c (maybe/c string?) (maybe/c string?))))
-
 (define pre-segment-meta/c
   (opt/c
    (and/c jsexpr?
@@ -469,17 +470,20 @@
                                        [page . #t])
                                hsh)))))
 
-(module+ main
-  (provide (all-defined-out))
+
+
+
+
+#|
+;(module+ main
+;  (provide (all-defined-out))
   (define doc
     (file->TEI
      (build-path
       "/Users/philip/code/ricoeur/texts/debug/"
       "broken_philosophy_Ricoeur_anthology_of_work.xml")))
 
-  (prepare-pre-segments doc))
-
-
-
+;  (prepare-pre-segments doc))
+;|#
 
 
