@@ -95,7 +95,8 @@
        [name name]
        [attributes attributes]
        [body (for/list ([child (in-list
-                                (normalize-xexpr-body raw-body))])
+                                (nondestructive-normalize-xexpr-body-once
+                                 raw-body))])
                (if (list? child)
                    (tag->element* child)
                    child))]))
