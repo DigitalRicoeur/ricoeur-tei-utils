@@ -96,10 +96,6 @@ the @tag{titleStmt}, @tag{publicationStmt}, and
 The @deftag{profileDesc} element contains only the
 @tag{textClass} element.
 
-@margin-note{
- Currently, to facilitate transition, documents missing the
- @tag{profileDesc} element will temporarily be accepted.}
-
 @chunk[$header$
        (define teiHeader/c
          (make-element-contract
