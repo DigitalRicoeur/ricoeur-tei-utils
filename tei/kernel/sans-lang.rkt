@@ -11,7 +11,11 @@
 
 (require-provide "base-structs.rkt"
                  "tei-info.rkt"
+                 "xmllint.rkt"
                  "xexpr/plain-contracts.rkt"
+                 "maybe.rkt"
+                 gregor
+                 adjutor
                  )
 
 (module+ private

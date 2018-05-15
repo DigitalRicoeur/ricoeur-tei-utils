@@ -1,7 +1,7 @@
 #lang racket
 
 (require "element.rkt"
-         xml
+         ricoeur/tei/oop-kernel
          )
 
 (provide elements-only<%>

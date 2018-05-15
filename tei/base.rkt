@@ -3,8 +3,7 @@
 (require adjutor
          )
 
-(require-provide ricoeur/tei/xexpr/tei-xexpr-contracts
-                 ricoeur/tei/oop/interfaces
-                 ricoeur/tei/oop/objects
-                 ricoeur/tei/xmllint
+(require-provide ricoeur/tei/kernel
+                 ricoeur/tei/base/def-from-spec
                  )
+

@@ -1,8 +1,6 @@
 #lang racket
 
-(require xml 
-         ricoeur/tei/xexpr/normalize
-         ricoeur/tei/xexpr/tei-xexpr-contracts
+(require ricoeur/tei/oop-kernel 
          data/maybe
          gregor
          adjutor

@@ -1,8 +1,8 @@
 #lang racket
 
-(require xml 
-         ricoeur/tei/xexpr/normalize
-         ricoeur/tei/xexpr/tei-xexpr-contracts
+(require ricoeur/tei/oop-kernel
+         (only-in ricoeur/tei/normalize-placeholder
+                  non-element-xexpr->plain-text)
          data/maybe
          gregor
          adjutor
@@ -32,9 +32,6 @@
     (define element-or-xexpr/c
       (or/c (is-a?/c element<%>)
             string?
-            symbol?
-            valid-char?
-            cdata?
             comment?
             p-i?))
     (define-member-name private-method (generate-member-key))
@@ -57,9 +54,9 @@
           [body :body])
         (define/public (to-xexpr)
           (list* name attributes (for/list ([child (in-list body)])
-                                   (if (xexpr? child)
-                                       child
-                                       (send child to-xexpr)))))
+                                   (if (tei-element? child)
+                                       (send child to-xexpr)
+                                       child))))
         (define/public (to-plain-text)
           (string-join (map element-or-xexpr->plain-text
                             body)

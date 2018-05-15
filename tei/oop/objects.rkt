@@ -1,8 +1,13 @@
 #lang racket
 
-(require (except-in xml element?)
-         ricoeur/tei/xexpr/tei-xexpr-contracts
-         ricoeur/tei/xexpr/normalize
+(require ricoeur/tei/oop-kernel
+         (only-in ricoeur/tei/normalize-placeholder
+                  nondestructive-normalize-xexpr-body-once)
+         (only-in xml
+                  xml->xexpr
+                  document-element
+                  read-xml
+                  )
          ricoeur/tei/oop/interfaces
          ricoeur/tei/oop/classes
          data/maybe

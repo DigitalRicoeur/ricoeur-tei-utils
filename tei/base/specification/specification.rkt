@@ -2,17 +2,14 @@
 
 ƒtitle[#:version ""]{Formal Specification}
 ƒ(require (for-label racket
-                     ;ricoeur/tei/xexpr/normalize
+                     (only-in ricoeur/tei/normalize-placeholder
+                              non-element-body->plain-text)
                      ))
 ƒ(begin-for-runtime
-   (require ;ricoeur/tei/xexpr/normalize
-     (submod ricoeur/tei/kernel private)
-     ))
-
-ƒ(begin-for-runtime
-   (define non-element-body->plain-text
-     (error 'non-element-body->plain-text
-            "TODO (ricoeur/tei/base/specification/specification)")))
+   (require (submod ricoeur/tei/kernel private)
+            (only-in ricoeur/tei/normalize-placeholder
+                     non-element-body->plain-text)
+            ))
 
 Digital Ricœur imposes requirements for the structure of TEI
 documents that are more stringent than merely being well-formed XML

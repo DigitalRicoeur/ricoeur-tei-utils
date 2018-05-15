@@ -1,8 +1,9 @@
 #lang at-exp racket
 
-(require xml 
-         ricoeur/tei/xmllint
-         ricoeur/tei/xexpr/normalize
+(require ricoeur/tei/oop-kernel
+         (only-in xml write-xexpr)
+         (only-in ricoeur/tei/normalize-placeholder
+                  non-element-body->plain-text)
          roman-numeral
          data/maybe
          (rename-in data/functor
