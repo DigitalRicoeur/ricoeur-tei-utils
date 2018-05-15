@@ -7,6 +7,13 @@
          (submod ricoeur/tei/kernel/lang/define
                  private)
          )
+
+(provide tei-xexpr/c
+         static-tei-xexpr/c
+         any-tei-xexpr/c
+         tei-element-name/c
+         )
+
 #;
 (show-elements-specification-transformer
  custom-spec)

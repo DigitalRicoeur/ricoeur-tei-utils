@@ -176,7 +176,7 @@
       (for/lists {dict:attr->contract
                   dict:attr->late-neg-projection}
                  ([raw (in-list init:attr-contracts)])
-        (match-define (list attr raw-c)
+        (match-define (cons attr raw-c)
           raw)
         (define c
           (coerce-flat-contract 'tei-element-contract% raw-c))

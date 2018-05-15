@@ -42,28 +42,87 @@
          (define l-element-names
            (map element-static-info-name-stx l-info))]
    #:with (element-name ...) l-element-names
-   
+   #:with (contract-name ...) (generate-temporaries
+                               l-element-names)
+   #:with (contract-expr ...)
+   (map (->element-static-info->contract-expr
+         #'make-element-contract)
+        l-info)
    (with-disappeared-uses
     (record-disappeared-uses
      (syntax->list #'(spec ...)))
     #`(begin
-        (define #|/final-prop|# tei-element-name/c
+        (define/final-prop tei-element-name/c
           (or/c 'element-name ...))
+        
         (define-make-element-contract make-element-contract
           #:tei-xexpr/c tei-xexpr/c
           #:any-tei-xexpr/c any-tei-xexpr/c)
 
+        (define contract-name contract-expr) ...
+        
+        (define-tei-xexpr/c tei-xexpr/c 
+          [element-name ...]
+          [contract-name ...])
 
-          (define #|/final-prop|# (tei-xexpr/c _)
-            (error 'tei-xexpr/c "TODO"))
+        (define-static-tei-xexpr/c static-tei-xexpr/c 
+          [element-name ...]
+          [contract-name ...])
           
-          (define #|/final-prop|# any-tei-xexpr/c
-            (make-any-tei-xexpr/c
-             #:tei-element-name/c tei-element-name/c
-             #:tei-xexpr/c tei-xexpr/c))
+        (define/final-prop any-tei-xexpr/c
+          (make-any-tei-xexpr/c
+           #:tei-element-name/c tei-element-name/c
+           #:tei-xexpr/c tei-xexpr/c))
         
         #|END define-values/elements-specifications|#))])
-    
+
+(define-syntax-parser define-static-tei-xexpr/c
+  [(_ static-tei-xexpr/c:id
+      [element-name:id ...]
+      [contract-name:id ...])
+   #`(define-syntax-parser static-tei-xexpr/c
+       [(_ (~datum element-name))
+        #'contract-name]
+       ...)])
+  
+(define-syntax-parser define-tei-xexpr/c
+  [(_ tei-xexpr/c:id
+      [element-name:id ...]
+      [contract-name:id ...])
+   #'(define/final-prop (tei-xexpr/c sym)
+       (case sym
+         [(element-name) contract-name]
+         ...
+         [else
+          (raise-argument-error
+           'tei-xexpr/c
+           "tei-element-name/c"
+           sym)]))])
+
+(define-for-syntax (->element-static-info->contract-expr
+                    make-element-contract-stx)
+  (match-lambda
+    [(element-static-info _
+                          name-stx
+                          text?
+                          children-stx
+                          required-order-stx
+                          attr-contracts-stx
+                          required-attrs-stx
+                          extra-check-stx)
+     #`(#,make-element-contract-stx
+        '#,name-stx
+        #:children #,children-stx
+        #:text? #,(if text? #'#t #'#f)
+        #:required-order #,required-order-stx
+        #:extra-check #,extra-check-stx
+        #:attr-contracts #,attr-contracts-stx
+        #:required-attrs #,required-attrs-stx)]))
+
+
+
+
+
 (begin-for-syntax
   (struct elem-name+ (sym stx info-val transf-stx)
     #:transparent)
