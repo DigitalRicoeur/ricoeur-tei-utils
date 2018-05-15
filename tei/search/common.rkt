@@ -1,6 +1,6 @@
 #lang _-exp racket
 
-(require ricoeur/tei/base
+(require ricoeur/tei/oop-base
          data/maybe
          json
          racket/serialize

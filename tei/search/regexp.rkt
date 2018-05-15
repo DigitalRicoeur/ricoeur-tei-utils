@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require ricoeur/tei/base
+(require ricoeur/tei/oop-base
          adjutor
          data/maybe
          racket/serialize

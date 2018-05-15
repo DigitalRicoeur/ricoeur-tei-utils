@@ -35,7 +35,7 @@
 
 (module adt racket
   (require data/maybe
-           ricoeur/tei/base
+           ricoeur/tei/oop-base
            )
   (provide location-stack-entry?
            location-stack-entry:root?

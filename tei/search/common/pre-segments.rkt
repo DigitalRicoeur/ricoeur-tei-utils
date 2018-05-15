@@ -4,8 +4,7 @@
          data/maybe
          json
          ricoeur/lib/todo
-         ricoeur/tei/oop/objects
-         ricoeur/tei/oop/interfaces
+         ricoeur/tei/oop-base
          "location-stack.rkt"
          (submod "location-stack.rkt" private)
          (for-syntax racket/base
