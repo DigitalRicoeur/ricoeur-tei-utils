@@ -1,6 +1,7 @@
-#lang racket
+#lang racket/base
 
 (require syntax/parse
+         racket/contract
          )
 
 (provide elements-specification-transformer

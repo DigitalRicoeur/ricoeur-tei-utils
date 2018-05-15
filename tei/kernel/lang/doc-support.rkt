@@ -1,4 +1,4 @@
-#lang _-exp racket
+#lang _-exp racket/base
 
 (require scribble/manual
          scribble/base
@@ -6,6 +6,9 @@
          scribble/decode
          scribble/html-properties
          scribble/bnf
+         racket/contract
+         racket/match
+         racket/list
          adjutor
          )
 

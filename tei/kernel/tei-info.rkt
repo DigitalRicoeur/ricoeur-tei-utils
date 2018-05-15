@@ -1,4 +1,8 @@
-#lang racket
+#lang racket/base
+
+(require racket/contract
+         racket/class
+         )
 
 (provide TEI-info?
          plain-TEI-info?

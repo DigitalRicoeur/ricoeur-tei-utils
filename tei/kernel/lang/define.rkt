@@ -1,6 +1,7 @@
-#lang racket
+#lang racket/base
 
 (require syntax/parse/define
+         racket/contract
          (submod ricoeur/tei/kernel/xexpr/contract-utils
                  private)
          (for-syntax racket/base

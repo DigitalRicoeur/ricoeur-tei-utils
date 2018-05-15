@@ -10,13 +10,12 @@
          (for-syntax racket/base
                      racket/list
                      syntax/parse
-                     syntax/strip-context
                      syntax/flatten-begin
                      racket/match
                      "ir/struct.rkt"
                      "ir/syntax-class.rkt"
                      "static-info.rkt"
-                     adjutor
+                     ;adjutor
                      ))
 
 (provide (except-out (all-from-out racket/base)

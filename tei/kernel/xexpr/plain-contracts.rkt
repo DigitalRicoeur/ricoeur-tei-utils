@@ -1,4 +1,4 @@
-#lang racket
+#lang racket/base
 
 (provide raw-xexpr-element/c
          raw-xexpr-element?
@@ -282,7 +282,27 @@
                                         misshapen))])))
   #|END module validate|#)
 
+;                                                          
+;                                                          
+;                    ;;                                 ;; 
+;                    ;;                                 ;; 
+;   ;;  ;;  ;; ;   ;;;;;;; ;     ;  ; ;;      ;;;    ;;;;; 
+;   ;;  ;;  ;;; ;    ;;     ;   ;   ;;  ;   ;;   ;  ;   ;; 
+;   ;;  ;;  ;;  ;;   ;;     ;   ;   ;;  ;   ;    ;  ;   ;; 
+;   ;;  ;;  ;;  ;;   ;;      ;  ;   ;;  ;; ;;;;;;;;;;   ;; 
+;   ;;  ;;  ;;  ;;   ;;      ; ;    ;;  ;   ;       ;   ;; 
+;    ; ;;;  ;;  ;;    ;      ; ;    ;;  ;   ;;   ;  ;   ;; 
+;     ; ;;  ;;  ;;     ;;;    ;     ;;;;      ;;;    ;;; ; 
+;                             ;     ;;                     
+;                            ;      ;;                     
+;                          ;;       ;;                     
+;                                                          
+
 (require 'validate
+         racket/contract
+         racket/match
+         racket/pretty
+         racket/string
          xml
          "entity-utils.rkt"
          )

@@ -1,12 +1,14 @@
-#lang racket
+#lang racket/base
 
 (require syntax/parse
+         racket/contract
+         racket/match
          "struct.rkt"
          adjutor
          (for-template racket/base
                        racket/contract
                        (submod "../stxparam.rkt" private)
-                       xml/xexpr
+                       ricoeur/tei/kernel/xexpr/plain-contracts
                        ))
 
 (provide define-element/rest
@@ -34,7 +36,7 @@
            #:attr parsed (extra-check this-syntax this-syntax))
   (pattern check
            #:declare check (expr/c #'(or/c #f
-                                           (-> (and/c list? xexpr/c)
+                                           (-> raw-xexpr-element/c
                                                (or/c blame? #f)
                                                any/c
                                                any/c))
