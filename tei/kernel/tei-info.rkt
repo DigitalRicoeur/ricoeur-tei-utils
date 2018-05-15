@@ -13,10 +13,11 @@
           ;TEI-info-mixin
           ))
 
-(module+ provate
+(module+ private
   (provide (contract-out
             [plain-TEI-info
-             any/c])))
+             any/c]
+            )))
 
 (define-values {prop:TEI-info TEI-info? get-get-plain}
   (make-struct-type-property 'prop:TEI-info))

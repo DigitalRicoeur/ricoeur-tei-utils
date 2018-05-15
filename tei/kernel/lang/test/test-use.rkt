@@ -1,9 +1,10 @@
 #lang racket
 
-(require ricoeur/tei/kernel/lang/test3
-         ricoeur/tei/kernel/lang/test4
-         ricoeur/tei/kernel/lang/test-duplicate
-         ricoeur/tei/kernel/lang/define
+(require "test3.rkt"
+         "test4.rkt"
+         "test-duplicate.rkt"
+         ricoeur/tei/kernel
+         (submod ricoeur/tei/kernel private)
          (submod ricoeur/tei/kernel/lang/define
                  private)
          )
@@ -14,7 +15,7 @@
          tei-element-name/c
          )
 
-#;
+
 (show-elements-specification-transformer
  custom-spec)
 

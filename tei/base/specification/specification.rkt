@@ -2,12 +2,17 @@
 
 ƒtitle[#:version ""]{Formal Specification}
 ƒ(require (for-label racket
-                     ricoeur/tei/xexpr/normalize
+                     ;ricoeur/tei/xexpr/normalize
                      ))
 ƒ(begin-for-runtime
-   (require ricoeur/tei/xexpr/normalize
-            (submod ricoeur/tei/kernel private)
-            ))
+   (require ;ricoeur/tei/xexpr/normalize
+     (submod ricoeur/tei/kernel private)
+     ))
+
+ƒ(begin-for-runtime
+   (define non-element-body->plain-text
+     (error 'non-element-body->plain-text
+            "TODO (ricoeur/tei/base/specification/specification)")))
 
 Digital Ricœur imposes requirements for the structure of TEI
 documents that are more stringent than merely being well-formed XML
@@ -19,14 +24,6 @@ This section specifies these requirements in a precise, succinct
 form suitable for reference once you understand the basics.
 
 ƒsection{Document Structure}
-
-The document should begin with an XML declaration and DOCTYPE
-declaration, which must be exactly as follows:
-ƒ(nested #:style 'inset
-         (verbatim
-          ƒtt{<?xml version="1.0" encoding="utf-8"?>}"\n"
-          ƒtt{<!DOCTYPE TEI SYSTEM "DR-TEI.dtd">}))
-
 ƒdefine-element[
  TEI
  #:children ([1 teiHeader]
@@ -35,6 +32,13 @@ declaration, which must be exactly as follows:
  #:attr-contracts ([version "5.0"]
                    [xmlns "http://www.tei-c.org/ns/1.0"])
  #:required-attrs (version xmlns)]{
+
+ The document should begin with an XML declaration and DOCTYPE
+ declaration, which must be exactly as follows:
+ ƒ(nested #:style 'inset
+          (verbatim
+           ƒtt{<?xml version="1.0" encoding="utf-8"?>}"\n"
+           ƒtt{<!DOCTYPE TEI SYSTEM "DR-TEI.dtd">}))
 
  The root element is a ƒtag{TEI} element,
  which contains exactly (in order)

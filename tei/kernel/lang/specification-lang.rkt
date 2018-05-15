@@ -6,6 +6,7 @@
          racket/match
          racket/splicing
          syntax/parse/define
+         ricoeur/tei/kernel/sans-lang
          (for-syntax racket/base
                      racket/list
                      syntax/parse
@@ -21,6 +22,7 @@
 (provide (except-out (all-from-out racket/base)
                      provide
                      #%module-begin)
+         (all-from-out ricoeur/tei/kernel/sans-lang)
          (all-from-out "stxparam.rkt")
          (all-from-out racket/contract)
          (all-from-out racket/match)
