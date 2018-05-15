@@ -1,5 +1,5 @@
 #lang s-exp syntax/module-reader
-ricoeur/tei/lang/specification-lang
+ricoeur/tei/kernel/lang/specification-lang
 #:whole-body-readers? #t
 #:read read*
 #:read-syntax read-syntax*
@@ -11,7 +11,7 @@ ricoeur/tei/lang/specification-lang
     (dynamic-require lib export default))
   (case key
     [(color-lexer)
-     (try-dynamic-require 'ricoeur/tei/lang/color-lexer 'color-lexer)]
+     (try-dynamic-require 'ricoeur/tei/kernel/lang/color-lexer 'color-lexer)]
     [(drracket:default-extension) "rkt"]
     [else
      (default)]))

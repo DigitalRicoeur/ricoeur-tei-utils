@@ -14,27 +14,31 @@
            (-> (or/c symbol? string?) element?)]
           [attr
            (-> (or/c symbol? string?) element?)]
-          [make-element-rows
-           (->* (#:name symbol?)
-                (#:children
-                 (or/c #f (listof (cons/c symbol?
-                                          (or/c 1 '1+ '0-1 '0+))))
-                 #:required-order (or/c #f (listof symbol?))
-                 #:attr-contracts
-                 (or/c #f (listof (cons/c symbol?
-                                          (or/c block? content?))))
-                 #:required-attrs (or/c #f (listof symbol?))
-                 #:text? any/c)
-                (listof (listof (or/c block? content? 'cont))))]
-          [make-define-element-flow
- (->* ()
-      (#:inset? any/c
-       #:elements (listof (listof (listof (or/c block?
-                                                content?
-                                                'cont)))))
-      #:rest (listof pre-flow?)
-      nested-flow?)]
           ))
+
+(module+ private
+  (provide (contract-out
+            [make-element-rows
+             (->* (#:name symbol?)
+                  (#:children
+                   (or/c #f (listof (cons/c symbol?
+                                            (or/c 1 '1+ '0-1 '0+))))
+                   #:required-order (or/c #f (listof symbol?))
+                   #:attr-contracts
+                   (or/c #f (listof (cons/c symbol?
+                                            (or/c block? content?))))
+                   #:required-attrs (or/c #f (listof symbol?))
+                   #:text? any/c)
+                  (listof (listof (or/c block? content? 'cont))))]
+            [make-defelement-flow
+             (->* ()
+                  (#:inset? any/c
+                   #:elements (listof (listof (listof (or/c block?
+                                                            content?
+                                                            'cont)))))
+                  #:rest (listof pre-flow?)
+                  nested-flow?)]
+            )))
 
 
 (define (deftag tag-str)
@@ -187,10 +191,10 @@
    rows))
 
 
-(define (make-define-element-flow
-          #:elements [listof-listsof-rows null]
-          #:inset? [inset? #f]
-          . body)
+(define (make-defelement-flow
+         #:elements [listof-listsof-rows null]
+         #:inset? [inset? #f]
+         . body)
   (let ([listof-listsof-rows
          (let loop ([listof-listsof-rows listof-listsof-rows])
            (match listof-listsof-rows

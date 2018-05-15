@@ -1,4 +1,4 @@
-#lang ricoeur/tei
+#lang ricoeur/tei/kernel
 
 ƒtitle[#:version ""]{Formal Specification}
 ƒ(require (for-label racket/base
