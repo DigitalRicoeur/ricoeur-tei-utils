@@ -89,6 +89,32 @@
                 [required-attrs required-attrs])))]))
 
 
+(define-syntax-rule (define-lexical-member-names name ...)
+  (begin (define-member-name name (generate-member-key)) ...))
+
+(define-lexical-member-names
+  get-name
+  first-order
+  late-neg-projection
+  •tei-xexpr/c
+  stronger-than?)
+
+(define-syntax make-tei-element-contract-class
+  (syntax-parser
+    [(_ (~alt (~once (~seq #:tei-xexpr/c tei-xexpr/c:expr))
+              (~once (~seq #:any-tei-xexpr/c any-tei-xexpr/c:expr)))
+        ...)
+     #`(class abstract-element-contract%
+         (super-new)
+         (define/override-final (stronger-than? other)
+           (or (equal? this other)
+               (contract-stronger? any-tei-xexpr/c other)))
+         (define/override-final (•tei-xexpr/c child-name)
+           (tei-xexpr/c child-name)))]))
+
+
+
+
 (define inside?
   (make-parameter #f))
 
@@ -108,19 +134,9 @@
 ;                                          
 ;                                          
 ;                                          
-;                                          
+;
 
-(define (make-tei-element-contract-class
-         #:tei-xexpr/c tei-xexpr/c
-         #:any-tei-xexpr/c any-tei-xexpr/c)
-  (define-syntax-rule (define-lexical-member-names name ...)
-    (begin (define-member-name name (generate-member-key)) ...))
-  (define-lexical-member-names
-    get-name
-    first-order
-    late-neg-projection
-    stronger-than?
-    )
+(define abstract-element-contract%
   (class* object%
     [(interface* ()
                  ([prop:custom-write
@@ -134,6 +150,7 @@
                     #:stronger (λ (this other)
                                  (send this stronger-than? other)))]))]
     (super-new)
+    (abstract •tei-xexpr/c stronger-than?)
     (init [(init:name name)]
           [(init:children children)]
           [(init:text? text?)]
@@ -173,10 +190,7 @@
        (coerce-flat-contract 'tei-element-contract% name)))
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     (define/public-final (get-name)
-      `(tei-xexpr/c ,name-contract-name))
-    (define/public-final (stronger-than? other)
-      (or (equal? this other)
-          (contract-stronger? any-tei-xexpr/c other))) ;<-------                                                                                     
+      `(tei-xexpr/c ,name-contract-name))                                                           
     ;                                                                                          
     ;       ;;;    ;                     ;;                                 ;;                 
     ;     ;;       ;;                    ;;                                 ;;                 
@@ -348,12 +362,12 @@
              ;check child is valid
              (if maybe-blame
                  (((get/build-late-neg-projection
-                    (tei-xexpr/c child-name))
+                    (•tei-xexpr/c child-name))
                    (blame-add-context maybe-blame
                                       (format "a child ~a element of"
                                               child-name)))
                   child neg-party)
-                 (unless ((tei-xexpr/c child-name) child)
+                 (unless ((•tei-xexpr/c child-name) child)
                    (return #f)))]
             [(pregexp #px"^\\s*$")
              (void)]
