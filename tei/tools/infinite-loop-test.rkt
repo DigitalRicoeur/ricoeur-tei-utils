@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require ricoeur/tei/base
+(require ricoeur/tei/oop-base
          (submod ricoeur/tei/search/common private)
          racket/class
          racket/cmdline

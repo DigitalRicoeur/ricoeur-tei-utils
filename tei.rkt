@@ -3,6 +3,6 @@
 (require adjutor
          )
 
-(require-provide ricoeur/tei/base
+(require-provide ricoeur/tei/oop-base
                  ricoeur/tei/corpus
                  )

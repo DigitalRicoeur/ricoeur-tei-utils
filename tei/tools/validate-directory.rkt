@@ -1,7 +1,6 @@
 #lang racket/base
 
-(require ricoeur/tei/oop/objects
-         ricoeur/tei/xmllint
+(require ricoeur/tei/oop-base
          racket/cmdline)
 
 (provide validate-directory-command)

@@ -2,7 +2,7 @@
 #lang racket/base
 
 (module+ main
-  (require ricoeur/tei/base
+  (require ricoeur/tei/oop-base
            ricoeur/lib
            racket/class
            racket/cmdline

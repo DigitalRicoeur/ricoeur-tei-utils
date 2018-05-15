@@ -1,6 +1,6 @@
 #lang racket/gui
 
-(require ricoeur/tei/base
+(require ricoeur/tei/oop-base
          (submod ricoeur/tei/search/common private)
          "lib.rkt"
          )

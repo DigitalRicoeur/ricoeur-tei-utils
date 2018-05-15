@@ -27,7 +27,7 @@
    )
 
   (require/typed
-   ricoeur/tei/xexpr/entity-utils
+   "entity-utils.rkt"
    [entity-symbol->char (-> Symbol Char)])
 
   (define-type Non-Element-Xexpr
@@ -121,7 +121,7 @@
 
 (require 'typed
          racket/contract
-         ricoeur/tei/xexpr/entity-utils
+         "entity-utils.rkt"
          xml
          )
 

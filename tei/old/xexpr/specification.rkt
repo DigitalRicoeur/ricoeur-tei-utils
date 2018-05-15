@@ -31,8 +31,8 @@ into a module as follows:
                 racket/contract
                 racket/match
                 racket/string
-                ricoeur/tei/xexpr/normalize
-                ricoeur/tei/xexpr/signatures)
+                "normalize.rkt"
+                "signatures.rkt")
 
        (provide element-contracts@)
 

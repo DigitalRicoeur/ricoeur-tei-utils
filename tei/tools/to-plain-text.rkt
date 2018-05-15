@@ -1,7 +1,7 @@
 #!/usr/bin/env racket
 #lang racket/base
 
-(require ricoeur/tei/oop/objects
+(require ricoeur/tei/oop-base
          racket/class
          racket/cmdline)
 
