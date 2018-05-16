@@ -1,8 +1,6 @@
 #lang racket
 
 (require ricoeur/tei/oop-kernel
-         (only-in ricoeur/tei/normalize-placeholder
-                  non-element-xexpr->plain-text)
          data/maybe
          gregor
          adjutor

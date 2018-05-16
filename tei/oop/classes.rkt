@@ -2,8 +2,6 @@
 
 (require ricoeur/tei/oop-kernel
          (only-in xml write-xexpr)
-         (only-in ricoeur/tei/normalize-placeholder
-                  non-element-body->plain-text)
          roman-numeral
          data/maybe
          (rename-in data/functor

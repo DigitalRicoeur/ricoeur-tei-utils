@@ -1,14 +1,14 @@
 #lang ricoeur/tei/kernel
 
 ƒtitle[#:version ""]{Formal Specification}
-ƒ(require (for-label racket
-                     (only-in ricoeur/tei/normalize-placeholder
-                              non-element-body->plain-text)
+ƒ(require (for-label ricoeur/tei/kernel
+                     (except-in racket
+                                date?
+                                date
+                                )
                      ))
 ƒ(begin-for-runtime
    (require (submod ricoeur/tei/kernel private)
-            (only-in ricoeur/tei/normalize-placeholder
-                     non-element-body->plain-text)
             ))
 
 Digital Ricœur imposes requirements for the structure of TEI

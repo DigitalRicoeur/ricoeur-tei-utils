@@ -3,11 +3,13 @@
 (provide raw-xexpr-element/c
          raw-xexpr-element?
          check-raw-xexpr-element
+         raw-xexpr-atom/c
          raw-xexpr/c
          raw-xexpr?
          normalized-xexpr-element/c
          normalized-xexpr-element?
          check-normalized-xexpr-element
+         normalized-xexpr-atom/c
          normalized-xexpr/c
          normalized-xexpr?
          ;;;;
@@ -337,6 +339,23 @@
      (λ (val neg-party)
        (check-normalized-xexpr-element blame val neg-party)))))
 
+
+
+(define (normalized-xexpr? v)
+  (or (string? v)
+      (comment? v)
+      (p-i? v)
+      (normalized-xexpr-element? v)))
+
+(define/final-prop normalized-xexpr-atom/c
+  (or/c string?
+        comment?
+        p-i?))
+
+(define/final-prop normalized-xexpr/c
+  (or/c normalized-xexpr-atom/c
+        normalized-xexpr-element/c))
+
 (define (raw-xexpr? v)
   (or (string? v)
       (comment? v)
@@ -346,26 +365,15 @@
       (cdata? v)
       (raw-xexpr-element? v)))
 
-(define/final-prop raw-xexpr/c
-  (or/c string?
-        comment?
-        p-i?
+(define/final-prop raw-xexpr-atom/c
+  (or/c normalized-xexpr-atom/c
         entity-symbol/c
         valid-char?
-        cdata?
+        cdata?))
+
+(define/final-prop raw-xexpr/c
+  (or/c raw-xexpr-atom/c
         raw-xexpr-element/c))
-
-(define (normalized-xexpr? v)
-  (or (string? v)
-      (comment? v)
-      (p-i? v)
-      (normalized-xexpr-element? v)))
-
-(define/final-prop normalized-xexpr/c
-  (or/c string?
-        comment?
-        p-i?
-        normalized-xexpr-element/c))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

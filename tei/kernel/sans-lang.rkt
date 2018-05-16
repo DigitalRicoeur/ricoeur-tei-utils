@@ -13,6 +13,7 @@
                  "tei-info.rkt"
                  "xmllint.rkt"
                  "xexpr/plain-contracts.rkt"
+                 "xexpr/normalize.rkt"
                  "maybe.rkt"
                  gregor
                  adjutor

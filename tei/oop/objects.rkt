@@ -1,8 +1,6 @@
 #lang racket
 
 (require ricoeur/tei/oop-kernel
-         (only-in ricoeur/tei/normalize-placeholder
-                  nondestructive-normalize-xexpr-body-once)
          (only-in xml
                   xml->xexpr
                   document-element
@@ -52,7 +50,7 @@
                                      [else #f])]
                  [current-full-path (and filename
                                          (simplify-path filename))])
-    (tag->element* tag)))
+    (tag->element* (normalize-xexpr tag))))
 
 (define (tag->element* tag)
   (define-values {name attributes raw-body}
@@ -99,9 +97,7 @@
          [(item) item%])
        [name name]
        [attributes attributes]
-       [body (for/list ([child (in-list
-                                (nondestructive-normalize-xexpr-body-once
-                                 raw-body))])
+       [body (for/list ([child (in-list raw-body)])
                (if (list? child)
                    (tag->element* child)
                    child))]))

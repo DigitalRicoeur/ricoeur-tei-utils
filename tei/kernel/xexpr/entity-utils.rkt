@@ -11,6 +11,7 @@
          entity-symbols-list
          entity-char->symbol
          entity-symbol->char
+         entity-symbol->string
          )
 
 (module+ main
@@ -22,12 +23,18 @@
   (define-syntax-class entity-clause
     #:description "entity clause"
     #:attributes {name ch code-point decimal
+                       string case/sym->string
                        case/sym->char case/char->sym}
     (pattern (name:id ch:char code-point:str decimal:nat)
              #:fail-unless
              (eqv? (syntax->datum #'ch)
                    (integer->char (syntax->datum #'decimal)))
              "character does not match decimal"
+             #:with string
+             (datum->syntax this-syntax
+                            (datum-intern-literal
+                             (string (syntax->datum #'ch))))
+             #:with case/sym->string #'[(name) string]
              #:with case/sym->char #`[(name) ch]
              #:with case/char->sym #`[(ch) 'name]))
   (syntax-parse stx
@@ -40,6 +47,7 @@
      (with-capturing
       [entity-symbol/c entity-char/c pairs:symbol+char
                        entity-symbol? entity-symbol->char entity-char->symbol
+                       entity-symbol->string
                        entity-symbols-list Entity-Symbol]
       #`(begin
           (module+ main 
@@ -69,6 +77,13 @@
             (case cf-sym
               clause.case/sym->char ...
               [else (raise-arguments-error 'entity-symbol->char
+                                           "contract violation"
+                                           "expected" entity-symbol/c
+                                           "given" cf-sym)]))
+          (define (entity-symbol->string cf-sym)
+            (case cf-sym
+              clause.case/sym->char ...
+              [else (raise-arguments-error 'entity-symbol->string
                                            "contract violation"
                                            "expected" entity-symbol/c
                                            "given" cf-sym)]))

@@ -4,5 +4,6 @@
 
 (require-provide "kernel/xmllint.rkt"
                  "kernel/xexpr/plain-contracts.rkt"
-                 ricoeur/tei/base/def-from-spec
+                 "kernel/xexpr/normalize.rkt"
+                 "base/def-from-spec.rkt"
                  )
