@@ -1,7 +1,8 @@
 #lang ricoeur/tei/kernel
 
 ƒtitle[#:version ""]{Formal Specification}
-ƒ(require (for-label ricoeur/tei/kernel
+ƒ(require ricoeur/lib
+          (for-label ricoeur/tei/kernel
                      (except-in racket
                                 date?
                                 date
@@ -423,8 +424,11 @@ the same source file that defines the Racket enforcement code.
  It may have a ƒattr{rend} attribute with a value of either
  ƒracket["numbered"] or ƒracket["bulleted"] (the default).
 
- ƒbold{TODO!!} Is the attribute supposed to be ƒattr{rend}
- or ƒattr{type}?
+ ƒTODO[
+ list attribute #: Should it be rend or type?
+ #:expr
+ ƒelem{ƒbold{TODO!!} Is the attribute supposed to be ƒattr{rend}
+ or ƒattr{type}?}]
 }
 
 ƒdefine-element[

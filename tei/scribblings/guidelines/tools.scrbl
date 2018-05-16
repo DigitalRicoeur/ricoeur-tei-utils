@@ -9,8 +9,8 @@ to assist in preparing and validating TEI XML documents.
 All of these require the library @racketmodname[ricoeur/tei],
 which should be installed as described under
 @secref["Installing___Updating_This_Library"
-        #:doc '(lib "ricoeur/tei/scribblings/tei-utils.scrbl")]
-in @other-doc['(lib "ricoeur/tei/scribblings/tei-utils.scrbl")].
+        #:doc '(lib "ricoeur/tei/scribblings/tei-utils/tei-utils.scrbl")]
+in @other-doc['(lib "ricoeur/tei/scribblings/tei-utils/tei-utils.scrbl")].
 
 All of our command-line tools will accept the flags
 @DFlag{help} or @Flag{h} to print usage information.
@@ -74,7 +74,7 @@ in the @tt{PATH} under most circumstances.
   @item{@exec{raco tei validate-directory} validates all of
   the XML files in some directory, enforcing both the DTD
   (when @exec{xmllint} is available) and the additional requirements
-  specified in @other-doc['(lib "ricoeur/tei/scribblings/guidelines.scrbl")].
+  specified in @other-doc['(lib "ricoeur/tei/scribblings/guidelines/guidelines.scrbl")].
   It does not give warnings about potential subtle mistakes,
   so "TEI Lint" should generally be preferred.
 
@@ -93,7 +93,7 @@ in the @tt{PATH} under most circumstances.
   repository renames files as needed (using @exec{git mv})
   in the @tt{TEI} directory.
 
-  A bug in the implementation of @racketmodname[ricoeur/tei/xmllint]
+  A bug in the implementation of @racketmodname[ricoeur/tei]
   (or perhaps in @exec{xmllint} itself) sometimes causes files
   that do not conform to these naming requirements to fail validation.
  }

@@ -10,7 +10,6 @@
                      xml
                      data/maybe
                      ricoeur/tei
-                     ricoeur/tei/xexpr/signatures
                      (submod ricoeur/tei/search/common private)
                      gregor
                      ))

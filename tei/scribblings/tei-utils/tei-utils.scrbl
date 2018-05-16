@@ -3,7 +3,7 @@
 @title[#:version ""]{Digital Ricœur TEI Library}
 @author[(author+email @elem{Philip M@superscript{c}Grath}
                       "philip@philipmcgrath.com")]
-@defmodule[#:multi (ricoeur/tei ricoeur/tei/base)]
+@defmodule[ricoeur/tei]
 
 @(require "for-manual.rkt"
           (for-label (except-in racket
@@ -13,7 +13,6 @@
                      xml
                      data/maybe
                      ricoeur/tei
-                     ricoeur/tei/xexpr/signatures
                      ricoeur/lib
                      db
                      json

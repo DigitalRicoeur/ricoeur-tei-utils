@@ -8,8 +8,8 @@
                      ricoeur/lib))
 
 The bindings documented in this section are provided by
-@racketmodname[ricoeur/lib], not @racketmodname[ricoeur/tei] or
-@racketmodname[ricoeur/tei/base]. 
+@racketmodname[ricoeur/lib] but not necessarily by @racketmodname[ricoeur/tei],
+unless otherwise specified.
 
 They are not specifically related to processing TEI XML files,
 but they are used in the implementation of @racketmodname[ricoeur/tei],

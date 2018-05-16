@@ -5,11 +5,9 @@
 @(require (for-label (except-in racket
                                 date
                                 date?)
-                     racket/unit
                      xml
                      data/maybe
                      ricoeur/tei
-                     ricoeur/tei/xexpr/signatures
                      ricoeur/lib
                      db
                      json
@@ -43,24 +41,11 @@
 }
 
 @section{@tt{xmllint}-based Operations}
-@defmodule[ricoeur/tei/xmllint
-           #:no-declare]
-@(declare-exporting ricoeur/tei/xmllint
-                    ricoeur/tei
-                    ricoeur/tei/base)
 
-
-The functions documented in this section are provided
-by @racketmodname[ricoeur/tei/xmllint] in addition to
-@racketmodname[ricoeur/tei] and @racketmodname[ricoeur/tei/base].
-
-They depend on the 
+The functions documented in this section depend on the 
 external command-line utility @tt{xmllint} (which is part
 of @tt{libxml2}) to work. If @tt{xmllint} can not be found,
 a warning is logged to @racket[(current-logger)].
-
-In addition, for historical reasons, @racketmodname[ricoeur/tei/xmllint]
-etc. also provide @racket[xml-path?] from @racketmodname[ricoeur/lib].
 
 @defproc[(xmllint-available?) any/c]{
  Detects whether @tt{xmllint} is available at runtime.

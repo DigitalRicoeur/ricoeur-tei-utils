@@ -10,7 +10,6 @@
                      xml
                      data/maybe
                      ricoeur/tei
-                     ricoeur/tei/xexpr/signatures
                      ricoeur/lib
                      db
                      json
@@ -25,9 +24,6 @@
                      ))
 
 
-
-The bindings documented in this section are provided by
-@racketmodname[ricoeur/tei], but not @racketmodname[ricoeur/tei/base].
 
 @defparam[current-corpus corpus (is-a?/c corpus%)
           #:value empty-corpus]{

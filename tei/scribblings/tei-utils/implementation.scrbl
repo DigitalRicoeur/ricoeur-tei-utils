@@ -10,7 +10,6 @@
                      xml
                      data/maybe
                      ricoeur/tei
-                     ricoeur/tei/xexpr/signatures
                      ricoeur/lib
                      db
                      json
@@ -23,7 +22,7 @@
                      setup/matching-platform
                      gregor
                      ))
-
+@;{
 @section{Contract Implementation}
 @defmodule[ricoeur/tei/xexpr/signatures]
 
@@ -114,6 +113,8 @@ They are used in the implementation of contracts on TEI x-expressions.
   under @guidelines-secref["Formal_Specification"] in @(guidelines-doc).
   It must be linked with @racket[tei-xexpr-contracts@] prior to invokation.
 }}
+}
+
 
 @;{
  ;                                                  
