@@ -2,7 +2,7 @@
 
 @title[#:version ""]{Background: XML and TEI}
 
-@(require (submod ricoeur/tei/xexpr/specification doc))
+@(require (submod ricoeur/tei/kernel doc))
 
 These guidelines assume familiarity with basic concepts of
 XML and the TEI system. This section serves as a brief

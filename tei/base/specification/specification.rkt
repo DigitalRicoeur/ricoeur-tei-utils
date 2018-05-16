@@ -20,6 +20,11 @@ and these project-specific requirements in an informal tutorial style.
 This section specifies these requirements in a precise, succinct
 form suitable for reference once you understand the basics.
 
+To ensure that the prose documenting the required structure of
+the TEI XML elements remains in sync with the Racket code that
+enforces those requirements, this section is generated from
+the same source file that defines the Racket enforcement code.
+
 ƒsection{Document Structure}
 ƒdefine-element[
  TEI
