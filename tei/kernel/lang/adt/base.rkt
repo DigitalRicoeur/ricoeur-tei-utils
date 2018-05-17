@@ -7,6 +7,7 @@
          racket/contract
          racket/stxparam
          racket/splicing
+         syntax/location
          syntax/parse/define
          (for-syntax racket/base
                      syntax/parse
@@ -16,15 +17,18 @@
                      syntax/flatten-begin
                      syntax/transformer
                      syntax/struct
+                     syntax/contract
                      racket/match
                      racket/sequence
                      ))
 
 (provide field
-         field/derived
          get-field
          lift-property
          lift-methods
+         field/derived
+         lift-property/derived
+         lift-methods/derived
          )
 
 (module+ private
@@ -37,9 +41,16 @@
 
 ;; field and other constructor sub-forms
 
-(define-syntax-parser field
-  [(_ sub ...)
-   #`(field/derived #,this-syntax sub ...)])
+(define-syntax-rule (define-derived [name name/derived] ...)
+  (begin (define-syntax-parser name
+           [(_ sub (... ...))
+            #`(name/derived #,this-syntax sub (... ...))])
+         ...))
+
+(define-derived
+  [field field/derived]
+  [lift-property lift-property/derived]
+  [lift-methods lift-methods/derived])
 
 
 (define-syntax-parser field/derived
@@ -66,7 +77,10 @@
    #`(parsed-field original-datum
                    name
                    [#:check #,(if (attribute check.c)
-                                  (syntax-local-lift-expression #'check.c)
+                                  (syntax-local-lift-expression
+                                   ;; would be nice to give better name to
+                                   ;; anonymous functions
+                                   #'check.c)
                                   #'#f)]
                    [#:accessor accessor])])
      
@@ -87,39 +101,38 @@
                                          (attribute accessor)
                                          (attribute check)))))
 
-(define-syntax (parsed-field stx)
-  (raise-syntax-error
-   #f "only allowed inside an element definition constructor spec"
-   (syntax-parse stx
-     [f:parsed-field-stx
-      #'f.orig-datum]
-     [_ stx])))
 
-(define-syntax-rule (define-constructor-subforms name ...)
-  (begin
-    (define-for-syntax (constructor-subform-error stx)
-      (raise-syntax-error
-       #f "only allowed inside an element definition constructor spec"
-       stx))
-    (define-syntax name constructor-subform-error) ...))
-
-(define-constructor-subforms lift-property lift-methods)
-
+(define-syntax-parser lift-property/derived
+  #:context (syntax-parse this-syntax
+              [(_ orig-datum _ ...)
+               #'orig-datum])
+  [(_ orig-datum prop:expr val:expr)
+   #`(parsed-lift-property orig-datum prop val)])
 
 (begin-for-syntax
   (struct lifted-property (prop val)
     #:transparent)
-  (define-syntax-class lift-property-stx
-    #:literals {lift-property}
-    #:attributes {parsed}
-    (pattern (lift-property prop:expr val:expr)
-             #:attr parsed (lifted-property #'prop #'val)))
+  (define-syntax-class parsed-lift-property-stx
+    #:literals {parsed-lift-property}
+    #:attributes {parsed orig-datum}
+    (pattern (parsed-lift-property orig-datum prop:expr val:expr)
+             #:attr parsed (lifted-property #'prop #'val))))
+
+
+(define-syntax-parser lift-methods/derived
+  #:context (syntax-parse this-syntax
+              [(_ orig-datum _ ...)
+               #'orig-datum])
+  [(_ orig-datum gen:id [body:expr ...])
+   #`(parsed-lift-methods orig-datum gen [body ...])])
+
+(begin-for-syntax
   (struct lifted-methods (gen body)
     #:transparent)
-  (define-syntax-class lift-methods-stx
-    #:literals {lift-methods}
-    #:attributes {parsed}
-    (pattern (lift-methods gen:id [body:expr ...])
+  (define-syntax-class parsed-lift-methods-stx
+    #:literals {parsed-lift-methods}
+    #:attributes {parsed orig-datum}
+    (pattern (parsed-lift-methods orig-datum gen:id [body:expr ...])
              #:attr parsed (lifted-methods #'gen
                                            (syntax->list
                                             #'(body ...)))))
@@ -129,8 +142,25 @@
     (pattern (~seq #:methods gen:id [body:expr ...])
              #:attr parsed (lifted-methods #'gen
                                            (syntax->list
-                                            #'(body ...)))))
-  #|END begin-for-syntax|#)
+                                            #'(body ...))))))
+
+
+(define-syntax-rule (define-constructor-subforms [name class] ...)
+  (begin
+    (define-syntax (name stx)
+      (syntax-parse stx
+        [(~var it class)
+         (raise-syntax-error
+          #f "only allowed inside an element definition constructor spec"
+          #'it.orig-datum)]
+        [_
+         (raise-syntax-error #f "bad syntax" stx)]))
+    ...))
+      
+(define-constructor-subforms
+  [parsed-field parsed-field-stx]
+  [parsed-lift-property parsed-lift-property-stx]
+  [parsed-lift-methods parsed-lift-methods-stx])
 
 
 ;                                                                          
@@ -240,33 +270,31 @@
     #:property prop:liberal-define-context #t)
   (define (expand-constructor-body to-go)
     (define local-expand-context
-      '(my-local-expand-context)
-      #;(let ([existing
-             (syntax-local-context)])
-        (println existing)
-        (if (list? existing)
-            (cons (context-value) existing)
-            (list (context-value)))))
+      (list (context-value)))
     (let loop ([to-go to-go]
                [fields-so-far null]
                [props-so-far null]
                [methods-so-far null]
+               [value-ids-so-far null]
                [bodies-so-far null])
       (match to-go
         ['()
          (values (reverse fields-so-far)
                  (reverse props-so-far)
                  (reverse methods-so-far)
+                 (reverse value-ids-so-far)
                  (reverse bodies-so-far))]
         [(cons this to-go)
          (syntax-parse (local-expand this
                                      local-expand-context
                                      (list #'parsed-field
-                                           #'lift-property
-                                           #'lift-methods
+                                           #'parsed-lift-property
+                                           #'parsed-lift-methods
+                                           #'define-values
+                                           #'define-syntaxes
                                            #'begin ;; it's implicitly added, but let's be clear
                                            ))
-           #:literals {begin}
+           #:literals {begin define-values}
            [(begin nested:expr ...)
             (loop (append (flatten-all-begins
                            #'(begin nested ...))
@@ -274,6 +302,7 @@
                   fields-so-far
                   props-so-far
                   methods-so-far
+                  value-ids-so-far
                   bodies-so-far)]
            [f:parsed-field-stx
             (loop to-go
@@ -281,33 +310,93 @@
                         fields-so-far)
                   props-so-far
                   methods-so-far
+                  value-ids-so-far
                   bodies-so-far)]
-           [p:lift-property-stx
+           [p:parsed-lift-property-stx
             (loop to-go
                   fields-so-far
                   (cons (attribute p.parsed)
                         props-so-far)
                   methods-so-far
+                  value-ids-so-far
                   bodies-so-far)]
-           [m:lift-methods-stx
+           [m:parsed-lift-methods-stx
             (loop to-go
                   fields-so-far
                   props-so-far
                   (cons (attribute m.parsed)
                         methods-so-far)
+                  value-ids-so-far
                   bodies-so-far)]
-           [other
+           [(define-values (id ...) _)
             (loop to-go
                   fields-so-far
                   props-so-far
                   methods-so-far
-                  (cons #'other
+                  (append (syntax->list #'(id ...))
+                          value-ids-so-far)
+                  (cons this-syntax
+                        bodies-so-far))]
+           [_
+            (loop to-go
+                  fields-so-far
+                  props-so-far
+                  methods-so-far
+                  value-ids-so-far
+                  (cons this-syntax
                         bodies-so-far))])])))
+  (define (make:field->ctor-arg element-name l-value-ids)
+    (define (dat v)
+      (datum->syntax #'contract v))
+    (define (q v)
+      (dat (format "~v" (syntax->datum v))))
+    (match-lambda
+      [(field-record name _ maybe-check)
+       (unless (member name l-value-ids bound-identifier=?)
+         (raise-syntax-error
+          #f "unbound field name in element definition constructor spec"
+          name))
+       (if maybe-check
+           #`(contract #,maybe-check
+                       #,name
+                       ;; Ideally want to include the name of the module
+                       ;; that defined the field/derived syntax here as well.
+                       '(element-constructor #,(q element-name)
+                                             #:field #,(q name))
+                       (quote-module-name)
+                       '(field #,(q name))
+                       #'#,name)
+           name)]))
+  (define (make-wrapped-constructor-expr
+           #:contains-text? contains-text?
+           #:raw-constructor raw-constructor-id
+           #:field-uses [field-uses null]
+           #:body-forms-list [body-forms-list null]
+           #:name-arg [name-arg-id (generate-temporary "name-arg")]
+           #:attributes-arg [attributes-arg-id (generate-temporary "attributes-arg")]
+           #:body-arg [body-arg-id (generate-temporary "body-arg")]
+           #:body/elements-only [body/elements-only-id (generate-temporary "body/elements-only")])
+    #`(λ (raw-name-arg raw-attributes-arg raw-body-arg)
+        ;; prevent set!
+        (define-immutable #,name-arg-id raw-name-arg)
+        (define-immutable #,attributes-arg-id raw-attributes-arg)
+        (define-immutable #,body-arg-id raw-body-arg)
+        #,@(if contains-text?
+               null
+               (list #`(define-immutable #,body/elements-only-id
+                         (filter tei-element? raw-body-arg))))
+        #,@body-forms-list
+        (#,raw-constructor-id raw-name-arg raw-attributes-arg raw-body-arg
+                              #,@(if contains-text?
+                                     null
+                                     (list body/elements-only-id))
+                              #,@field-uses)))
   (define-syntax-class (constructor-spec #:contains-text? contains-text?
+                                         #:raw-constructor raw-constructor-id
                                          #:element-name element-name)
     #:description "constructor spec"
-    #:attributes {fields raw-constructor wrapped-constructor-expr
-                         properties methods}
+    #:attributes {fields properties methods
+                         wrapped-constructor-expr raw-constructor}
     (pattern [(~alt (~optional (~seq #:name name-arg:id)
                                #:name "name arg binding"
                                #:defaults ([name-arg
@@ -331,7 +420,7 @@
              #:fail-when (and contains-text?
                               (attribute body/elements-only-clause))
              "not allowed for a text-containing element"
-             #:do [(define-values {l-fields l-props l-methods l-bodies}
+             #:do [(define-values {l-fields l-props l-methods l-value-ids l-bodies}
                      (expand-constructor-body
                       (syntax->list #'(raw-body ...))))]
              #:fail-when (check-duplicate-identifier
@@ -340,31 +429,22 @@
              #:attr fields l-fields
              #:attr properties l-props
              #:attr methods l-methods
-             #:with (body ...) l-bodies
-             #:with raw-constructor (generate-temporary
-                                     (format-symbol "~a:raw-constructor"
-                                                    element-name))
+             #:with raw-constructor raw-constructor-id
              #:with wrapped-constructor-expr
-             #`(λ (name-arg attributes-arg body-arg)
-                 #,@(if contains-text?
-                        null
-                        (list #'(define body/elements-only
-                                  (filter tei-element? body-arg))))
-                 body ...
-                 (raw-constructor name-arg attributes-arg body-arg
-                                  #,@(if contains-text?
-                                         null
-                                         (list #'body/elements-only))
-                                  ;; TODO: use the check contract when present.
-                                  ;; TODO: want to be able to catch
-                                  ;; undefined fields.
-                                  ;; This might mean I need to add a scope
-                                  ;; with make-syntax-introducer or something
-                                  ;; to make sure they not only are defined,
-                                  ;; but are defined in the bodies.
-                                  #,@(map field-record-name l-fields)))
+             (make-wrapped-constructor-expr
+              #:contains-text? contains-text?
+              #:raw-constructor raw-constructor-id
+              #:body-forms-list l-bodies
+              #:field-uses (map (make:field->ctor-arg element-name
+                                                      l-value-ids)
+                                l-fields)
+              #:name-arg #'name-arg
+              #:attributes-arg #'attributes-arg
+              #:body-arg #'body-arg
+              #:body/elements-only #'body/elements-only)
              #|END define-syntax-class constructor-spec|#)))
 
+                                       
 
 ;                                                  
 ;                                                  
@@ -389,14 +469,28 @@
               [(_ original-datum _ ...)
                #'original-datum])
   [(_ original-datum outer:outer-declarations
+      (~do (define raw-constructor-id
+             (generate-temporary
+              (format-symbol "~a:raw-constructor"
+                             #'outer.element-name))))
       (~alt (~optional (~seq #:predicate predicate-external-name:id)
                        #:name "#:predicate clause")
-            (~once (~seq #:constructor
-                         (~var constructor (constructor-spec
-                                            #:element-name #'outer.element-name
-                                            #:contains-text?
-                                            (attribute outer.contains-text?))))
-                   #:name "#:constructor clause")
+            (~optional (~seq #:constructor
+                             (~var constructor (constructor-spec
+                                                #:element-name #'outer.element-name
+                                                #:raw-constructor raw-constructor-id
+                                                #:contains-text?
+                                                (attribute outer.contains-text?))))
+                       #:name "#:constructor clause"
+                       #:defaults
+                       ([constructor.fields null]
+                        [constructor.properties null]
+                        [constructor.methods null]
+                        [constructor.raw-constructor raw-constructor-id]
+                        [constructor.wrapped-constructor-expr
+                         (make-wrapped-constructor-expr
+                          #:contains-text? (attribute outer.contains-text?)
+                          #:raw-constructor raw-constructor-id)]))
             (~seq #:property prop-expr:expr prop-val-expr:expr)
             outer-methods:methods-clause
             )
@@ -416,12 +510,8 @@
    (build-struct-names #'struct-name l-field-names #f #t)
    #:with (lifted-prop-expr ...) (map lifted-property-prop lifted-properties)
    #:with (lifted-prop-val-expr ...) (map lifted-property-val lifted-properties)
-   #|#:with predicate-name (format-id #f "~a?" #'struct-name)
-   #:with (struct-name-field-name ...)
-   (map (λ (f) (format-id #f "~a-~a" #'struct-name (field-record-name f)))
-        fields)|#
    #`(begin
-       (define-syntax get-field-transformer
+       (define-for-syntax get-field-transformer
          (make-get-field-transformer
           #,@(for/list ([field (in-list l-field-names)]
                         [accessor (in-syntax #'(struct-name-field-name ...))])
@@ -453,15 +543,14 @@
                           #,@body)])))
          #|END define-struct/derived|#)
        #,@(if (attribute predicate-external-name)
-              (list #`(define-syntax predicate-external-name
-                        (make-variable-like-transformer #'predicate-name)))
+              (list #`(define-immutable predicate-external-name predicate-name))
               null)
        (define-accessors
          #,@(for/list ([accessor (in-list (map field-record-maybe-accessor fields))]
                        [raw-accessor (in-syntax #'(struct-name-field-name ...))]
                        #:when accessor)
               #`[#,accessor #,raw-accessor]))
-       (define outer.wrapped-constructor-name
+       (define-immutable outer.wrapped-constructor-name
          constructor.wrapped-constructor-expr)
        
        #|END define-element-struct/derived|#)])
@@ -488,10 +577,15 @@
 (define-syntax-parser define-accessors
   [(_ [external-name:id raw-accessor:id] ...)
    #`(begin
-       (define-syntax external-name
-         (make-variable-like-transformer #'raw-accessor))
+       (define-immutable external-name raw-accessor)
        ...)])
 
-
+(define-syntax-parser define-immutable
+  [(_ new:id old:id)
+   #'(define-syntax new
+       (make-variable-like-transformer #'old))]
+  [(_ new:id raw:expr)
+   #'(begin (define tmp raw)
+            (define-immutable new tmp))])
 
 

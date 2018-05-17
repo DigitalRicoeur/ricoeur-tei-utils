@@ -16,11 +16,21 @@
                         #:wrapped-constructor-name make-example]
   #:predicate tei-example?
   #:constructor
-  [#;(define-fields
+  [(define-fields
      [zap "ok"]
-     [(resp #:check (λ (v) #t)) "#ricoeur"])
+     [(resp #|#:check none/c|#) "#ricoeur"])
    (define tmp 1)
+   (define list vector)
+   (field list)
    ]
+  #:property prop:procedure (λ (this) (get-field resp this))
   #||#)
 
-(make-example 'example null null)
+(define it
+  (make-example 'example null null))
+
+(it)
+
+
+
+
