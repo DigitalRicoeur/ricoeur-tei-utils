@@ -17,25 +17,20 @@ All of our command-line tools will accept the flags
 
 @section{TEI Lint}
 
-Most comprehensively, the GUI program "TEI Lint" is a "linter" for
+Most comprehensively, the GUI program ``TEI Lint'' is a ``linter'' for
 TEI XML documents:
-it both checks the validity of the prepared documents (using @tt{xmllint}
+it both checks the validity of the prepared documents (using @exec{xmllint}
 from @tt{libxml2} when available) both in terms of the DTD and
 with respect to our more stringent project-specific requirements
 and also alerts the user to issues
 with the documents that, while not making them invalid,
 are indicative of potential subtle mistakes.
 
-Using "TEI Lint" is the most important reason to have @tt{xmllint}
-installed: without it, "TEI Lint" can check that the documents
+Using ``TEI Lint'' is the most important reason to have @exec{xmllint}
+installed: without it, ``TEI Lint'' can check that the documents
 are well-formed XML and meet the project-specific requirements
 expressed in Racket code, but can't actually check that the 
 documents are valid in terms of the DTD.
-
-@section{DR Migration Assistant}
-
-The GUI program "DR Migration Assistant" is a tool to help make
-batch updates to TEI XML documents.
 
 @section{encode-xml-entities}
 
@@ -45,22 +40,6 @@ It replaces the reserved characters @litchar{<} and @litchar{&}
 with the corresponding XML entities as described under
 @secref["Prerequisites"] above.
 Run it with the flag @DFlag{help} or @Flag{h} for usage information.
-
-@section{tei-guess-paragraphs}
-
-The @exec{tei-guess-paragraphs} command-line tool
-replaces a TEI XML file with an equivalent in which paragraph
-breaks have been guessed using the method 
-@(xmethod guess-paragraphs<%> guess-paragraphs).
-Run it with the flag @DFlag{help} or @Flag{h} for usage information.
-
-When @tt{xmllint} is available, the output will be prettyprinted.
-
-Please always check the output of this tool: it operates on
-a best-effort basis. If, for example, you notice that it has simply
-replaced each "annonymous block" with one long paragraph, it
-would be better to revert your change and wait for this tool
-to be improved than to commit such semantically meaningless output.
 
 @section{raco tei}
 
@@ -76,7 +55,7 @@ in the @tt{PATH} under most circumstances.
   (when @exec{xmllint} is available) and the additional requirements
   specified in @other-doc['(lib "ricoeur/tei/scribblings/guidelines/guidelines.scrbl")].
   It does not give warnings about potential subtle mistakes,
-  so "TEI Lint" should generally be preferred.
+  so ``TEI Lint'' should generally be preferred.
 
   Running @exec{make validate} in the root directory of the @tt{texts}
   repository validates the contents of the @tt{TEI} directory
@@ -107,3 +86,27 @@ in the @tt{PATH} under most circumstances.
   If for some reason you want to use it directly,
   run @exec{raco tei-to-plain-text -h} for usage information.
   }]
+
+@section{DR Migration Assistant}
+
+The GUI program ``DR Migration Assistant'' is a tool to help make
+batch updates to TEI XML documents.
+
+@section{tei-guess-paragraphs}
+
+The @exec{tei-guess-paragraphs} command-line tool
+replaces a TEI XML file with an equivalent in which paragraph
+breaks have been guessed using the method 
+@(xmethod guess-paragraphs<%> guess-paragraphs).
+Run it with the flag @DFlag{help} or @Flag{h} for usage information.
+
+When @tt{xmllint} is available, the output will be prettyprinted.
+
+Please always check the output of this tool: it operates on
+a best-effort basis. If, for example, you notice that it has simply
+replaced each ``annonymous block'' with one long paragraph, it
+would be better to revert your change and wait for this tool
+to be improved than to commit such semantically meaningless output.
+
+``TEI Lint'' includes the same functionality as this tool, but
+with better output checking, so it should generally be preferred.
