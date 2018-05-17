@@ -1,4 +1,4 @@
-#lang racket
+#lang racket/base
 
 (require (for-syntax syntax/parse
                      racket/base
@@ -7,6 +7,7 @@
 
 (provide TODO
          TODO/void
+         TODO/scrbl
          )
 
 (begin-for-syntax
@@ -69,5 +70,14 @@
         (void))
       (attribute msg.full)
       (attribute msg.summary))]))
+
+(define-syntax TODO/scrbl
+  (syntax-parser
+    [(_ [msg:message] body:expr ...+)
+      (make-todo-syntax
+       (quasisyntax/loc this-syntax
+         (begin body ...))
+       (attribute msg.full)
+       (attribute msg.summary))]))
 
 

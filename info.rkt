@@ -1,6 +1,11 @@
 #lang info
 
 (define collection "ricoeur")
+(define pkg-desc "TEI utilities for Digital Ricoeur")
+(define version "0.3.1")
+(define pkg-authors '(philip))
+;; Executables to build are listed in "tei/tools/info.rkt"
+;; Dependencies:
 (define deps '(("base" #:version "6.12")
                ("adjutor" #:version "0.2")
                "functional-lib"
@@ -26,9 +31,7 @@
                      ("_-exp" #:version "0.1")
                      "db-doc"
                      ))
-(define pkg-desc "TEI utilities for Digital Ricoeur")
-(define version "0.3.1")
-(define pkg-authors '(philip))
+;; Documentation:
 (define scribblings '(("tei/scribblings/tei-utils/tei-utils.scrbl"
                        (multi-page)
                        ("Digital Ricœur" 0)
@@ -37,21 +40,4 @@
                        (multi-page)
                        ("Digital Ricœur" 0)
                        )))
-(define raco-commands '(("tei"
-                         (submod ricoeur/tei/tools/raco-tei main)
-                         "run Digital Ricoeur TEI commands"
-                         #f)))
-(define gracket-launcher-names
-  '("TEI Lint"
-    ;"DR Migration Assistant" ; now managed by tei/tools/migration/info.rkt
-    ))
-(define gracket-launcher-libraries
-  '("tei/tools/tei-lint/tei-lint.rkt"
-    ;"tei/tools/migration/migration-assistant.rkt"
-    ))
-(define racket-launcher-names
-  (list "tei-guess-paragraphs"
-        "encode-xml-entities"))
-(define racket-launcher-libraries
-  (list "tei/tools/tei-guess-paragraphs.rkt"
-        "tei/tools/encode-entities.rkt"))
+

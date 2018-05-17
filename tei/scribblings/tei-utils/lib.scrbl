@@ -76,3 +76,11 @@ and they may also be useful in other contexts.
  @void-const at runtime.
 }
 
+@defform[(TODO/scrbl [message] runtime-expr ...+)]{
+ Cooperates with DrRacket like @racket[TODO],
+ but designed when for use with the Scribble reader.
+ Evaluates to @racket[(begin runtime-expr ...)]
+ at runtime.
+}
+
+

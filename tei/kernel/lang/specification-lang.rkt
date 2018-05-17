@@ -15,7 +15,6 @@
                      "ir/struct.rkt"
                      "ir/syntax-class.rkt"
                      "static-info.rkt"
-                     ;adjutor
                      ))
 
 (provide (except-out (all-from-out racket/base)

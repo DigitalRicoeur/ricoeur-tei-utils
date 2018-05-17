@@ -32,6 +32,18 @@ In addition to being valid and well-formed XML, the
 documents should conform to the structure specified in
 @(guidelines-doc).
 
+@margin-note{
+ Some significant revisions to this library are
+ currently in progress.
+ All current functionality will still be supported,
+ but significant backwards-incompatable API changes are
+ planned, especially to the lower-level portions.
+ The goal of the changes is to improve the organization
+ of the library and to provide a better and more stable
+ foundation for future extensions.
+ In the mean time, clients of this library should beware.
+}
+
 This document is written for programmers intending either to
 use these libraries in their own programs (particularly in the case
 of @secref["High-level_Interface"] and, to a lesser extent,

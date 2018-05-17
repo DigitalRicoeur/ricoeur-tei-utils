@@ -9,18 +9,20 @@
   (lazy-require [racket/system (system*)])
   (provide directory-clean-filenames
            git-mv
+           git
            )
   (define git
     (let ([git (find-executable-path "git")])
       (unless git
-        (log-error "Warning: git not found"))
+        (log-warning "\"git\" executable not found"))
       git))
   (define (git-mv from to)
     (if git
         (system* git #"mv" from to)
         (rename-file-or-directory from to)))
   (define (directory-clean-filenames [dir (current-directory)]
-                                     #:mv [mv rename-file-or-directory])
+                                     #:mv [mv rename-file-or-directory]
+                                     #:box:ok? [box:ok? (box #t)])
     (for ([orig-pth (in-directory dir)]
           #:when (xml-path? orig-pth)
           [(base orig-name-pth _) (in-value*/expression
@@ -40,7 +42,15 @@
                                       (string-foldcase
                                        (bytes->string/utf-8 bs)))
                                      (bytes-append #"autocleaned_" bs)))])))))
-      (mv orig-pth new-pth))))
+      (cond
+        [(file-exists? new-pth)
+         (set-box! box:ok? #f)
+         (eprintf "WARNING: ~a\n  path: ~e\n  target: ~e\n"
+                  "skipping path where target already exists"
+                  orig-pth
+                  new-pth)]
+        [else
+         (mv orig-pth new-pth)]))))
 
 (module cmd racket/base
   (require (submod ".." real)
@@ -49,6 +59,8 @@
   (define (directory-clean-filenames-command [argv (current-command-line-arguments)])
     (define mv
       rename-file-or-directory)
+    (define box:ok?
+      (box #t))
     (command-line
      #:program "raco tei directory-clean-filenames"
      #:argv argv
@@ -61,9 +73,13 @@
      #:once-each
      [("--git" "-g")
       "Move files using \"git mv\" (when available)"
+      (unless git
+        (eprintf "WARNING: \"git\" executable not found\n  using fallback\n"))
       (set! mv git-mv)]
      #:args ([dir (current-directory)])
-     (directory-clean-filenames dir #:mv mv))))
+     (directory-clean-filenames dir #:mv mv #:box:ok? box:ok?)
+     (unless (unbox box:ok?)
+       (exit 1)))))
 
 (require 'real
          'cmd
