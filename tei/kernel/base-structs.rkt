@@ -34,7 +34,8 @@
                [body (listof (or/c tei-element?
                                    comment?
                                    p-i?))]
-               [body/elements-only (listof tei-element?)])]
+               [body/elements-only (listof tei-element?)])
+              #:omit-constructor]
             [struct (content-containing-element tei-element)
               ([name symbol?]
                [attributes
@@ -43,7 +44,8 @@
                [body (listof (or/c tei-element?
                                    comment?
                                    p-i?
-                                   string?))])])))
+                                   string?))])
+              #:omit-constructor])))
 (module* private racket/base
   (require (submod ".." private*))
   (provide elements-only-element

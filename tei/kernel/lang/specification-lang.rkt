@@ -103,7 +103,7 @@
                                (list #'begin-for-runtime
                                      #'plain-element-definition
                                      #'begin ;; it's implicitly added, but let's be clear
-                                     ;; need to not try to expand these
+                                     ;; Need to not try to expand these:
                                      #'#%require
                                      #'#%provide
                                      ))

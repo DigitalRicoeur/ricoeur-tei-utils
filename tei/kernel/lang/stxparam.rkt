@@ -8,6 +8,7 @@
 (provide begin-for-runtime
          define-element
          define-elements-together
+         begin-for-test
          )
 
 (module+ private
@@ -38,4 +39,11 @@
 (define-syntax-parameter plain-element-definition
   element-definition-syntax-error)
 
+
+(define-syntax begin-for-test
+  (syntax-parser
+    [(_ body:expr ...)
+     #'(begin-for-runtime
+         (module+ test
+           body ...))]))
 
