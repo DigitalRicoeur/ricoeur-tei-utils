@@ -27,6 +27,7 @@
           [struct element-info
             ([name-sym symbol?]
              [name-stx identifier?]
+             [wrapped-constructor-name identifier?]
              [options element-options?])]
           [struct element-definition-group
             ([elements (listof element-info?)]
@@ -54,7 +55,7 @@
                          text?)
   #:transparent)
 
-(struct element-info (name-sym name-stx options)
+(struct element-info (name-sym name-stx wrapped-constructor-name options)
   ;; TODO: datatype definition
   #:transparent)
 

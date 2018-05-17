@@ -13,6 +13,7 @@
                      ))
 
 (provide define-values/elements-specifications
+         define-combined-elements-specification
          )
 
 (module+ private
@@ -105,6 +106,7 @@
   (match-lambda
     [(element-static-info _
                           name-stx
+                          wrapped-constructor-name
                           text?
                           children-stx
                           required-order-stx
@@ -183,6 +185,22 @@
   #|END begin-for-syntax|#)
 
 
+(define-syntax-parser define-combined-elements-specification
+  [(_ name:id [spec:elements-specification-transformer ...+])
+   #:do [(check-no-missing/duplicate-elems
+          this-syntax
+          (attribute spec.parsed)
+          (syntax->list #'(spec ...)))]
+   (with-disappeared-uses
+    (record-disappeared-uses
+     (syntax->list #'(spec ...)))
+    #`(define-syntax name
+        #,(specification-group-info->stx
+           (apply specification-group-info-union
+                  (attribute spec.parsed)))))])
+
+
+
 
 (define-syntax-parser show-elements-specification-transformer
   [(_ spec:elements-specification-transformer)
@@ -205,6 +223,7 @@
                       [(element-static-info
                         _
                         name-stx
+                        wrapped-constructor-name
                         text?
                         children-stx
                         required-order-stx

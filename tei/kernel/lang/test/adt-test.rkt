@@ -43,7 +43,7 @@
   #:constructor
   [(define-fields
      [zap "ok"]
-     [(resp #|#:check none/c|#) "#ricoeur"])
+     [(resp #:accessor get-resp) "#ricoeur"])
    (define tmp 1)
 
    (resp+proc)

@@ -1,13 +1,18 @@
 #lang racket/base
 
 (require syntax/parse
+         racket/syntax
          racket/contract
          racket/match
+         racket/sequence
          "struct.rkt"
          adjutor
          (for-template racket/base
                        racket/contract
+                       racket/splicing
+                       "../stxparam.rkt"
                        (submod "../stxparam.rkt" private)
+                       (submod "../adt.rkt" private)
                        ricoeur/tei/kernel/xexpr/plain-contracts
                        ))
 
@@ -233,6 +238,10 @@
 ;                                                                          
 ;                                                                          
 
+(define (error-inside-struct-def stx)
+  (raise-syntax-error
+   #f "not allowed inside an element struct definition"
+   stx))
 
 (define-splicing-syntax-class inset-clause
   #:description #f
@@ -246,21 +255,44 @@
 
 (define-splicing-syntax-class define-element/rest
   #:description #f
-  #:attributes {parsed name opts [body 1]}
-  (pattern (~seq (~describe "element name"
-                            name:id)
-                 inset:inset-clause
-                 opts:define-element/options
-                 (~or*
-                  (~seq body:expr ...) ;; datatype before body
-                  (~seq #:prose [body:expr ...]))) ;; datatype after body
-           #:attr parsed
-           (element-definition-group
-            (list (element-info (syntax->datum #'name)
-                                #'name
-                                (attribute opts.parsed)))
-            #'inset.inset?-expr
-            (syntax->list #'(body ...)))))
+  #:attributes {parsed name opts [body 1] struct-def}
+  (pattern
+   (~seq (~describe "element name"
+                    name:id)
+         inset:inset-clause
+         opts:define-element/options
+         (~or*
+          (~seq (~describe "element struct definition form"
+                           datatype)
+                ...
+                #:prose [body:expr ...]) 
+          (~seq #:prose [body:expr ...]
+                (~describe "element struct definition form"
+                           datatype)
+                ...)))
+   #:with wrapped-constructor-name
+   (generate-temporary (format-symbol "make-~a-struct" #'name))
+   #:with struct-def
+   #`(begin-for-runtime
+       (splicing-syntax-parameterize
+           ([define-element error-inside-struct-def]
+            [define-elements-together error-inside-struct-def])
+         (define-element-struct/derived
+           #,this-syntax
+           [#:wrapped-constructor-name wrapped-constructor-name
+            #:element-name name
+            #,(if (element-options-text? (attribute opts.parsed))
+                  #'#:contains-text
+                  #'#:elements-only)]
+           datatype ...)))
+   #:attr parsed
+   (element-definition-group
+    (list (element-info (syntax->datum #'name)
+                        #'name
+                        #'wrapped-constructor-name
+                        (attribute opts.parsed)))
+    #'inset.inset?-expr
+    (syntax->list #'(body ...)))))
 
 
 (define-splicing-syntax-class element-declaration-start
@@ -274,24 +306,50 @@
 
 (define-splicing-syntax-class define-elements-together/rest
   #:description #f
-  #:attributes {parsed [name 1] [opts 1] [body 1]}
+  #:attributes {parsed [name 1] [opts 1] [body 1] struct-def}
+  ;; may add more options in future
   (pattern (~seq inset:inset-clause
-                 (~or* (~seq ([decl:element-declaration-start]
-                              ;; datatype after decl
-                              ...+)
-                             body:expr ...)
-                       (~seq ([decl:element-declaration-start]
-                              ...+)
-                             #:prose [body:expr ...]))) ;; datatypes after body
+                 ([decl:element-declaration-start
+                   (~describe "element struct definition form"
+                              datatype)
+                   ...]
+                  ...+)
+                 body:expr ...)
            #:with (name ...) #'(decl.name ...)
            #:with (opts ...) #'(decl.opts ...)
+           #:with (wrapped-constructor-name ...)
+           (for/list ([name-stx (in-syntax #'(decl.name ...))])
+             (generate-temporary
+              (format-symbol "make-~a-struct" name-stx)))
+           #:with struct-def
+           #`(begin-for-runtime
+               (splicing-syntax-parameterize
+                   ([define-element error-inside-struct-def]
+                    [define-elements-together error-inside-struct-def])
+                 #,@(for/list ([name-stx (in-syntax #'(decl.name ...))]
+                               [wrapped (in-syntax #'(wrapped-constructor-name ...))]
+                               [text? (in-list (map element-options-text?
+                                                    (attribute decl.options)))]
+                               [datatype-splice
+                                (in-list
+                                 (map syntax->list
+                                      (syntax->list #'([datatype ...] ...))))])
+                      #`(define-element-struct/derived
+                          #,this-syntax
+                          [#:wrapped-constructor-name #,wrapped
+                           #:element-name #,name-stx
+                           #,(if text?
+                                 #'#:contains-text
+                                 #'#:elements-only)]
+                          #,@datatype-splice))))
            #:attr parsed
            (element-definition-group
-            (for/list ([name-stx (in-list (syntax->list
-                                           #'(decl.name ...)))]
+            (for/list ([name-stx (in-syntax #'(decl.name ...))]
+                       [wrapped (in-syntax #'(wrapped-constructor-name ...))]
                        [opts (in-list (attribute decl.options))])
               (element-info (syntax->datum name-stx)
                             name-stx
+                            wrapped
                             opts))
             #'inset.inset?-expr
             (syntax->list #'(body ...)))))
@@ -321,6 +379,7 @@
   #:attributes {parsed name}
   (pattern
    [name:id
+    [#:wrapped-constructor-name wrapped-constructor-name:id]
     [#:children
      (~optional (~and children-present
                       ([(~and repeat
@@ -349,6 +408,7 @@
    (element-info
     (syntax->datum #'name)
     #'name
+    #'wrapped-constructor-name
     (element-options
      (and (attribute children-present)
           (for/list ([r (in-list (syntax->list
@@ -385,7 +445,7 @@
 (define element-info->plain-element-definition
   (match-lambda
     [(element-info
-      _ name
+      _ name wrapped-constructor-name
       (element-options children
                        required-order
                        attr-contracts
@@ -394,6 +454,7 @@
                        text?))
      #`(plain-element-definition
         [#,name
+         [#:wrapped-constructor-name #,wrapped-constructor-name]
          #,(if children
                #`[#:children
                   (#,@(map (match-lambda
@@ -429,7 +490,8 @@
 (define plain-d-element
   (syntax-parser
     [(_ it:define-element/rest)
-     #`(begin #,(element-info->plain-element-definition
+     #`(begin it.struct-def
+              #,(element-info->plain-element-definition
                  (car
                   (element-definition-group-elements
                    (attribute it.parsed))))
@@ -439,7 +501,8 @@
 (define plain-d-elements-together
   (syntax-parser
     [(_ it:define-elements-together/rest)
-     #`(begin #,@(map element-info->plain-element-definition
+     #`(begin it.struct-def
+              #,@(map element-info->plain-element-definition
                       (element-definition-group-elements
                        (attribute it.parsed)))
               it.body ...)]))

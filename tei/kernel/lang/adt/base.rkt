@@ -202,7 +202,7 @@
   (syntax-parser 
     [(_ orig-datum _)
      (raise-syntax-error
-      #f "element definition keyword used out of context" #'orig-datum)]))
+      #f "element struct definition keyword used out of context" #'orig-datum)]))
 
 (define-syntax-parser with-get-field-context
   [(_ (~optional (~seq (~and splicing? #:splicing)))
@@ -283,7 +283,7 @@
                         
 (define-syntax-parser define-element-struct
   [(_ outer:outer-declarations body ...)
-   #`(define-element-struct/derived #,this-syntax outer body ...)])
+   #`(define-element-struct/derived* #,this-syntax outer body ...)])
 
 (define-syntax-parser define-element-struct/derived
   ;; Like define-element-struct/derived*, but blames
@@ -551,7 +551,7 @@
          (define l-field-names
            (map field-record-name fields))]
    #:with (field-name ...) l-field-names
-   #:with struct-name (format-id #f "~a-struct" #'outer.element-name)
+   #:with struct-name (format-id #f "tei-~a-struct" #'outer.element-name)
    #:with (plain-struct-field-name ...)
    (for/list ([name (in-list l-field-names)]
               [i (in-naturals)])
@@ -635,6 +635,7 @@
    #'(define-syntax new
        (make-variable-like-transformer #'old))]
   [(_ new:id raw:expr)
+   #:with tmp (generate-temporary #'new)
    #'(begin (define tmp raw)
             (define-immutable new tmp))])
 

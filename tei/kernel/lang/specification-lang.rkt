@@ -7,6 +7,8 @@
          racket/splicing
          syntax/parse/define
          ricoeur/tei/kernel/sans-lang
+         (only-in "define.rkt"
+                  define-combined-elements-specification)
          (for-syntax racket/base
                      racket/list
                      syntax/parse
@@ -24,6 +26,7 @@
          (all-from-out "stxparam.rkt")
          (all-from-out racket/contract)
          (all-from-out racket/match)
+         extend-specifications
          (rename-out
           [module-begin #%module-begin]
           ))
@@ -74,25 +77,37 @@
       (splicing-syntax-parameterize
           ([define-element plain-d-element]
            [define-elements-together
-             plain-d-elements-together])
+             plain-d-elements-together]
+           #;[extend-specifications do-extend-specifications])
         (stratify-body name
+                       ()
                        ()
                        ()
                        (body ...))))])
 
-  
+(define-for-syntax do-extend-specifications
+  (syntax-parser
+    [(_ e:elements-specification-transformer ...)
+     #'(extend-specifications/checked #,this-syntax e ...)]))
+
+(define-syntax-parser extend-specifications/checked
+  [(_ orig-datum e:elements-specification-transformer ...)
+   (raise-syntax-error #f "not allowed as expression" #'orig-datum)])
 
 (define-syntax-parser stratify-body
   [(_ name:id
+      (to-extend:elements-specification-transformer ...)
       (for-spec-body:expr ...)
       (spec-form:plain-element-definition-stx ...)
       ())
    #:fail-unless (eq? (syntax-local-context) 'module)
    "only allowed in a module context"
    #`(unwrap-stratified name
+                        (to-extend ...)
                         (for-spec-body ...)
                         (spec-form ...))]
   [(_ name:id
+      (to-extend:elements-specification-transformer ...)
       (for-spec-body:expr ...)
       (spec-form:plain-element-definition-stx ...)
       (this to-go:expr ...))
@@ -102,50 +117,69 @@
                                'module
                                (list #'begin-for-runtime
                                      #'plain-element-definition
+                                     #'extend-specifications/checked
                                      #'begin ;; it's implicitly added, but let's be clear
                                      ;; Need to not try to expand these:
                                      #'#%require
                                      #'#%provide
                                      ))
-     #:literals {begin begin-for-runtime}
+     #:literals {begin begin-for-runtime extend-specifications/checked}
      [(begin body:expr ...)
       #:with (flattened ...) (flatten-all-begins
                               #'(begin body ...))
       #`(stratify-body name
+                       (to-extend ...)
                        (for-spec-body ...)
                        (spec-form ...)
                        (flattened ... to-go ...))]
      [(begin-for-runtime body:expr ...)
       #`(stratify-body name
+                       (to-extend ...)
                        (for-spec-body ... body ...)
+                       (spec-form ...)
+                       (to-go ...))]
+     [(extend-specifications/checked _ e:elements-specification-transformer ...)
+      #`(stratify-body name
+                       (to-extend ... e ...)
+                       (for-spec-body ...)
                        (spec-form ...)
                        (to-go ...))]
      [new-spec:plain-element-definition-stx
       #`(stratify-body name
+                       (to-extend ...)
                        (for-spec-body ...)
                        (spec-form ... new-spec)
                        (to-go ...))]
      [_
       #`(stratify-body name
+                       (to-extend ...)
                        (for-spec-body ...)
                        (spec-form ...)
                        (to-go ...))])])
 
+(define-for-syntax (error-inside-begin-for-runtime stx)
+  (raise-syntax-error
+   #f "not allowed inside begin-for-runtime" stx))
 
 (define-syntax-parser unwrap-stratified
   [(_ name:id
+      (to-extend:elements-specification-transformer ...)
       (for-spec-body:expr ...)
       (spec-form:plain-element-definition-stx ...))
    #`(splicing-syntax-parameterize
-         ([begin-for-runtime nested-begin-for-runtime-transformer])
+         ([begin-for-runtime nested-begin-for-runtime-transformer]
+          [define-element error-inside-begin-for-runtime]
+          [define-elements-together error-inside-begin-for-runtime])
        for-spec-body ...
-       (prepare-spec name spec-form ...))])
+       (prepare-spec name
+                     (to-extend ...)
+                     spec-form ...))])
 
 
 (define-for-syntax ir->static-info-splice
   (match-lambda
     [(element-info
-      _ name-stx
+      _ name-stx wrapped-constructor-name
       (element-options children required-order
                        attr-contracts required-attrs
                        extra-check/false text?))
@@ -154,6 +188,7 @@
       #`(element-static-info
          '#,name-stx
          #'#,name-stx
+         #'#,wrapped-constructor-name
          #,text?
          #,(if children
                #`#''(#,@(map (match-lambda
@@ -172,7 +207,7 @@
                                        #,(syntax-local-lift-expression
                                           protected))])
                             attr-contracts))
-                #'#''())
+               #'#''())
          #,(if required-attrs
                #`#''(#,@required-attrs)
                #'#''())
@@ -180,8 +215,8 @@
              [(extra-check _ protected)
               #`#'#,(syntax-local-lift-expression
                      protected)]
-              [#f
-               #'#'#f])))]))
+             [#f
+              #'#'#f])))]))
                   
 (define-for-syntax (ir->needed-elements-stxes ir)
   (define children?
@@ -193,7 +228,14 @@
       null))
      
 (define-syntax-parser prepare-spec
-  [(_ name:id spec-form:plain-element-definition-stx ...)
+  [(_ name:id
+      (to-extend:elements-specification-transformer ...+)
+      spec-form:plain-element-definition-stx ...)
+   #`(begin
+       (prepare-spec local-spec () spec-form ...)
+       (define-combined-elements-specification name
+         [local-spec to-extend ...]))]
+  [(_ name:id () spec-form:plain-element-definition-stx ...)
    #:fail-when (check-duplicate-identifier
                 (syntax->list #'(spec-form.name ...)))
    "duplicate element name"
@@ -220,7 +262,9 @@
                                      eq?
                                      #:key car)))))])
 
-   
+
+
+
 ;                                                          
 ;                                                          
 ;                                                          
@@ -243,7 +287,7 @@
 
   (define-for-syntax element-info->stx
     (match-lambda
-      [(element-info _ name-stx 
+      [(element-info _ name-stx _
                      (element-options children
                                       required-order
                                       attr-contracts
