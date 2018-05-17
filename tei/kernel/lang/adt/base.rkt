@@ -4,6 +4,7 @@
          ricoeur/tei/kernel/base-structs
          (submod ricoeur/tei/kernel/base-structs
                  private)
+         ricoeur/lib
          racket/contract
          racket/stxparam
          racket/splicing
@@ -27,6 +28,7 @@
          lift-property
          lift-methods
          field/derived
+         get-field/derived
          lift-property/derived
          lift-methods/derived
          )
@@ -181,29 +183,73 @@
 ;    ;;;;                                                                  
 ;                                                                          
 
-(define-syntax-parameter get-field
-  (λ (stx)
-    (raise-syntax-error #f "element definition keyword used out of context" stx)))
+(define-syntax-parser get-field
+  [(_ f:id)
+   #'(get-field/derived #,this-syntax f)]
+  [(_ f:id target:expr)
+   #'(get-field/derived #,this-syntax f target)])
+
+(define-syntax-parser get-field/derived
+  #:context (syntax-parse this-syntax
+              [(_ orig-datum . _)
+               #'orig-datum])
+  [(_ orig-datum f:id)
+   #'(core-get-field orig-datum f)]
+  [(_ orig-datum f:id target:expr)
+   #'((core-get-field orig-datum f) target)])
+
+(define-syntax-parameter core-get-field
+  (syntax-parser 
+    [(_ orig-datum _)
+     (raise-syntax-error
+      #f "element definition keyword used out of context" #'orig-datum)]))
+
+(define-syntax-parser with-get-field-context
+  [(_ (~optional (~seq (~and splicing? #:splicing)))
+      []
+      body:expr ...)
+   #:with stx-parameterize (if (attribute splicing?)
+                               #'splicing-syntax-parameterize
+                               #'syntax-parameterize)
+   #'(stx-parameterize
+      ([core-get-field core-get-field:none-in-context])
+      body ...)]
+  [(_ (~optional (~seq (~and splicing? #:splicing)))
+      [(field:id accessor-id:id) ...+]
+      body:expr ...)
+   #:with (stx-parameterize let-stx)
+   (if (attribute splicing?)
+       #'(splicing-syntax-parameterize splicing-let-syntax)
+       #'(syntax-parameterize let-syntax))
+   #'(let-stx
+      ([field (field-to-get-transformer #'accessor-id)] ...)
+      (stx-parameterize
+       ([core-get-field core-get-field:lookup])
+       body ...))])
 
 (begin-for-syntax
-  (define-syntax make-get-field-transformer
+  (struct field-to-get-transformer (accessor-id)
+    #:property prop:procedure
+    (λ (this stx) 
+      (raise-syntax-error
+       #f "field name used out of context" stx)))
+  (define core-get-field:none-in-context
     (syntax-parser
-      [(_)
-       #'(λ (stx)
-           (raise-syntax-error #f "no fields declared in this context" stx))]
-      [(_ [plain-field:id accessor-id:id] ...+)
-       #`(λ (stx)
-           (define-syntax-class field-name
-             #:description "field-name"
-             #:attributes {accessor}
-             (pattern (~datum plain-field)
-                      #:with accessor #'accessor-id)
-             ...)
-           (syntax-parse stx
-             [(_ field:field-name)
-              #'field.accessor]
-             [(_ field:field-name target:expr)
-              #'(field.accessor target)]))])))
+      [(_ orig-datum _)
+       (raise-syntax-error
+        #f "no fields declared in this context" #'orig-datum)]))
+  (define (core-get-field:lookup stx)
+    (syntax-parse stx
+      #:context (syntax-parse stx
+                  [(_ orig-datum _)
+                   #'orig-datum])
+      [(_ orig-datum f:id)
+       (with-disappeared-uses
+        (let ([v (syntax-local-value/record #'f field-to-get-transformer?)])
+          (if v
+              (field-to-get-transformer-accessor-id v)
+              (raise-syntax-error
+               #f "not defined as a field" #'orig-datum #'f))))])))
 
 
 ;                                          
@@ -504,23 +550,25 @@
                    (attribute outer-methods.parsed)))
          (define l-field-names
            (map field-record-name fields))]
+   #:with (field-name ...) l-field-names
    #:with struct-name (format-id #f "~a-struct" #'outer.element-name)
-   #:with (plain-field-name ...) l-field-names
+   #:with (plain-struct-field-name ...)
+   (for/list ([name (in-list l-field-names)]
+              [i (in-naturals)])
+     (format-id name "~a:~a" i name))
    #:with (_ _ predicate-name struct-name-field-name ...)
-   (build-struct-names #'struct-name l-field-names #f #t)
+   (build-struct-names #'struct-name
+                       (syntax->list #'(plain-struct-field-name ...))
+                       #f
+                       #t)
    #:with (lifted-prop-expr ...) (map lifted-property-prop lifted-properties)
    #:with (lifted-prop-val-expr ...) (map lifted-property-val lifted-properties)
    #`(begin
-       (define-for-syntax get-field-transformer
-         (make-get-field-transformer
-          #,@(for/list ([field (in-list l-field-names)]
-                        [accessor (in-syntax #'(struct-name-field-name ...))])
-               #`[#,field #,accessor])))
        (define-struct/derived original-datum
          (struct-name #,(if (attribute outer.contains-text?)
                             #'content-containing-element
                             #'elements-only-element))
-         (plain-field-name ...)
+         (plain-struct-field-name ...)
          #:transparent
          #:constructor-name constructor.raw-constructor
          #,@(apply
@@ -529,8 +577,9 @@
                         [val (in-syntax #'(lifted-prop-val-expr ... prop-val-expr ...))])
                (list #'#:property
                      prop
-                     #`(syntax-parameterize ([get-field get-field-transformer])
-                         #,val))))
+                     #`(with-get-field-context
+                        ([field-name struct-name-field-name] ...)
+                        #,val))))
          #,@(apply
              append
              (for/list ([m (in-list l-methods)])
@@ -538,9 +587,10 @@
                  m)
                (list #'#:methods
                      gen
-                     #`[(splicing-syntax-parameterize
-                            ([get-field get-field-transformer])
-                          #,@body)])))
+                     #`[(with-get-field-context
+                         #:splicing
+                         ([field-name struct-name-field-name] ...)
+                         #,@body)])))
          #|END define-struct/derived|#)
        #,@(if (attribute predicate-external-name)
               (list #`(define-immutable predicate-external-name predicate-name))
