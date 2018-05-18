@@ -27,14 +27,14 @@ enforces those requirements, this section is generated from
 the same source file that defines the Racket enforcement code.
 
 ƒsection{Document Structure}
-ƒdefine-element[
- TEI
- #:children ([1 teiHeader]
-             [1 text])
- #:required-order (teiHeader text)
- #:attr-contracts ([version "5.0"]
-                   [xmlns "http://www.tei-c.org/ns/1.0"])
- #:required-attrs (version xmlns)]{
+ƒ(define-element TEI
+   #:children ([1 teiHeader]
+               [1 text])
+   #:required-order (teiHeader text)
+   #:attr-contracts ([version "5.0"]
+                     [xmlns "http://www.tei-c.org/ns/1.0"])
+   #:required-attrs (version xmlns)
+   #:prose ƒ{
 
  The document should begin with an XML declaration and DOCTYPE
  declaration, which must be exactly as follows:
@@ -50,7 +50,7 @@ the same source file that defines the Racket enforcement code.
  ƒtt{version="5.0"} and
  ƒtt{xmlns="http://www.tei-c.org/ns/1.0"}.
 
-}
+ })
 
 
 
@@ -83,10 +83,11 @@ the same source file that defines the Racket enforcement code.
 
 
 ƒsubsection{The Title Statement}
-ƒdefine-element[titleStmt
-                #:children ([1+ title]
-                            [1+ author]
-                            [0+ editor])]{
+ƒ(define-element titleStmt
+   #:children ([1+ title]
+               [1+ author]
+               [0+ editor])
+   #:prose ƒ[]{
 
  The ƒtag{titleStmt} contains
  one or more ƒtag{title} elements,
@@ -96,46 +97,45 @@ the same source file that defines the Racket enforcement code.
  elements indicates first author vs. second author,
  main title vs. subtitle, etc.
 
- ƒdefine-element[
- title
- #:inset? #t
- #:contains-text
- #:extra-check
- (λ (val maybe-blame neg-party)
-   (or (regexp-match? #px"\\S"
-                      (non-element-body->plain-text (get-body val)))
-       (and maybe-blame
-            (raise-blame-error
-             maybe-blame #:missing-party neg-party
-             val
-             '("title element may not be empty"
-               given: "~e")
-             val))))]{
+ ƒ(define-element title
+    #:inset? #t
+    #:contains-text
+    #:extra-check
+    (λ (val maybe-blame neg-party)
+      (or (regexp-match? #px"\\S"
+                         (non-element-body->plain-text (get-body val)))
+          (and maybe-blame
+               (raise-blame-error
+                maybe-blame #:missing-party neg-party
+                val
+                '("title element may not be empty"
+                  given: "~e")
+                val))))
+    #:prose ƒ{
   The ƒtag{title} element contains free-form text.
   It must not be empty.
- }
+  })
 
- ƒdefine-element[
- author
- #:inset? #t
- #:contains-text
- #:attr-contracts ([xml:id any/c])
- ]{
+ ƒ(define-element author
+    #:inset? #t
+    #:contains-text
+    #:attr-contracts ([xml:id any/c])
+    #:prose ƒ[]{
   The ƒtag{author} element contains free-form text and may have
   an optional ƒattr{xml:id} attribute. As a special case,
   the ID ƒracket["ricoeur"] is reserved for use with Paul Ricœur across all
   documents.
- }
+  })
                  
- ƒdefine-element[
- editor
- #:inset? #t
- #:contains-text
- #:attr-contracts ([role (or/c "editor"
-                               "translator"
-                               "compiler"
-                               "preface")]
-                   [xml:id any/c])]{
+ ƒ(define-element editor
+    #:inset? #t
+    #:contains-text
+    #:attr-contracts ([role (or/c "editor"
+                                  "translator"
+                                  "compiler"
+                                  "preface")]
+                      [xml:id any/c])
+    #:prose ƒ[]{
 
   The ƒtag{editor} element contains free-form text and
   has optional ƒattr{role} and ƒattr{xml:id} attributes.
@@ -149,8 +149,8 @@ the same source file that defines the Racket enforcement code.
    fit neatly into these categories, we should decide on a standard
    value for the ƒtt{role} attribute and amend this document.}
 
- } 
-}
+  }) 
+ })
 
 
 ƒsubsection{The Publication Statement}
@@ -237,22 +237,22 @@ the same source file that defines the Racket enforcement code.
 
 
 ƒsubsection{The Text Classification}
-ƒdefine-element[
- textClass
- #:children ([1 catRef]
-             [1 keywords])]{
+ƒ(define-element textClass
+   #:children ([1 catRef]
+               [1 keywords])
+   #:prose ƒ[]{
                             
  The ƒtag{textClass} element must contain
  one ƒtag{catRef} element and one ƒtag{keywords} element.
 
- ƒdefine-element[
- catRef
- #:inset? #t
- #:attr-contracts
- ([scheme "https://schema.digitalricoeur.org/taxonomy/type"]
-  [target (or/c "https://schema.digitalricoeur.org/taxonomy/type#article"
-                "https://schema.digitalricoeur.org/taxonomy/type#book")])
- #:required-attrs (scheme target)]{
+ ƒ(define-element catRef
+    #:inset? #t
+    #:attr-contracts
+    ([scheme "https://schema.digitalricoeur.org/taxonomy/type"]
+     [target (or/c "https://schema.digitalricoeur.org/taxonomy/type#article"
+                   "https://schema.digitalricoeur.org/taxonomy/type#book")])
+    #:required-attrs (scheme target)
+    #:prose ƒ{
   The ƒtag{catRef} element contains nothing.
   It has two attributes, ƒattr{scheme} and ƒattr{target},
   both of which are required.
@@ -268,7 +268,7 @@ the same source file that defines the Racket enforcement code.
  ƒitem{ƒracket["https://schema.digitalricoeur.org/taxonomy/type#book"],
     if the document is a book.
     }]
- }
+  })
 
  ƒdefine-elements-together[
  #:inset? #t
@@ -316,16 +316,16 @@ the same source file that defines the Racket enforcement code.
   or ƒlitchar{skip}.
   Only the ƒlitchar{todo} value should be entered manually.
  }                                 
-}
+ })
 
 
 ƒsection{The text Element}
-ƒdefine-element[
- text
- #:children ([0-1 front]
-             [1 body]
-             [0-1 back])
- #:required-order (front body back)]{
+ƒ(define-element text
+   #:children ([0-1 front]
+               [1 body]
+               [0-1 back])
+   #:required-order (front body back)
+   #:prose ƒ{
 
  The ƒtag{text} element may contain only (in order) 
  a ƒtag{front} element, a ƒtag{body} element,
@@ -358,31 +358,31 @@ the same source file that defines the Racket enforcement code.
   may contain ƒtag{head}, 
   ƒtag{p}, ƒtag{pb}, ƒtag{ab}, and ƒtag{div} elements.
  }
-}
+ })
 
 
 ƒsubsection{Structural Elements}
-ƒdefine-element[
- div
- #:children ([0+ head]
-             [0+ list]
-             [0+ p]
-             [0+ pb]
-             [0+ ab]
-             [0+ sp]
-             [0+ div])
- #:attr-contracts
- ([type (or/c "chapter"
-              "part"
-              "section"
-              "dedication"
-              "contents"
-              "bibl"
-              "ack"
-              "intro"
-              "index")]
-  [resp #rx"#.+"])
- #:required-attrs (type)]{
+ƒ(define-element div
+   #:children ([0+ head]
+               [0+ list]
+               [0+ p]
+               [0+ pb]
+               [0+ ab]
+               [0+ sp]
+               [0+ div])
+   #:attr-contracts
+   ([type (or/c "chapter"
+                "part"
+                "section"
+                "dedication"
+                "contents"
+                "bibl"
+                "ack"
+                "intro"
+                "index")]
+    [resp #rx"#.+"])
+   #:required-attrs (type)
+   #:prose ƒ{
  The ƒtag{div} element may contain
  ƒtag{head}, ƒtag{list}, ƒtag{p},
  ƒtag{pb}, ƒtag{ab}, ƒtag{sp}, or nested ƒtag{div} elements.
@@ -401,24 +401,24 @@ the same source file that defines the Racket enforcement code.
  ƒmargin-note{If a type of division arises that does not
   fit neatly into these categories, we should decide on a standard
   value for the ƒtt{type} attribute and amend this document.}
-}
+ })
 
-ƒdefine-element[
- pb
- #:attr-contracts ([n any/c])]{
+ƒ(define-element pb
+   #:attr-contracts ([n any/c])
+   #:prose ƒ[]{
  The ƒtag{pb} element has no contents.
  Unless the corresponding page is not numbered in the source,
  it should have an ƒattr{n} attribute giving the page number
  as given in the source (i.e. possibly as a Roman numeral).
-}
+ })
 
-ƒdefine-element[
- list
- #:children ([0+ head]
-             [0+ item]
-             [0+ pb])
- #:attr-contracts
- ([type (or/c "numbered" "bulleted")])]{
+ƒ(define-element list
+   #:children ([0+ head]
+               [0+ item]
+               [0+ pb])
+   #:attr-contracts
+   ([type (or/c "numbered" "bulleted")])
+   #:prose ƒ[]{
  The ƒtag{list} element may contain
  the ƒtag{head}, ƒtag{item}, and ƒtag{pb} elements.
  It may have a ƒattr{rend} attribute with a value of either
@@ -427,29 +427,29 @@ the same source file that defines the Racket enforcement code.
  ƒTODO/scrbl[[list element attribute #: Should it be rend or type?]]{
   ƒbold{TODO!!} Is the attribute supposed to be ƒattr{rend}
   or ƒattr{type}?}
-}
+ })
 
-ƒdefine-element[
- sp
- #:children ([0+ list]
-             [0+ p]
-             [0+ pb]
-             [0+ ab])
- #:attr-contracts ([who #rx"#.+"])
- #:required-attrs (who)]{
+ƒ(define-element sp
+   #:children ([0+ list]
+               [0+ p]
+               [0+ pb]
+               [0+ ab])
+   #:attr-contracts ([who #rx"#.+"])
+   #:required-attrs (who)
+   #:prose ƒ{
  The ƒtag{sp} ("speech") element must have a valid ƒattr{who}
  attribute and may contain ƒtag{list}, ƒtag{p}, ƒtag{pb}, or ƒtag{ab}
  elements.
-}
+ })
 
 
 ƒsubsection{Content-Containing Elements}
-ƒdefine-element[
- ab
- #:contains-text
- #:children ([0+ list]
-             [0+ note]
-             [0+ pb])]{
+ƒ(define-element ab
+   #:contains-text
+   #:children ([0+ list]
+               [0+ note]
+               [0+ pb])
+   #:prose ƒ[]{
  The ƒtag{ab} ("anonymous block")
  element may contain a combination of
  free-form text and ƒtag{list}, ƒtag{note},
@@ -457,41 +457,41 @@ the same source file that defines the Racket enforcement code.
  It is used for blocks of text
  that have not yet been divided into more semantically
  meaningful elements.
-}
+ })
 
-ƒdefine-element[
- p
- #:contains-text
- #:children ([0+ list]
-             [0+ note]
-             [0+ pb])]{
+ƒ(define-element p
+   #:contains-text
+   #:children ([0+ list]
+               [0+ note]
+               [0+ pb])
+   #:prose ƒ[]{
  The ƒtag{p} ("paragraph")
  element may contain a combination of
  free-form text and ƒtag{list}, ƒtag{note},
  and ƒtag{pb} elements.
-}
+ })
 
-ƒdefine-element[
- head
- #:contains-text
- #:children ([0+ note])]{
+ƒ(define-element head
+   #:contains-text
+   #:children ([0+ note])
+   #:prose ƒ[]{
  The ƒtag{head} ("heading")
  element may contain a combination of
  free-form text and ƒtag{note} elements.
-}
+ })
 
-ƒdefine-element[
- note
- #:contains-text
- #:children ([0+ list]
-             [0+ note]
-             [0+ p]
-             [0+ ab])
- #:attr-contracts ([place (or/c "foot" "end")]
-                   [resp #rx"#.+"]
-                   [type "transl"]
-                   [n any/c])
- #:required-attrs (place n)]{
+ƒ(define-element note
+   #:contains-text
+   #:children ([0+ list]
+               [0+ note]
+               [0+ p]
+               [0+ ab])
+   #:attr-contracts ([place (or/c "foot" "end")]
+                     [resp #rx"#.+"]
+                     [type "transl"]
+                     [n any/c])
+   #:required-attrs (place n)
+   #:prose ƒ{
  The ƒtag{note} element
  may contain a combination of free-form text
  and ƒtag{list}, ƒtag{note}, ƒtag{p}, and
@@ -507,21 +507,21 @@ the same source file that defines the Racket enforcement code.
  note not by Paul Ricœur must, have a ƒattr{resp} attribute
  that is valid per the TEI standard, as discussed above under
  ƒsecref["Sections_Not_by_Ric_ur"].
-}
+ })
 
-ƒdefine-element[
- item
- #:contains-text
- #:children ([0+ list]
-             [0+ note]
-             [0+ p]
-             [0+ pb]
-             [0+ ab])]{
+ƒ(define-element item
+   #:contains-text
+   #:children ([0+ list]
+               [0+ note]
+               [0+ p]
+               [0+ pb]
+               [0+ ab])
+   #:prose ƒ[]{
  The ƒtag{item} element may contain
  a combination of free-form text and
  ƒtag{list}, ƒtag{note}, ƒtag{p}, ƒtag{pb}, and
  ƒtag{ab} elements.
-}
+ })
 
 
 

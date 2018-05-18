@@ -20,6 +20,71 @@
   (provide show-elements-specification-transformer
            ))
 
+
+(begin-for-syntax
+  (struct elem-name+ (sym stx info-val transf-stx)
+    #:transparent)
+
+  (define (assocs-to-name+-list accessor l-vals l-stx)
+    (flatten
+     (for/list ([info-val (in-list l-vals)]
+                [transf-stx (in-list l-stx)])
+       (map (match-lambda
+              [(cons sym stx)
+               (elem-name+ sym stx info-val transf-stx)])
+            (accessor info-val)))))
+
+  (define (check-no-missing/duplicate-elems this-syntax
+                                            l-vals
+                                            l-stx
+                                            #:missing-ok? [missing-ok? #f])
+    (define all-present-name+
+      (assocs-to-name+-list 
+       specification-group-info-elements-present-assocs
+       l-vals
+       l-stx))
+    (for ([grp (in-list (group-by elem-name+-sym
+                                  all-present-name+
+                                  eq?))]
+          #:unless (= 1 (length grp)))
+      (match-define (list-rest
+                     (elem-name+ sym _ _ tranf-stx-a)
+                     (elem-name+ _ _ _  tranf-stx-b)
+                     _)
+        grp)
+      (raise-syntax-error
+       #f
+       (format "duplicate definitions for element ~v"
+               sym)
+       this-syntax
+       tranf-stx-b
+       (remove tranf-stx-b
+               (map elem-name+-transf-stx grp))))
+    (unless missing-ok?
+      (define all-present-syms
+        (map elem-name+-sym all-present-name+))
+      (define all-needed-name+
+        (assocs-to-name+-list
+         specification-group-info-elements-needed-assocs
+         l-vals
+         l-stx))
+      (for ([needed (in-list all-needed-name+)]
+            #:unless (memq (elem-name+-sym needed)
+                           all-present-syms))
+        (match-define (elem-name+ sym stx info-val transf-stx)
+          needed)
+        (raise-syntax-error
+         #f
+         (format "no definition for required element ~v"
+                 sym)
+         this-syntax
+         transf-stx))))
+  #|END begin-for-syntax|#)
+
+
+
+
+
 (define-syntax-parser define-values/elements-specifications
   [(_ [spec:elements-specification-transformer
        ...]
@@ -125,69 +190,10 @@
 
 
 
-
-(begin-for-syntax
-  (struct elem-name+ (sym stx info-val transf-stx)
-    #:transparent)
-
-  (define (assocs-to-name+-list accessor l-vals l-stx)
-    (flatten
-     (for/list ([info-val (in-list l-vals)]
-                [transf-stx (in-list l-stx)])
-       (map (match-lambda
-              [(cons sym stx)
-               (elem-name+ sym stx info-val transf-stx)])
-            (accessor info-val)))))
-
-  (define (check-no-missing/duplicate-elems this-syntax
-                                            l-vals
-                                            l-stx)
-    (define all-present-name+
-      (assocs-to-name+-list 
-       specification-group-info-elements-present-assocs
-       l-vals
-       l-stx))
-    (for ([grp (in-list (group-by elem-name+-sym
-                                  all-present-name+
-                                  eq?))]
-          #:unless (= 1 (length grp)))
-      (match-define (list-rest
-                     (elem-name+ sym _ _ tranf-stx-a)
-                     (elem-name+ _ _ _  tranf-stx-b)
-                     _)
-        grp)
-      (raise-syntax-error
-       #f
-       (format "duplicate definitions for element ~v"
-               sym)
-       this-syntax
-       tranf-stx-b
-       (remove tranf-stx-b
-               (map elem-name+-transf-stx grp))))
-    (define all-present-syms
-      (map elem-name+-sym all-present-name+))
-    (define all-needed-name+
-      (assocs-to-name+-list
-       specification-group-info-elements-needed-assocs
-       l-vals
-       l-stx))
-    (for ([needed (in-list all-needed-name+)]
-          #:unless (memq (elem-name+-sym needed)
-                         all-present-syms))
-      (match-define (elem-name+ sym stx info-val transf-stx)
-        needed)
-      (raise-syntax-error
-       #f
-       (format "no definition for required element ~v"
-               sym)
-       this-syntax
-       transf-stx)))
-  #|END begin-for-syntax|#)
-
-
 (define-syntax-parser define-combined-elements-specification
   [(_ name:id [spec:elements-specification-transformer ...+])
    #:do [(check-no-missing/duplicate-elems
+          #:missing-ok? #t
           this-syntax
           (attribute spec.parsed)
           (syntax->list #'(spec ...)))]

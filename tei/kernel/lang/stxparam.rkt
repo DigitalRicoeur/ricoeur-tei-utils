@@ -9,7 +9,6 @@
          define-element
          define-elements-together
          begin-for-test
-         extend-specifications
          )
 
 (module+ private
@@ -30,11 +29,6 @@
 (define-for-syntax (element-definition-syntax-error stx)
   (raise-syntax-error
    #f "element definition form used out of context" stx))
-
-(define-syntax-parameter extend-specifications
-  (syntax-parser
-    [(_ e:id ...)
-     #'(void)]))
 
 (define-syntax-parameter define-element
   element-definition-syntax-error)
