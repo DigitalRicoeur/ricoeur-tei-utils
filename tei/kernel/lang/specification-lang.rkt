@@ -21,7 +21,6 @@
                      ))
 
 (provide (except-out (all-from-out racket/base)
-                     provide
                      #%module-begin)
          (all-from-out ricoeur/tei/kernel/sans-lang)
          (all-from-out "stxparam.rkt")

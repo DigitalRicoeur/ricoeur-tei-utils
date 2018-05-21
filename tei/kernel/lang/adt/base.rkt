@@ -311,6 +311,12 @@
 ;                                                                                          
 ;                                                                                          
 
+(define (filter-whitespace lst)
+  (for/list ([v (in-list lst)]
+             #:unless (and (string? v)
+                           (regexp-match? #px"^\\s*$" v)))
+    v))
+
 (begin-for-syntax
   (struct context-value ()
     #:property prop:liberal-define-context #t)
@@ -426,13 +432,16 @@
         ;; prevent set!
         (define-immutable #,name-arg-id raw-name-arg)
         (define-immutable #,attributes-arg-id raw-attributes-arg)
-        (define-immutable #,body-arg-id raw-body-arg)
+        (define-immutable #,body-arg-id
+          #,(if contains-text?
+                #'raw-body-arg
+                #'(filter-whitespace raw-body-arg)))
         #,@(if contains-text?
                null
                (list #`(define-immutable #,body/elements-only-id
-                         (filter tei-element? raw-body-arg))))
+                         (filter tei-element? #,body-arg-id))))
         #,@body-forms-list
-        (#,raw-constructor-id raw-name-arg raw-attributes-arg raw-body-arg
+        (#,raw-constructor-id raw-name-arg raw-attributes-arg #,body-arg-id
                               #,@(if contains-text?
                                      null
                                      (list body/elements-only-id))

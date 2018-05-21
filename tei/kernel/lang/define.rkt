@@ -2,6 +2,8 @@
 
 (require syntax/parse/define
          racket/contract
+         racket/match
+         ricoeur/tei/kernel/sans-lang
          (submod ricoeur/tei/kernel/xexpr/contract-utils
                  private)
          (for-syntax racket/base
@@ -95,6 +97,9 @@
                    #:name "#:static-tei-xexpr/c clause")
             (~once (~seq #:any-tei-xexpr/c any-tei-xexpr/c:id)
                    #:name "#:any-tei-xexpr/c clause")
+            (~once (~seq #:xexpr->element xexpr->element:id
+                         (~optional (~and use-contract? #:define/contract)))
+                   #:name "#:xexpr->element clause")
             (~once (~seq #:tei-element-name/c tei-element-name/c:id)
                    #:name "#:tei-element-name/c clause"))
       ...)
@@ -114,6 +119,9 @@
    #:with (contract-expr ...)
    (map (->element-static-info->contract-expr
          #'make-element-contract)
+        l-info)
+   #:with (wrapped-constructor-name ...)
+   (map element-static-info-wrapped-constructor-name
         l-info)
    (with-disappeared-uses
     (record-disappeared-uses
@@ -140,6 +148,13 @@
           (make-any-tei-xexpr/c
            #:tei-element-name/c tei-element-name/c
            #:tei-xexpr/c tei-xexpr/c))
+
+        (define-xexpr->element xexpr->element
+          #:contract #,(if (attribute use-contract?)
+                           #'any-tei-xexpr/c
+                           #'#f)
+          [element-name ...]
+          [wrapped-constructor-name ...])
         
         #|END define-values/elements-specifications|#))])
 
@@ -186,6 +201,50 @@
         #:extra-check #,extra-check-stx
         #:attr-contracts #,attr-contracts-stx
         #:required-attrs #,required-attrs-stx)]))
+
+
+(define-syntax-parser define-xexpr->element
+  [(_ xexpr->element:id #:contract any-tei-xexpr/c:id
+      [element-name:id ...]
+      [wrapped-constructor-name:id ...])
+   #`(define/contract xexpr->element
+       (-> any-tei-xexpr/c tei-element?)
+       (make-xexpr->element
+        xexpr->element
+        [element-name ...]
+        [wrapped-constructor-name ...]))]
+  [(_ xexpr->element:id #:contract #f
+      [element-name:id ...]
+      [wrapped-constructor-name:id ...])
+   #`(define xexpr->element
+       (make-xexpr->element
+        xexpr->element
+        [element-name ...]
+        [wrapped-constructor-name ...]))])
+
+(define-syntax-parser make-xexpr->element
+  [(_ xexpr->element:id
+      [element-name:id ...]
+      [wrapped-constructor-name:id ...])
+   #`(λ (xs)
+       (let xexpr->element ([xs (normalize-xexpr xs)])
+         (match-define (list-rest name attrs body)
+           xs)
+         (define make
+           (case name
+             [(element-name) wrapped-constructor-name]
+             ...
+             [else
+              (raise-argument-error
+               'xexpr->element
+               "any-tei-xexpr/c"
+               xs)]))
+         (make name
+               attrs
+               (for/list ([child (in-list body)])
+                 (if (list? child)
+                     (xexpr->element child)
+                     child)))))])
 
 
 
@@ -238,6 +297,7 @@
                         extra-check-stx)
                        (list #`'#,name-stx
                              #`(vector
+                                #,wrapped-constructor-name
                                 #,(if text? #'#t #'#f)
                                 #,children-stx
                                 #,required-order-stx

@@ -124,7 +124,7 @@
   #:attributes {parsed}
   (pattern it:id
            #:do [(define val
-                   (syntax-local-value #'it))]
+                   (syntax-local-value #'it (λ () #f)))]
            #:fail-unless (specification-group-info? val)
            "not an elements specification transformer"
            #:attr parsed val))
