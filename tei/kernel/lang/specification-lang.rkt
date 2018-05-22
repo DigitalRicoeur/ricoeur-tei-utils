@@ -59,7 +59,7 @@
    (datum->syntax this-syntax 'ricoeur/tei/kernel/lang/doc-lang)
    #`(#%module-begin
       (provide decl.name)
-      (module doc for-doc-lang
+      (module* doc for-doc-lang
         doc body ...)
       (module+ test
         (require (submod ".." doc)))

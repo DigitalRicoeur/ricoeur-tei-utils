@@ -16,6 +16,7 @@
 
  (submod ricoeur/tei/kernel private)
  define-values/elements-specifications
+ define-combined-elements-specification
  get-attributes
  get-body
  attributes-ref
