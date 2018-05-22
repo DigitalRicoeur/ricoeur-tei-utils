@@ -47,12 +47,12 @@ from Racket's @racketmodname[xml] library
 @(table-of-contents)
 
 
-
+@include-section["installing.scrbl"]
 @include-section["contracts-tei-xexpr.scrbl"]
 @include-section["kernel-sans-lang.scrbl"]
 @include-section["new-api.scrbl"]
 @include-section["old-api.scrbl"]
-@include-section["installing.scrbl"]
+
 
 
 

@@ -1,6 +1,6 @@
 #lang scribble/manual
 
-@title{Specification Language}
+@title[#:style '(toc)]{Specification Language}
 @(define (spec-lang-mod)
    (racketmodlink ricoeur/tei/kernel/lang/specification-lang
                   (racketmodfont "ricoeur/tei/kernel")))
@@ -36,6 +36,11 @@ This specifcation operates on several different levels, including:
 
 To ensure consistency, all of these operationalizations of the
 specification are defined together in the language @(hash-lang-kernel).
+
+@(local-table-of-contents)
+
+@section{Language Objectives}
+
 A module in @(hash-lang-kernel) consists of interleaved
 @deftech{runtime} and @deftech{documentation-time} code,
 some of which is generated from syntactic forms that have meanings
@@ -49,7 +54,7 @@ linked with encapsulated information from
 other @(hash-lang-kernel) modules.
 (This is somewhat analagous to the @racketmodname[racket/unit]
 system, which was used in an earlier version of this library.)
-The remainder of this section will explain these aspects of
+The next several sections of this manual will explain these aspects of
 the @(hash-lang-kernel) language in detail.
 
 A module in @(hash-lang-kernel) provides its clients
@@ -61,7 +66,7 @@ at least two, and possibly three, distinct kinds of services:
  into a larger Scribble document via @racket[include-section].
 }
   @item{Each module in @(hash-lang-kernel) exports
- a @deftech{elements specification transformer} binding
+ an @deftech{elements specification transformer} binding
  that encapsulates the specifications of the TEI XML elements
  defined in that module.
  This can be invoked using @racket[define-values/elements-specifications],
@@ -83,7 +88,7 @@ at least two, and possibly three, distinct kinds of services:
  protecting such exports.
  })
 
-@section{Module Structure Overview}
+@section{Module Structure}
 
 The reader for @(hash-lang-kernel) is a variant of
 the at-reader that uses @litchar{ƒ} as its command character
@@ -95,7 +100,7 @@ contains the @tech{runtime} phase and the @tech{documentation-time}
 code is placed in an implicit @racket[doc] submodule
 (declared with @racket[module*]).
 
-The top-level grammar of a @(hash-lang-kernel) module is as follows"
+The top-level grammar of a @(hash-lang-kernel) module is as follows:
 @racketgrammar[spec-module
                (code:line #,(hash-lang) #,(spec-lang-mod)
                           init-whitespace ...
@@ -106,7 +111,8 @@ The @racket[_init-whitespace] forms are literal strings consisting
 exclusively of whitespace: there are ignored, though they are
 permitted for convienience with the text-mode reader.
 
-The @racket[_spec-name-declaration] controls the binding of
+The @racket[_spec-name-declaration] (which may be empty)
+controls the binding of
 the module's @tech{elements specification transformer};
 it is discussed in more detail bellow.
 
@@ -127,7 +133,7 @@ documentation-time use are documented under
 At @tech{runtime}, the @racket[_spec-module-body] forms
 are partially expanded to reveal uses of @racket[begin-for-runtime],
 @racket[define-element], or @racket[define-elements-together].
-Any @racket[_spec-module-body]form that does not expand 
+Any @racket[_spec-module-body] form that does not expand 
 to one of these forms is ignored at runtime.
 @TODO/scrbl[[Expansion to define-element
              #: From outside the "library," how would it actually
@@ -223,9 +229,9 @@ that combines @racket[_local-spec-id] with all of the
  "adt.rkt"
 }
 
-define-element
+@(defidform/inline define-element)
 
-define-elements-together
+@(defidform/inline define-elements-together)
 
 
 

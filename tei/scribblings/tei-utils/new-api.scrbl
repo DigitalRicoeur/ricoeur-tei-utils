@@ -29,15 +29,6 @@
  attr
  make-other-doc-tag
 
- ;;;;;;;;;;;;;;;;;;;;;;;;;;
-
- ricoeur/tei/kernel/lang/specification-lang
-
- ;;;;;;;;;;;;;;;;;;;;;;;;;;
-
- ricoeur/tei/kernel/lang/doc-lang
-
- ;;;;;;;;;;;;;;;;;;;;;;;;;;
 }
 
 @section{TEI Element Representation}

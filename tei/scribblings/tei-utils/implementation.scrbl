@@ -1,5 +1,7 @@
 #lang scribble/manual
 
-@title{Implementation Details}
+@title[#:style '(toc)]{Implementation Details}
+
+@(local-table-of-contents)
 
 @include-section["implementation/lang-kernel.scrbl"]
