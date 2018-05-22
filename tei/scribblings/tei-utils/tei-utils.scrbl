@@ -3,7 +3,8 @@
 @title[#:version ""]{Digital Ricœur TEI Library}
 @author[(author+email @elem{Philip M@superscript{c}Grath}
                       "philip@philipmcgrath.com")]
-@defmodule[ricoeur/tei]
+@defmodule[#:multi (ricoeur/tei/oop ricoeur/tei)
+           #:no-declare]
 
 @(require "for-manual.rkt"
           (for-label (only-in ricoeur/tei/search
@@ -33,22 +34,30 @@ documents should conform to the structure specified in
  In the mean time, clients of this library should beware.
 }
 
+The @racketmodname[ricoeur/tei/oop] module provides
+the fully-functional old API of this library,
+but will be removed in a future release.
+The new version of this library, which is still in
+development, is exported by @racketmodname[ricoeur/tei].
+
 This document is written for programmers intending either to
-use these libraries in their own programs (particularly in the case
-of @secref["High-level_Interface"] and, to a lesser extent,
-@secref["Object_System"]) or to contribute to their implementation.
+use these libraries in their own programs
+@;(particularly in the case
+@;of @secref["High-level_Interface"] and, to a lesser extent,
+@;@secref["Object_System"])
+or to contribute to their implementation.
 It assumes familiarity with the concept of @deftech{x-expressions}
 from Racket's @racketmodname[xml] library
 (see the grammar documented under @racket[xexpr?]).
 
 @(table-of-contents)
 
+
+@include-section["high-level.scrbl"]
+@include-section["object-system.scrbl"]
+@include-section["contracts-tei-xexpr.scrbl"]
 @include-section["kernel-sans-lang.scrbl"]
-@;include-section["high-level.scrbl"]
-@;include-section["object-system.scrbl"]
-@;include-section["xexpr+xmllint.scrbl"]
-@;include-section["implementation.scrbl"]
-@include-section["lib.scrbl"]
+@include-section["implementation.scrbl"]
 @include-section["installing.scrbl"]
 
 

@@ -4,7 +4,6 @@
          ricoeur/tei/kernel/base-structs
          (submod ricoeur/tei/kernel/base-structs
                  private)
-         ricoeur/lib
          racket/contract
          racket/stxparam
          racket/splicing

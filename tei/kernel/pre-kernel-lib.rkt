@@ -6,8 +6,13 @@
 ;; TEI-related dependencies and no other expensive
 ;; dependencies.
 
-(require-provide "pre-kernel-lib/maybe.rkt"
-                 "pre-kernel-lib/utils.rkt"
-                 adjutor
+(require-provide (multi "pre-kernel-lib"
+                        ("maybe.rkt"
+                         "todo.rkt"
+                         "utils.rkt"
+                         "xml-path.rkt"
+                         "output-to-file.rkt"
+                         ))
+                 (provide-only adjutor)
                  gregor)
  

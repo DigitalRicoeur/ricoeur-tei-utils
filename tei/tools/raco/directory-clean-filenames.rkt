@@ -2,7 +2,8 @@
 #lang racket/base
 
 (module real racket/base
-  (require ricoeur/lib/xml-path
+  (require (only-in ricoeur/tei/kernel
+                    xml-path?)
            racket/lazy-require
            adjutor
            )

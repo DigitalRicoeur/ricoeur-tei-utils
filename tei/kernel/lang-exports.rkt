@@ -16,7 +16,6 @@
   ;; It is not for runtime use.
   (require "lang/doc-support.rkt"
            )
-  (provide tag
-           attr
-           make-other-doc-tag
-           ))
+  (require-provide (provide-only "lang/doc-support.rkt")
+                   ))
+

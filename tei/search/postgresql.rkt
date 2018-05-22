@@ -5,7 +5,6 @@
          db
          data/maybe
          json
-         ricoeur/lib/postgresql-data-source
          "common.rkt"
          (submod "common.rkt" private)
          (for-syntax syntax/parse

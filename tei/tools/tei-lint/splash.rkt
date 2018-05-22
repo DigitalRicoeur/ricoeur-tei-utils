@@ -1,6 +1,6 @@
 #lang racket/gui
 
-(require ricoeur/tei
+(require ricoeur/tei/oop
          racket/runtime-path
          data/maybe
          xml/path

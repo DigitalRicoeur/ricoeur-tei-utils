@@ -2,9 +2,12 @@
 
 (define collection "ricoeur")
 (define pkg-desc "TEI utilities for Digital Ricoeur")
-(define version "0.4")
+(define version "0.4.1")
 (define pkg-authors '(philip))
-;; Executables to build are listed in "tei/tools/info.rkt"
+
+;; Executables to build are listed in "tei/tools/info.rkt".
+;; Documentation to build is listed in "tei/info.rkt".
+
 ;; Dependencies:
 (define deps '(("base" #:version "6.12")
                ("adjutor" #:version "0.2")
@@ -31,13 +34,4 @@
                      ("_-exp" #:version "0.1")
                      "db-doc"
                      ))
-;; Documentation:
-(define scribblings '(("tei/scribblings/tei-utils/tei-utils.scrbl"
-                       (multi-page)
-                       ("Digital Ricœur" 0)
-                       )
-                      ("tei/scribblings/guidelines/guidelines.scrbl"
-                       (multi-page)
-                       ("Digital Ricœur" 0)
-                       )))
 

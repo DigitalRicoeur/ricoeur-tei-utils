@@ -1,6 +1,6 @@
 #lang racket/gui
 
-(require ricoeur/tei
+(require ricoeur/tei/oop
          "icon.rkt"
          "../tei-lint/splash.rkt"
          "../tei-lint/lib.rkt"

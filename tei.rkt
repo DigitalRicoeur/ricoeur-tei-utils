@@ -1,8 +1,7 @@
 #lang racket/base
 
-(require adjutor
+(require ricoeur/tei/base
          )
 
-(require-provide ricoeur/tei/oop-base
-                 ricoeur/tei/corpus
+(require-provide (provide-only ricoeur/tei/base)
                  )

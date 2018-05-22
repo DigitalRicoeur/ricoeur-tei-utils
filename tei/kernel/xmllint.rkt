@@ -5,8 +5,8 @@
          racket/system
          racket/contract
          setup/matching-platform
-         ricoeur/lib/xml-path
          racket/runtime-path
+         "pre-kernel-lib.rkt"
          (for-syntax racket/base
                      setup/matching-platform
                      ))

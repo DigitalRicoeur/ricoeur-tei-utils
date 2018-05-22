@@ -1,9 +1,7 @@
 #lang racket
 
-(require adjutor
-         data/maybe
+(require data/maybe
          json
-         ricoeur/lib/todo
          ricoeur/tei/oop-base
          "location-stack.rkt"
          (submod "location-stack.rkt" private)

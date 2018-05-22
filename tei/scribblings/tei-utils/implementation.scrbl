@@ -2,15 +2,14 @@
 
 @title{Implementation Details}
 
-@(require "for-manual.rkt"
+@(require (only-meta-in 0 "for-manual.rkt")
           (for-label (except-in racket
                                 date
                                 date?)
                      racket/unit
                      xml
                      data/maybe
-                     ricoeur/tei
-                     ricoeur/lib
+                     ricoeur/tei/oop
                      db
                      json
                      (only-in ricoeur/tei/search
@@ -22,97 +21,12 @@
                      setup/matching-platform
                      gregor
                      ))
-@;{
-@section{Contract Implementation}
-@defmodule[ricoeur/tei/xexpr/signatures]
 
-The bindings documented in this section are provided by
-@racketmodname[ricoeur/tei/xexpr/signatures], but not by
-@racketmodname[ricoeur/tei] or @racketmodname[ricoeur/tei/base].
-They are used in the implementation of contracts on TEI x-expressions.
-
-@defsignature[tei-xexpr-contracts^ ()]{
- @signature-desc{
-  This signature specifies both the contract bindings ultimately
-  provided by @racketmodname[ricoeur/tei] and the binding
-  @sigelem[tei-xexpr-contracts^ make-element-contract] for specifying
-  the contracts on individual elements.
-  It is implemented by @racket[tei-xexpr-contracts@].
- }
- @defthing[tei-element-name/c flat-contract?]{
-  Used to implement @racket[tei-element-name/c].
- }
- @defproc[(tei-xexpr/c [name tei-element-name/c]) flat-contract?]{
-  Used to implement @racket[tei-xexpr/c].
- }
- @defthing[any-tei-xexpr/c flat-contract?]{
-  Used to implement @racket[any-tei-xexpr/c].
- }
- @defproc[(make-element-contract [name tei-element-name/c]
-                                 [#:children children
-                                  (listof (list/c (or/c 1 '1+ '0-1 '0+) tei-element-name/c))
-                                  '()]
-                                 [#:text? text? any/c #f]
-                                 [#:required-order required-order
-                                  (listof tei-element-name/c)
-                                  '()]
-                                 [#:attr-contracts attr-contracts
-                                  (listof (list/c symbol? flat-contract?))
-                                  '()]
-                                 [#:required-attrs required-attrs (listof symbol?) '()]
-                                 [#:extra-check extra-check
-                                  (or/c #f (-> (and/c list? xexpr/c)
-                                               (or/c blame? #f)
-                                               any/c
-                                               any/c))
-                                  #f])
-          flat-contract?]{
-  Creates a contract recognizing a particular Digital Ricœur TEI XML element.
-  Used by units implementing @racket[element-contracts^].
-
-  The @racket[attr-contracts] argument specifies contracts for the values
-  of attributes, without requiring that those attributes be present.
-
-  The @racket[required-order] argument applies only to children that
-  are actually present. It also allows other children to be present,
-  and it does not insist that they be in any particular order.
-
-  When a function is provided as the @racket[extra-check] argument,
-  its first argument is the value to which the contract is being applied,
-  which is guaranteed to satisfy all of the other requirements of
-  the contract (including the implicit requirement of having valid children).
-  When its second argument is @racket[#f], it should ignore the third
-  argument and return @racket[#f] to signal that the check fails or
-  any other value if the check succeeds.
-  When its second argument is a blame object, the return value is ignored
-  and violations must be signaled using @racket[raise-blame-error], 
-  with the third argument supplied for the @racket[#:missing-party].
- }
- @defproc[(get-attributes [elem (and/c list? xexpr/c)])
-          (listof (list/c symbol? string?))]{
-  Extracts the attributes from any element x-expression
- }
- @defproc[(get-body [elem (and/c list? xexpr/c)])
-          (listof xexpr/c)]{
-  Extracts the body of any element x-expression
- }
-}
-
-@defthing[tei-xexpr-contracts@ unit?]{
- A unit implementing @racket[tei-xexpr-contracts^].
- It must be linked with an implementation of @racket[element-contracts^]
- prior to invokation.
-}
-
-@defsignature[element-contracts^ ()]{
- @signature-desc{
-  This signature specifies contracts on individual Digital Ricœur TEI XML elements
-  using @sigelem[tei-xexpr-contracts^ make-element-contract].
-  The unit implementing this signature, @racket[element-contracts@], is
-  documented in "literate programming" style
-  under @guidelines-secref["Formal_Specification"] in @(guidelines-doc).
-  It must be linked with @racket[tei-xexpr-contracts@] prior to invokation.
-}}
+@nested[#:style 'inset]{
+ @bold{WARNING:} The bindings documented in this section
+ are @bold{not} provided by @racketmodname[ricoeur/tei].
+ They are subject to backwards-incompatible changes during
+ the ongoing revision of this library.
 }
 
 

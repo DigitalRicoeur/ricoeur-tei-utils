@@ -2,7 +2,6 @@
 
 (require ricoeur/tei/oop-base
          ricoeur/tei/search
-         ricoeur/lib/postgresql-data-source
          adjutor
          )
 

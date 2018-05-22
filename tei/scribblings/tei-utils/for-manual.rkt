@@ -1,12 +1,13 @@
 #lang at-exp racket
 
 (require scribble/manual
-         (only-in (submod ricoeur/tei/kernel doc)
-                  make-other-doc-tag)
-         adjutor
+         (except-in (submod ricoeur/tei/kernel doc)
+                    tag
+                    attr)
          )
 
-(require-provide scribble/core
+(require-provide (provide-only (submod ricoeur/tei/kernel doc))
+                 scribble/core
                  syntax/parse/define
                  (for-syntax racket/base
                              syntax/parse
@@ -14,8 +15,7 @@
                  (for-label (except-in racket
                                        date
                                        date?)
-                            ricoeur/lib
-                            ricoeur/tei/base ;includes ricoeur/tei/kernel
+                            ricoeur/tei
                             xml
                             db
                             json

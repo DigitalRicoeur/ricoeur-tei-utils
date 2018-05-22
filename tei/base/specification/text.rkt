@@ -4,8 +4,7 @@
 
 ƒtitle{The text Element}
 
-ƒ(require ricoeur/lib
-          (for-label ricoeur/tei/kernel
+ƒ(require (for-label ricoeur/tei/kernel
                      (except-in racket
                                 date?
                                 date

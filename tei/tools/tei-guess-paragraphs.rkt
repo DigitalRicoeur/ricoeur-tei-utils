@@ -3,7 +3,6 @@
 
 (module+ main
   (require ricoeur/tei/oop-base
-           ricoeur/lib
            racket/class
            racket/cmdline
            )

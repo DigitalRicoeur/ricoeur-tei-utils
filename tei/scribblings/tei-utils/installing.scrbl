@@ -3,9 +3,7 @@
 @title{Installing & Updating This Library}
 
 @(require "for-manual.rkt"
-          (for-label ricoeur/lib
-                     setup/matching-platform
-                     ))
+          )
 
 @margin-note{Installing this library will also install
  the tools documented under

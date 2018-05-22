@@ -2,14 +2,17 @@
 
 @title{General Interfaces}
 
-@(require ricoeur/lib
+@(require (only-in "../for-manual.rkt"
+                   TODO
+                   TODO/void
+                   TODO/scrbl)
           (for-label (except-in racket
                                 date
                                 date?)
                      racket/unit
                      xml
                      data/maybe
-                     ricoeur/tei
+                     ricoeur/tei/oop
                      (submod ricoeur/tei/search/common private)
                      gregor
                      ))

@@ -3,8 +3,7 @@
 (require adjutor
          )
 
-(require-provide ricoeur/tei/oop-kernel
-                 ricoeur/tei/oop/interfaces
-                 ricoeur/tei/oop/objects
+(require-provide ricoeur/tei/oop-base
+                 ricoeur/tei/corpus
                  ricoeur/tei/transient/postgresql-data-source
                  )

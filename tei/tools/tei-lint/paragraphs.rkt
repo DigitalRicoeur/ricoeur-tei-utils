@@ -1,8 +1,7 @@
 #lang racket/gui
 
 (require framework
-         ricoeur/tei
-         ricoeur/lib
+         ricoeur/tei/oop
          ricoeur/tei/tools/tei-lint/lib
          ricoeur/tei/tools/tei-lint/xml-preview
          adjutor

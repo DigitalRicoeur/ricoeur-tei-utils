@@ -1,7 +1,7 @@
 #lang scribble/manual
 
 @title{High-level Interface}
-@defmodule[ricoeur/tei #:link-target? #f]
+@declare-exporting[ricoeur/tei/oop]
 
 @(require (for-label (except-in racket
                                 date
@@ -9,8 +9,7 @@
                      racket/unit
                      xml
                      data/maybe
-                     ricoeur/tei
-                     ricoeur/lib
+                     ricoeur/tei/oop
                      db
                      json
                      (only-in ricoeur/tei/search
@@ -23,6 +22,13 @@
                      gregor
                      ))
 
+@nested[#:style 'inset]{
+ @bold{WARNING:} The bindings documented in this section
+ are provided by @racketmodname[ricoeur/tei/oop],
+ but @bold{not} @racketmodname[ricoeur/tei].
+ They are subject to backwards-incompatible changes during
+ the ongoing revision of this library.
+}
 
 
 @defparam[current-corpus corpus (is-a?/c corpus%)

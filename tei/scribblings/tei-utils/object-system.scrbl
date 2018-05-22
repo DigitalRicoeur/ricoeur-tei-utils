@@ -1,6 +1,7 @@
 #lang scribble/manual
 
 @title[#:version ""]{Object System}
+@declare-exporting[ricoeur/tei/oop]
 
 @(require (for-label (except-in racket
                                 date
@@ -8,19 +9,22 @@
                      racket/unit
                      xml
                      data/maybe
-                     ricoeur/tei
+                     ricoeur/tei/oop
                      (submod ricoeur/tei/search/common private)
                      gregor
                      ))
 
+@nested[#:style 'inset]{
+ @bold{WARNING:} The bindings documented in this section
+ are provided by @racketmodname[ricoeur/tei/oop],
+ but @bold{not} @racketmodname[ricoeur/tei].
+ Backwards-incompatible changes are expected during
+ the ongoing revision of this library.
+}
+
 Internally, this library represents TEI XML documents
 as nested objects (from Racket's class-based object system),
 which form a thin layer of abstraction over plain x-expressions.
-
-@margin-note{
- The details of this representation may be changed
- in a future version of this library.
-}
 
 @defproc[(file->TEI [file (and/c path-string? file-exists?)])
          (is-a?/c TEI<%>)]{
