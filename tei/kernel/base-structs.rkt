@@ -1,5 +1,8 @@
 #lang racket/base
 
+;; Note blame issue:
+;; https://github.com/racket/racket/issues/2093
+
 (require racket/contract
          racket/match
          "xexpr/plain-contracts.rkt"
