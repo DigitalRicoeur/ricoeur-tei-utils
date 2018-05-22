@@ -9,10 +9,10 @@
          racket/contract
          racket/match
          racket/list
-         "../pre-kernel-lib.rkt"
+         adjutor
          )
 
-(provide (all-from-out "../pre-kernel-lib.rkt")
+(provide (all-from-out adjutor)
          (contract-out
           [tag
            (-> (or/c symbol? string?) element?)]

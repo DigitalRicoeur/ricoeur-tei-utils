@@ -8,7 +8,6 @@
 
 (require-provide (multi "pre-kernel-lib"
                         ("maybe.rkt"
-                         "todo.rkt"
                          "utils.rkt"
                          "xml-path.rkt"
                          "output-to-file.rkt"

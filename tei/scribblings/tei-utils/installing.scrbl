@@ -13,8 +13,8 @@ To use this library, you must install the Racket programming
 language and runtime system for your platform from
 @url["https://racket-lang.org"]. Racket version 6.12 or later
 is currently required. If you use Mac OS, you are free to use the 
-"cask" for the Homebrew packacge manager (but note that the
-"minimal-racket" Homebrew formula is currently unmaintained and
+``cask'' for the Homebrew packacge manager (but note that the
+``minimal-racket'' Homebrew formula is currently unmaintained and
 should be avoided), and, if you use Ubuntu, you may wish to
 consider the Racket
 @hyperlink["https://launchpad.net/~plt/+archive/ubuntu/racket"]{PPA}.

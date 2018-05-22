@@ -24,7 +24,7 @@
  ;;;;;;;;;;;;;;;;;;;;;;;;;;
 
  (ricoeur/tei/kernel doc)
- (all-from-out "../pre-kernel-lib.rkt")
+ adjutor
  tag
  attr
  make-other-doc-tag
