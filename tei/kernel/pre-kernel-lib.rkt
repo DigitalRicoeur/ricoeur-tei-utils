@@ -8,5 +8,6 @@
 
 (require-provide "pre-kernel-lib/maybe.rkt"
                  "pre-kernel-lib/utils.rkt"
+                 adjutor
                  gregor)
  

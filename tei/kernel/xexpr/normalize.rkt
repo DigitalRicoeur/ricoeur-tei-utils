@@ -45,7 +45,8 @@
 (define (non-element-body->plain-text body)
   (string-join (map non-element-xexpr->plain-text
                     body)
-               ""))
+               ;; should this be " " ???
+               "")) 
 
 
 (define normalize-to-string 

@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require adjutor)
+(require "pre-kernel-lib.rkt")
 
 ;; This module (and its submodules) re-export
 ;; everything from ricoeur/tei/kernel that
@@ -14,8 +14,7 @@
                  "xmllint.rkt"
                  "xexpr/plain-contracts.rkt"
                  "xexpr/normalize.rkt"
-                 "pre-kernel-lib.rkt"
-                 adjutor
+                 (provide-only "pre-kernel-lib.rkt")
                  )
 
 (module+ private

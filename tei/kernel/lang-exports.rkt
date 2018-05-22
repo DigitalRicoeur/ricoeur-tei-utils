@@ -18,4 +18,5 @@
            )
   (provide tag
            attr
+           make-other-doc-tag
            ))

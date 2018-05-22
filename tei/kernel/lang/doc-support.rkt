@@ -17,6 +17,9 @@
            (-> (or/c symbol? string?) element?)]
           [attr
            (-> (or/c symbol? string?) element?)]
+          [make-other-doc-tag
+           (-> (or/c #f module-path?)
+               (-> (or/c symbol? string?) element?))]
           ))
 
 (module+ private
@@ -50,12 +53,18 @@
                        (list 'tei tag-str)
                        (tt tag-str)))
 
-(define (tag raw)
+(define ((make-other-doc-tag mod-path) raw)
   (define tag-str
     (if (symbol? raw)
         (symbol->string raw)
         raw))
-  (link-element #f (litchar tag-str) (list 'tei tag-str)))
+  (link-element #f
+                (litchar tag-str)
+                (doc-prefix mod-path (list 'tei tag-str))))
+
+(define tag
+  (make-other-doc-tag #f))
+  
 
 (define (attr raw)
   (tt (if (symbol? raw)
