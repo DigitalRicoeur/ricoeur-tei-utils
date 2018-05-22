@@ -12,6 +12,8 @@
                      ))
 ƒ(begin-for-runtime
    (require (submod ricoeur/tei/kernel private)
+            (submod ricoeur/tei/kernel
+                    private-plain-TEI-info)
             ))
 
 ƒdefine-elements-together[
@@ -46,6 +48,36 @@
    #:children ([1+ title]
                [1+ author]
                [0+ editor])
+   #:predicate tei-titleStmt?
+   #:constructor [
+ #:body/elements-only body/elements-only
+ (define (child->plain-text child)
+   (string-normalize-spaces
+              (string-trim
+               (non-element-body->plain-text
+                (tei-element-get-body child)))))
+ (define/field [title
+                #:check string?
+                #:accessor titleStmt-title]
+   (string-join (for/list ([t (in-list body/elements-only)]
+                           #:when (tei-title? t))
+                  (child->plain-text t))
+                ": "))
+ (define/field [resp-table
+                #:check (hash/c	symbol? string?
+                                #:immutable #t)
+                #:accessor titleStmt-resp-table]
+   (for*/hasheq ([child (in-list body/elements-only)]
+                 #:when (or (tei-author? child)
+                            (tei-editor? child))
+                 [maybe-id-str
+                  (in-value (attributes-ref
+                             (tei-element-get-attributes child)
+                             'xml:id))]
+                 #:when maybe-id-str)
+     (values (string->symbol maybe-id-str)
+             (child->plain-text child))))
+ #|END constructor|#]
    #:prose ƒ[]{
 
  The ƒtag{titleStmt} contains
@@ -70,6 +102,7 @@
                 '("title element may not be empty"
                   given: "~e")
                 val))))
+    #:predicate tei-title?
     #:prose ƒ{
   The ƒtag{title} element contains free-form text.
   It must not be empty.
@@ -79,12 +112,13 @@
     #:inset? #t
     #:contains-text
     #:attr-contracts ([xml:id any/c])
+    #:predicate tei-author?
     #:prose ƒ[]{
   The ƒtag{author} element contains free-form text and may have
   an optional ƒattr{xml:id} attribute. As a special case,
   the ID ƒracket["ricoeur"] is reserved for use with Paul Ricœur across all
   documents.
-  })
+ })
                  
  ƒ(define-element editor
     #:inset? #t
@@ -94,6 +128,7 @@
                                   "compiler"
                                   "preface")]
                       [xml:id any/c])
+    #:predicate tei-editor?
     #:prose ƒ[]{
 
   The ƒtag{editor} element contains free-form text and

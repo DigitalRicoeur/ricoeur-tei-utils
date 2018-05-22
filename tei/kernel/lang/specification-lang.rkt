@@ -1,12 +1,9 @@
 #lang racket/base
 
-(require "stxparam.rkt"
+(require ricoeur/tei/kernel/sans-lang
          (submod "stxparam.rkt" private)
-         racket/contract
-         racket/match
          racket/splicing
          syntax/parse/define
-         ricoeur/tei/kernel/sans-lang
          (only-in "define.rkt"
                   define-combined-elements-specification)
          (for-syntax racket/base
@@ -20,12 +17,17 @@
                      "static-info.rkt"
                      ))
 
+(require-provide (provide-only ricoeur/tei/kernel/sans-lang)
+                 racket/contract
+                 racket/match
+                 racket/string
+                 racket/list
+                 "stxparam.rkt"
+                 "adt.rkt"
+                 )
+
 (provide (except-out (all-from-out racket/base)
                      #%module-begin)
-         (all-from-out ricoeur/tei/kernel/sans-lang)
-         (all-from-out "stxparam.rkt")
-         (all-from-out racket/contract)
-         (all-from-out racket/match)
          (rename-out
           [module-begin #%module-begin]
           ))

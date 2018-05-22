@@ -24,5 +24,11 @@
   ;; It provides forms and functions to help make
   ;; use of #lang ricoeur/tei/kernel.
   (require-provide "xexpr/contract-utils.rkt"
-                   (submod "tei-info.rkt" private)
                    ))
+
+(module+ private-plain-TEI-info
+  ;; This submodule is for use only in the
+  ;; implementation of the teiHeader struct.
+  ;(submod "tei-info.rkt" private)
+  )
+
