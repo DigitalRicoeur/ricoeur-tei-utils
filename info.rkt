@@ -22,8 +22,14 @@
                "draw-lib"
                "parser-tools-lib"
                "pict-snip-lib"
+               "typed-racket-lib"
                ("xmllint-win32-x86_64" #:platform "win32\\x86_64"
-                                       #:version "0.1") 
+                                       #:version "0.1")
+               ;; The following are for the documentation time
+               ;; of #lang ricoeur/tei/kernel.
+               ;; Can they be made build-deps somehow?
+               "at-exp-lib"
+               "syntax-color-lib"
                ))
 (define build-deps '("scribble-lib"
                      "racket-doc"
@@ -33,5 +39,6 @@
                      "rackunit-lib"
                      ("_-exp" #:version "0.1")
                      "db-doc"
+                     "todo-list" ;; TODO: eliminate this dependency
                      ))
 
