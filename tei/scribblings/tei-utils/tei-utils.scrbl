@@ -3,18 +3,12 @@
 @title[#:version ""]{Digital Ricœur TEI Library}
 @author[(author+email @elem{Philip M@superscript{c}Grath}
                       "philip@philipmcgrath.com")]
-@defmodule[#:multi (ricoeur/tei/oop ricoeur/tei)
+@defmodule[#:multi (ricoeur/tei/oop ricoeur/tei ricour/tei/base)
            #:no-declare]
 
+
 @(require "for-manual.rkt"
-          (for-label (only-in ricoeur/tei/search
-                              search-documents
-                              searchable-document-set?
-                              regexp-searchable-document-set
-                              postgresql-searchable-document-set)
-                     (submod ricoeur/tei/search/common private)
-                     ricoeur/tei/corpus
-                     ))
+          )
 
 This manual documents utilities and Racket libraries for
 working with TEI XML documents developed for Digital Ricœur.
@@ -56,6 +50,7 @@ from Racket's @racketmodname[xml] library
 
 @include-section["contracts-tei-xexpr.scrbl"]
 @include-section["kernel-sans-lang.scrbl"]
+@include-section["new-api.scrbl"]
 @include-section["old-api.scrbl"]
 @include-section["installing.scrbl"]
 

@@ -14,6 +14,7 @@
          static-tei-xexpr/c
          any-tei-xexpr/c
          tei-element-name/c
+         TEI?
          (contract-out
           [file->TEI
            (-> (and/c path-string? file-exists?)

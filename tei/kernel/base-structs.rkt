@@ -21,7 +21,7 @@
           [tei-element-get-body
            (-> tei-element? any)]
           [rename elements-only-element-body/elements-only
-                  elements-only-element-get-body/elements-only
+                  tei-get-body/elements-only
                   (-> elements-only-element? any)]
           [tei-element-to-xexpr
            (-> tei-element? normalized-xexpr-element/c)]

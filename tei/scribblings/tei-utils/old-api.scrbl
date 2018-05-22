@@ -13,4 +13,4 @@ the ongoing revision of this library.
 
 @include-section["high-level.scrbl"]
 @include-section["object-system.scrbl"]
-@include-section["implementation.scrbl"]
+@include-section["old-implementation.scrbl"]

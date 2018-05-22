@@ -2,15 +2,21 @@
 
 @title[#:style '(toc)]{Kernel Utilities}
 @defmodule[ricoeur/tei/kernel #:no-declare]
-@TODO/void[improve this]
-@(declare-exporting ricoeur/tei
+@;; ricoeur/tei/kernel/pre-kernel-lib
+@;; and ricoeur/tei/kernel/xmllint
+@;; to support ricoeur/tei/oop
+@(declare-exporting ricoeur/tei/kernel
                     ricoeur/tei/base
-                    ricoeur/tei/kernel
+                    ricoeur/tei
                     ricoeur/tei/oop
+                    #:use-sources (ricoeur/tei/kernel/pre-kernel-lib
+                                   ricoeur/tei/kernel/xmllint)
                     )
 
 @(require "for-manual.rkt"
-          )
+          (for-label ricoeur/tei/kernel/pre-kernel-lib
+                     ricoeur/tei/kernel/xmllint
+                     ))
 
 In addition to the bindings documented below,
 @racketmodname[ricoeur/tei/kernel] also re-exports
@@ -283,7 +289,7 @@ typically a no-op.
  @void-const at runtime.
 }
 
-@defform[(TODO/scrbl [message] runtime-expr ...+)]{
+@defform[(TODO/scrbl [message] runtime-expr ...)]{
  Cooperates with DrRacket like @racket[TODO],
  but designed when for use with the Scribble reader.
  Evaluates to @racket[(begin runtime-expr ...)]

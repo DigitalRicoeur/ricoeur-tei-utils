@@ -73,6 +73,12 @@
 
 (define-syntax TODO/scrbl
   (syntax-parser
+    [(_ [msg:message])
+     (make-todo-syntax
+       (quasisyntax/loc this-syntax
+         (void))
+       (attribute msg.full)
+       (attribute msg.summary))]
     [(_ [msg:message] body:expr ...+)
       (make-todo-syntax
        (quasisyntax/loc this-syntax

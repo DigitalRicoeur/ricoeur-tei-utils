@@ -13,9 +13,12 @@
                              syntax/parse
                              )
                  (for-label (except-in racket
+                                       tag
                                        date
                                        date?)
                             ricoeur/tei
+                            ricoeur/tei/base
+                            ricoeur/tei/kernel
                             xml
                             db
                             json
@@ -24,12 +27,15 @@
 
 (provide guidelines-doc
          guidelines-secref
-         ;xml-tech
+         Ricoeur
          defpredicate
          (contract-out
           [tag
            (-> (or/c symbol? string?) element?)]
           ))
+
+(define Ricoeur
+  "Ricœur")
 
 (define guidelines
   '(lib "ricoeur/tei/scribblings/guidelines/guidelines.scrbl"))
@@ -43,10 +49,7 @@
 (define tag
   (make-other-doc-tag guidelines))
 
-#|
-(define (xml-tech args)
-  (apply tech #:doc '(lib "xml/xml.scrbl") args))
-|#
+
 
 (define-syntax-parser defpredicate
   [(_ name:id v:id body:expr ...)

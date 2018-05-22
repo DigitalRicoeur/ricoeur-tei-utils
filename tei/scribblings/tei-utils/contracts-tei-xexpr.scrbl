@@ -1,13 +1,16 @@
 #lang scribble/manual
 
 @title{TEI X-Expression Contracts}
-@(declare-exporting ricoeur/tei
-                    ricoeur/tei/base
+@;; ricoeur/tei/base/def-from-spec to support ricoeur/tei/oop
+@(declare-exporting ricoeur/tei/base
+                    ricoeur/tei
                     ricoeur/tei/oop
+                    #:use-sources (ricoeur/tei/base/def-from-spec)
                     )
 
 @(require "for-manual.rkt"
-          )
+          (for-label ricoeur/tei/base/def-from-spec
+                     ))
 
 @defthing[any-tei-xexpr/c flat-contract?]{
  Similar to @racket[raw-xexpr-element/c], but
