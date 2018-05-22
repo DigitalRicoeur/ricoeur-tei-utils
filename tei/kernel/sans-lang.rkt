@@ -14,8 +14,7 @@
                  "xmllint.rkt"
                  "xexpr/plain-contracts.rkt"
                  "xexpr/normalize.rkt"
-                 "maybe.rkt"
-                 gregor
+                 "pre-kernel-lib.rkt"
                  adjutor
                  )
 
