@@ -14,6 +14,8 @@
                              )
                  (for-label (except-in racket
                                        tag
+                                       field
+                                       get-field
                                        date
                                        date?)
                             ricoeur/tei

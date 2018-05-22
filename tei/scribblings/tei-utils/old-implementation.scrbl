@@ -1,6 +1,6 @@
 #lang scribble/manual
 
-@title{Implementation Details}
+@title{Old Implementation Details}
 
 @(require (only-meta-in 0 "for-manual.rkt")
           (for-label (except-in racket

@@ -1,6 +1,6 @@
 #lang scribble/manual
 
-@title{Work-In-Progress API}
+@title[#:style '(toc)]{Work-In-Progress API}
 @(declare-exporting ricoeur/tei/kernel
                     ricoeur/tei/base
                     ricoeur/tei
@@ -10,20 +10,31 @@
 @(require "for-manual.rkt"
           )
 
+@(local-table-of-contents)
+
 @;{
 
- (kernel private)
- "xexpr/contract-utils.rkt"
+ (submod ricoeur/tei/kernel private)
  define-values/elements-specifications
-
- (kernel doc)
- "lang/doc-support.rkt"
+ get-attributes
+ get-body
+ attributes-ref
 
  ;;;;;;;;;;;;;;;;;;;;;;;;;;
 
- specification-lang
+ (ricoeur/tei/kernel doc)
+ (all-from-out "../pre-kernel-lib.rkt")
+ tag
+ attr
+ make-other-doc-tag
 
- doc-lang
+ ;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+ ricoeur/tei/kernel/lang/specification-lang
+
+ ;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+ ricoeur/tei/kernel/lang/doc-lang
 
  ;;;;;;;;;;;;;;;;;;;;;;;;;;
 }
@@ -201,8 +212,19 @@
 
 @defpredicate[TEI?]{
  Recognizes @tech{tei element structs} that represent
- the root @;{@tag{TEI}} element of a document.
+ the root @tag{TEI} element of a document.
 }
+
+
+
+
+
+
+
+
+
+@include-section["implementation.scrbl"]
+
 
 
 

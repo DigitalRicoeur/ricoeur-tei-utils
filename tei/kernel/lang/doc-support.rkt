@@ -51,7 +51,7 @@
 (define (deftag tag-str)
   (toc-target2-element #f
                        (litchar tag-str)
-                       (list 'tei tag-str)
+                       (list 'tei (list 'prefixable tag-str))
                        (tt tag-str)))
 
 (define ((make-other-doc-tag mod-path) raw)
@@ -61,7 +61,8 @@
         raw))
   (link-element #f
                 (litchar tag-str)
-                (doc-prefix mod-path (list 'tei tag-str))))
+                (list 'tei (cons 'prefixable
+                                 (doc-prefix mod-path (list tag-str))))))
 
 (define tag
   (make-other-doc-tag #f))
