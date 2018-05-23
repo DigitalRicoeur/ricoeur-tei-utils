@@ -1,35 +1,20 @@
 #lang scribble/manual
 
 @title[#:style '(toc)]{Work-In-Progress API}
+@;; ricoeur/tei/kernel/sans-lang
+@;;   to support ricoeur/tei/kernel/lang/specification-lang
 @(declare-exporting ricoeur/tei/kernel
                     ricoeur/tei/base
                     ricoeur/tei
+                    #:use-sources (ricoeur/tei/kernel/sans-lang)
                     )
 
 
 @(require "for-manual.rkt"
-          )
+          (for-label ricoeur/tei/kernel/sans-lang
+                     ))
 
 @(local-table-of-contents)
-
-@;{
-
- (submod ricoeur/tei/kernel private)
- define-values/elements-specifications
- define-combined-elements-specification
- get-attributes
- get-body
- attributes-ref
-
- ;;;;;;;;;;;;;;;;;;;;;;;;;;
-
- (ricoeur/tei/kernel doc)
- adjutor
- tag
- attr
- make-other-doc-tag
-
-}
 
 @section{TEI Element Representation}
 @deftogether[

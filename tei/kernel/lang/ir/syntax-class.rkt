@@ -265,8 +265,8 @@
           (~seq (~describe "element struct definition form"
                            datatype)
                 ...
-                #:prose [body:expr ...]) 
-          (~seq #:prose [body:expr ...]
+                #:prose [body:expr ...+]) 
+          (~seq #:prose [body:expr ...+]
                 (~describe "element struct definition form"
                            datatype)
                 ...)))

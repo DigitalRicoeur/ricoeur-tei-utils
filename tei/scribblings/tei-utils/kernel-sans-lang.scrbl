@@ -3,19 +3,23 @@
 @title[#:style '(toc)]{Kernel Utilities}
 @defmodule[ricoeur/tei/kernel #:no-declare]
 @;; ricoeur/tei/kernel/pre-kernel-lib
-@;; and ricoeur/tei/kernel/xmllint
-@;; to support ricoeur/tei/oop
+@;;   and ricoeur/tei/kernel/xmllint
+@;;   to support ricoeur/tei/oop
+@;; ricoeur/tei/kernel/sans-lang
+@;;   to support ricoeur/tei/kernel/lang/specification-lang
 @(declare-exporting ricoeur/tei/kernel
                     ricoeur/tei/base
                     ricoeur/tei
                     ricoeur/tei/oop
                     #:use-sources (ricoeur/tei/kernel/pre-kernel-lib
-                                   ricoeur/tei/kernel/xmllint)
+                                   ricoeur/tei/kernel/xmllint
+                                   ricoeur/tei/kernel/sans-lang)
                     )
 
 @(require "for-manual.rkt"
           (for-label ricoeur/tei/kernel/pre-kernel-lib
                      ricoeur/tei/kernel/xmllint
+                     ricoeur/tei/kernel/sans-lang
                      ))
 
 In addition to the bindings documented below,

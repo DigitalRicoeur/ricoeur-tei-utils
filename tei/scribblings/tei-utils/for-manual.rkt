@@ -31,6 +31,7 @@
          guidelines-secref
          Ricoeur
          defpredicate
+         submodlink
          (contract-out
           [tag
            (-> (or/c symbol? string?) element?)]
@@ -60,5 +61,8 @@
    #'(defpredicate name v body ...)])
 
 
+(define-syntax-parser submodlink
+  [(_ m:expr)
+   #'(racketmodlink m (racket m))])
 
 
