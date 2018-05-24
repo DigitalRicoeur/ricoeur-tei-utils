@@ -2,6 +2,7 @@
 
 ;; Note blame issue:
 ;; https://github.com/racket/racket/issues/2093
+;; Will be fixed in Racket 7
 
 (require racket/contract
          racket/match
