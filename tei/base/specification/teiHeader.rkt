@@ -16,18 +16,55 @@
                     private-plain-TEI-info)
             ))
 
+
 ƒdefine-elements-together[
  ([teiHeader
    #:required-order (fileDesc profileDesc)
    #:children ([1 fileDesc]
-               [1 profileDesc])]
+               [1 profileDesc])
+   #:constructor
+   [#:body/elements-only body/elements-only
+    (match-define (list fileD (app profileDesc-textClass
+                                   textC))
+      body/elements-only)
+    (define/field info
+     (make-plain-TEI-info
+      #:title (fileDesc-title fileD)
+      #:resp-table (fileDesc-resp-table fileD)
+      #:citation (fileDesc-citation fileD)
+      #:orig-publication-date (fileDesc-orig-publ-date fileD)
+      #:publication-date (fileDesc-this-publ-date fileD)
+      #:publication-original? (fileDesc-this-is-orig? fileD)
+      #:guess-paragraphs-status (textClass-guess-paragraphs-status textC)
+      #:book/article (textClass-book/article textC)))
+    (lift-property prop:TEI-info
+                   (λ (this) (get-field info this)))
+    #|END teiHeader|#]]
   [fileDesc
    #:children ([1 titleStmt]
                [1 publicationStmt]
                [1 sourceDesc])
-   #:required-order (titleStmt publicationStmt sourceDesc)]
+   #:required-order (titleStmt publicationStmt sourceDesc)
+   #:constructor [
+ #:body/elements-only body/elements-only
+ (match-define (list titleS _ sourceD)
+   body/elements-only)
+ (define-fields
+   #:infer
+   [title (titleStmt-title titleS)]
+   [resp-table (titleStmt-resp-table titleS)]
+   [citation (sourceDesc-citation sourceD)]
+   [orig-publ-date (sourceDesc-orig-publ-date sourceD)]
+   [this-publ-date (sourceDesc-this-publ-date sourceD)]
+   [this-is-orig? (sourceDesc-this-is-orig? sourceD)]
+   #|END fileDesc|#)]]
   [profileDesc
-   #:children ([1 textClass])])]{
+   #:children ([1 textClass])
+   #:constructor
+   [#:body/elements-only body/elements-only
+    (field textClass #:infer)
+    (match-define (list textClass)
+      body/elements-only)]])]{
 
  The ƒtag{teiHeader} element contains (in order) one
  ƒtag{fileDesc} element followed by one
@@ -53,12 +90,11 @@
  #:body/elements-only body/elements-only
  (define (child->plain-text child)
    (string-normalize-spaces
-              (string-trim
-               (non-element-body->plain-text
-                (tei-element-get-body child)))))
- (define/field [title
-                #:check string?
-                #:accessor titleStmt-title]
+    (string-trim
+     (non-element-body->plain-text
+      (tei-element-get-body child)))))
+ (define/field #:infer [title
+                        #:check string?]
    (string-join (for/list ([t (in-list body/elements-only)]
                            #:when (tei-title? t))
                   (child->plain-text t))
@@ -118,7 +154,7 @@
   an optional ƒattr{xml:id} attribute. As a special case,
   the ID ƒracket["ricoeur"] is reserved for use with Paul Ricœur across all
   documents.
- })
+  })
                  
  ƒ(define-element editor
     #:inset? #t
@@ -175,7 +211,26 @@
 ƒsection{The Source Description}
 ƒdefine-elements-together[
  ([sourceDesc
-   #:children ([1 bibl])]
+   #:children ([1 bibl])
+   #:constructor
+   [#:body/elements-only body/elements-only
+    (match-define (list bibl)
+      body/elements-only)
+    (define/field [citation #:accessor sourceDesc-citation]
+      (string-normalize-spaces
+       (element-or-xexpr->plain-text bibl)))
+    (define-values/fields #:infer (orig-publ-date
+                                   this-publ-date
+                                   this-is-orig?)
+      (match (for/list ([c (in-list (tei-element-get-body bibl))]
+                        #:when (tei-date-element? c))
+               (cons (date-when c) (date-subtype c)))
+        [(list (cons d 'thisIsOriginal))
+         (values d d 'thisIsOriginal)]
+        [(or (list (cons this 'this) (cons original 'original))
+             (list (cons original 'original) (cons this 'this)))
+         (values original this #f)]))
+    #|END sourceDesc|#]]
   [bibl
    #:contains-text
    #:children ([1+ date])
@@ -204,7 +259,15 @@
    #:attr-contracts ([when #px"^(\\d\\d\\d\\d)(-\\d\\d)?(-\\d\\d)?$"]
                      [type "publication"]
                      [subtype (or/c "this" "original" "thisIsOriginal")])
-   #:required-attrs (when type subtype)])]{
+   #:required-attrs (when type subtype)
+   #:predicate tei-date-element?
+   #:constructor 
+   [#:attributes attrs
+    (define-fields
+      #:infer
+      [subtype (string->symbol (attributes-ref attrs 'subtype))]
+      [when (iso8601->date (attributes-ref attrs 'when))]
+      #|END bibl|#)]])]{
  The ƒtag{sourceDesc} element must contain exactly one
  ƒtag{bibl} element.
 
@@ -234,6 +297,22 @@
 ƒ(define-element textClass
    #:children ([1 catRef]
                [1 keywords])
+   #:constructor
+   [#:body/elements-only body/elements-only
+    (field guess-paragraphs-status #:infer)
+    (match-define
+      (list-no-order (? tei-keywords?
+                        (app keywords-guess-paragraphs-status
+                             guess-paragraphs-status))
+                     (? catRef? catRef))
+      body/elements-only)
+    (define/field #:infer book/article
+      (case (attributes-ref (tei-element-get-attributes catRef)
+                            'target)
+        [("https://schema.digitalricoeur.org/taxonomy/type#article")
+         'article]
+        [("https://schema.digitalricoeur.org/taxonomy/type#book")
+         'book]))]
    #:prose ƒ[]{
                             
  The ƒtag{textClass} element must contain
@@ -246,6 +325,7 @@
      [target (or/c "https://schema.digitalricoeur.org/taxonomy/type#article"
                    "https://schema.digitalricoeur.org/taxonomy/type#book")])
     #:required-attrs (scheme target)
+    #:predicate catRef?
     #:prose ƒ{
   The ƒtag{catRef} element contains nothing.
   It has two attributes, ƒattr{scheme} and ƒattr{target},
@@ -270,7 +350,15 @@
    #:attr-contracts
    ([scheme "https://schema.digitalricoeur.org/tools/tei-guess-paragraphs"])
    #:required-attrs (scheme)
-   #:children ([1 term])]
+   #:children ([1 term])
+   #:predicate tei-keywords?
+   #:constructor
+   [#:body/elements-only body/elements-only
+    (field guess-paragraphs-status #:infer)
+    (match-define (list (app term-guess-paragraphs-status
+                             guess-paragraphs-status))
+      body/elements-only)
+    #|END keywords|#]]
   [term
    #:contains-text
    #:extra-check
@@ -295,7 +383,19 @@
                 given: "~e"
                 "\n  term element...:\n   ~e")
               body-string
-              val))]))])]{
+              val))]))
+   #:constructor
+   [#:body body
+    (define body-string
+      (non-element-body->plain-text body))
+    (define/field #:infer guess-paragraphs-status
+      (case body-string
+        [("todo") 'todo]
+        [("line-breaks") 'line-breaks]
+        [("blank-lines") 'blank-lines]
+        [("done") 'done]
+        [("skip") 'skip]))
+    #|END term|#]])]{
   The ƒtag{keywords} element is currently used to encode flags
   for the ƒtt{guess-paragraphs} tool.
   It must have a ƒattr{scheme} attribute with a value of

@@ -4,6 +4,7 @@
          ricoeur/tei/kernel/base-structs
          (submod ricoeur/tei/kernel/base-structs
                  private)
+         "../stxparam.rkt"
          racket/contract
          racket/stxparam
          racket/splicing
@@ -54,16 +55,44 @@
   [lift-methods lift-methods/derived])
 
 
+(define-for-syntax (infer-accessor-id field-id)
+  ;; Following file:///Applications/Racket%20v6.12/doc/tools/Check_Syntax.html
+  (let* ([first-part (symbol->string (syntax-e (local-element-name)))]
+         [second-part (symbol->string (syntax-e field-id))]
+         [first-len (string-length first-part)]
+         [second-len (string-length second-part)]
+         [hyphenated-id
+          (format-id field-id
+                     "~a-~a"
+                     (local-element-name)
+                     field-id
+                     #:source field-id)])
+    (syntax-property
+     hyphenated-id
+     'sub-range-binders
+     (list
+      (vector (syntax-local-introduce hyphenated-id)
+              0 first-len 0.5 0.5
+              (syntax-local-introduce (local-element-name))
+              0 first-len 0.5 0.5)
+      (vector (syntax-local-introduce hyphenated-id)
+              (+ first-len 1) second-len 0.5 0
+              (syntax-local-introduce field-id)
+              0 second-len 0.5 1)))))
+                     
+
 (define-syntax-parser field/derived
   #:context (syntax-parse this-syntax
               [(_ original-datum _ ...)
                #'original-datum])
   [(_ original-datum
       name:id
-      (~alt (~optional (~or* (~seq #:accessor (~or* accessor:id #f))
-                             (~seq [#:accessor (~or* accessor:id #f)]))
-                       #:name "#:accessor clause"
-                       #:defaults ([accessor #'#f]))
+      (~alt (~optional (~or* (~seq #:accessor (~or* raw-accessor:id #f))
+                             (~seq [#:accessor (~or* raw-accessor:id #f)]))
+                       #:name "#:accessor clause")
+            (~optional (~or* (~seq (~and infer? #:infer))
+                             (~seq [(~and infer? #:infer)]))
+                       #:name "#:infer clause")
             (~optional (~or* (~seq #:check
                                    (~var check
                                          (expr/c #'contract?
@@ -75,6 +104,14 @@
                              (~seq [#:check]))
                        #:name "#:check clause"))
       ...)
+   #:fail-when (and (not (local-element-name))
+                    (attribute infer?))
+   "#:infer specified, but local-element-name not initialized in context"
+   #:fail-when (and (attribute infer?)
+                    (attribute raw-accessor))
+   "#:infer not compatible with explicit #:accessor option"
+   #:with accessor (or (attribute raw-accessor)
+                       (infer-accessor-id #'name))
    #`(parsed-field original-datum
                    name
                    [#:check #,(if (attribute check.c)
@@ -184,9 +221,9 @@
 
 (define-syntax-parser get-field
   [(_ f:id)
-   #'(get-field/derived #,this-syntax f)]
+   #`(get-field/derived #,this-syntax f)]
   [(_ f:id target:expr)
-   #'(get-field/derived #,this-syntax f target)])
+   #`(get-field/derived #,this-syntax f target)])
 
 (define-syntax-parser get-field/derived
   #:context (syntax-parse this-syntax

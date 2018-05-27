@@ -42,6 +42,16 @@ the same source file that defines the Racket enforcement code.
                      [xmlns "http://www.tei-c.org/ns/1.0"])
    #:required-attrs (version xmlns)
    #:predicate TEI?
+   #:constructor
+   [#:body/elements-only body/elements-only
+    (field teiHeader)
+    (field text)
+    (match-define (list teiHeader text)
+      body/elements-only)
+    (lift-property prop:TEI-info
+                   (λ (this)
+                     (get-plain-TEI-info
+                      (get-field teiHeader this))))]
    #:prose ƒ{
 
  The document should begin with an XML declaration and DOCTYPE

@@ -2,6 +2,7 @@
 
 (require racket/contract
          racket/class
+         gregor
          (for-syntax racket/base
                      syntax/parse
                      ))
@@ -9,6 +10,7 @@
 (provide TEI-info?
          plain-TEI-info?
          TEI-info<%>
+         guess-paragraphs-status/c
          (contract-out
           [get-plain-TEI-info
            (-> TEI-info?
@@ -23,19 +25,35 @@
                        (init [TEI-info TEI-info?]))))]
           ))
 
-#|(module+ private
+(module+ private
   (provide (contract-out
             [make-plain-TEI-info
-             any/c]
-            )))|#
+             (-> #:title string?
+                 #:resp-table (hash/c symbol? string?
+                                      #:immutable #t)
+                 #:citation string?
+                 #:orig-publication-date date?
+                 #:publication-date date?
+                 #:publication-original? any/c
+                 #:book/article (or/c 'book 'article)
+                 #:guess-paragraphs-status guess-paragraphs-status/c
+                 plain-TEI-info?)]
+            )))
 
 (define-values {prop:TEI-info TEI-info? get-get-plain}
   (make-struct-type-property 'prop:TEI-info))
 
+(define/final-prop guess-paragraphs-status/c
+  (or/c 'todo
+        'line-breaks
+        'blank-lines
+        'done
+        'skip))
+        
 #|
 get-title
 get-publication-date
-get-original-publication-date
+get-orig-publication-date
 get-citation
 get-book/article
 get-resp-string
@@ -48,8 +66,34 @@ get-this-is-original?
 
 |#
 
-(struct plain-TEI-info ()
+(struct plain-TEI-info (title
+                        resp-table
+                        citation
+                        orig-publ-date
+                        this-publ-date
+                        publication-original?
+                        book/article
+                        guess-paragraphs-status
+                        )
+  #:transparent
   #:property prop:TEI-info values)
+
+(define (make-plain-TEI-info #:title title
+                             #:resp-table resp-table
+                             #:citation citation
+                             #:orig-publication-date orig-publ-date
+                             #:publication-date this-publ-date
+                             #:publication-original? publication-original?
+                             #:book/article book/article
+                             #:guess-paragraphs-status guess-paragraphs-status)
+  (plain-TEI-info title
+                  resp-table
+                  citation
+                  orig-publ-date
+                  this-publ-date
+                  publication-original?
+                  book/article
+                  guess-paragraphs-status)) 
 
 (define (get-plain-TEI-info v)
   ((get-get-plain v) v))

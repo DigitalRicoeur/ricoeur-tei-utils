@@ -28,6 +28,6 @@
 (module+ private-plain-TEI-info
   ;; This submodule is for use only in the
   ;; implementation of the teiHeader struct.
-  ;(submod "tei-info.rkt" private)
-  )
+  (require-provide (submod "tei-info.rkt" private)
+                   ))
 
