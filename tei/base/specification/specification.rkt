@@ -13,10 +13,18 @@
                                 )
                      ))
 ƒ(begin-for-runtime
-   (provide TEI?
-            )
+   (provide tei-document?
+            (contract-out
+             [write-tei-document
+              (->* {tei-document?} {output-port?} any)]
+             [tei-document-md5
+              (-> tei-document? string?)]
+             ))
    (require "teiHeader.rkt"
             "text.rkt"
+            xml
+            openssl/md5
+            racket/promise
             ))
 
 Digital Ricœur imposes requirements for the structure of TEI
@@ -41,37 +49,71 @@ the same source file that defines the Racket enforcement code.
    #:attr-contracts ([version "5.0"]
                      [xmlns "http://www.tei-c.org/ns/1.0"])
    #:required-attrs (version xmlns)
-   #:predicate TEI?
+   #:predicate tei-document?
    #:constructor
    [#:body/elements-only body/elements-only
+    #:this/thunk get-this
     (field teiHeader)
     (field text)
     (match-define (list teiHeader text)
       body/elements-only)
-    (lift-property prop:TEI-info
-                   (λ (this)
-                     (get-plain-TEI-info
-                      (get-field teiHeader this))))]
+    (define/field pr:md5
+      (delay/sync
+       (TODO/void Should md5 really use prettyprint?
+                  #: Might be a lot faster to just use write-xexpr
+                  and not launch a subprocess.
+                  I think the original rationale was not being sensitive
+                  to |"changes"| like comments and ignored whitespace:
+                  maybe I should handle those explicitly.
+                  )
+       (define-values (in-from-pipe out-to-pipe)
+         (make-pipe))
+       (write-xexpr (tei-element->xexpr (get-this)) out-to-pipe)
+       ;(write-TEI (get-this) out-to-pipe)
+       (close-output-port out-to-pipe)
+       (md5 in-from-pipe)))]
+   #:property prop:TEI-info (λ (this)
+                              (get-plain-TEI-info
+                               (get-field teiHeader this)))
+   #:begin [(define (tei-document-md5 doc)
+              (force (get-field pr:md5 doc)))]
+   #:property prop:element->plain-text
+   (λ (this)
+     (string-append (tei-title this)
+                    "\n\n"
+                    (tei-citation this)
+                    "\n\nDigital Ricoeur: Not for distribution.\f"
+                    (element-or-xexpr->plain-text
+                     (get-field text this))))
    #:prose ƒ{
 
- The document should begin with an XML declaration and DOCTYPE
- declaration, which must be exactly as follows:
- ƒ(nested #:style 'inset
-          (verbatim
-           ƒtt{<?xml version="1.0" encoding="utf-8"?>}"\n"
-           ƒtt{<!DOCTYPE TEI SYSTEM "DR-TEI.dtd">}))
+     The document should begin with an XML declaration and DOCTYPE
+     declaration, which must be exactly as follows:
+     ƒ(nested #:style 'inset
+              (verbatim
+               ƒtt{<?xml version="1.0" encoding="utf-8"?>}"\n"
+               ƒtt{<!DOCTYPE TEI SYSTEM "DR-TEI.dtd">}))
 
- The root element is a ƒtag{TEI} element,
- which contains exactly (in order)
- ƒtag{teiHeader} and ƒtag{text} elements.
- It must have the attributes
- ƒtt{version="5.0"} and
- ƒtt{xmlns="http://www.tei-c.org/ns/1.0"}.
+     The root element is a ƒtag{TEI} element,
+     which contains exactly (in order)
+     ƒtag{teiHeader} and ƒtag{text} elements.
+     It must have the attributes
+     ƒtt{version="5.0"} and
+     ƒtt{xmlns="http://www.tei-c.org/ns/1.0"}.
 
- })
+     })
 
+ƒ(begin-for-runtime
+   (define (write-tei-document doc [out (current-output-port)])
+     (parameterize ([current-output-port out])
+       (call/prettyprint-xml-out
+        (λ () 
+          (displayln ƒstring-append{
+ <?xml version="1.0" encoding="utf-8"?>
+ <!DOCTYPE TEI SYSTEM "DR-TEI.dtd">})
+          (write-xexpr (tei-element->xexpr doc) out))))))
 
-
+         
 ƒinclude-section[(submod "teiHeader.rkt" doc)]
 ƒinclude-section[(submod "text.rkt" doc)]
 

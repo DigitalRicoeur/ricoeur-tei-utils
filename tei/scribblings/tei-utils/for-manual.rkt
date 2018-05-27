@@ -2,8 +2,7 @@
 
 (require scribble/manual
          (except-in (submod ricoeur/tei/kernel doc)
-                    tag
-                    attr)
+                    tag)
          )
 
 (require-provide (provide-only (submod ricoeur/tei/kernel doc))

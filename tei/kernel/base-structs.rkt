@@ -26,7 +26,7 @@
           [rename elements-only-element-body/elements-only
                   tei-get-body/elements-only
                   (-> elements-only-element? any)]
-          [tei-element-to-xexpr
+          [tei-element->xexpr
            (-> tei-element? normalized-xexpr-element/c)]
           [element-or-xexpr->plain-text
            (-> (or/c tei-element? raw-xexpr-atom/c) string?)]
@@ -34,6 +34,8 @@
            (struct-type-property/c
             (-> any/c string?))]
           ))
+
+
 
 (module* private* #f
   (provide (contract-out
@@ -106,11 +108,14 @@
      body]))
 
     
-(define tei-element-to-xexpr
+(define tei-element->xexpr
   (match-lambda
     [(or (elements-only-element name attrs body _)
          (content-containing-element name attrs body))
-     (list* name attrs body)]))
+     (list* name attrs (map tei-element-to-xexpr* body))]))
 
-
+(define (tei-element-to-xexpr* x)
+  (if (tei-element? x)
+      (tei-element->xexpr x)
+      x))
 

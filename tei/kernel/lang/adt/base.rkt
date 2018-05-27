@@ -27,10 +27,12 @@
          get-field
          lift-property
          lift-methods
+         lift-begin 
          field/derived
          get-field/derived
          lift-property/derived
          lift-methods/derived
+         lift-begin/derived
          )
 
 (module+ private
@@ -51,12 +53,13 @@
 
 (define-derived
   [field field/derived]
+  [lift-begin lift-begin/derived]
   [lift-property lift-property/derived]
   [lift-methods lift-methods/derived])
 
 
 (define-for-syntax (infer-accessor-id field-id)
-  ;; Following file:///Applications/Racket%20v6.12/doc/tools/Check_Syntax.html
+  ;; Following the Check Syntax documentation.
   (let* ([first-part (symbol->string (syntax-e (local-element-name)))]
          [second-part (symbol->string (syntax-e field-id))]
          [first-len (string-length first-part)]
@@ -87,12 +90,13 @@
                #'original-datum])
   [(_ original-datum
       name:id
-      (~alt (~optional (~or* (~seq #:accessor (~or* raw-accessor:id #f))
-                             (~seq [#:accessor (~or* raw-accessor:id #f)]))
-                       #:name "#:accessor clause")
-            (~optional (~or* (~seq (~and infer? #:infer))
+      (~alt (~optional (~or* (~seq (~and accessor-kw #:accessor)
+                                   (~or* raw-accessor:id #f))
+                             (~seq [(~and accessor-kw #:accessor)
+                                    (~or* raw-accessor:id #f)])
+                             (~seq (~and infer? #:infer))
                              (~seq [(~and infer? #:infer)]))
-                       #:name "#:infer clause")
+                       #:name "#:accessor or#:infer  clause")
             (~optional (~or* (~seq #:check
                                    (~var check
                                          (expr/c #'contract?
@@ -108,10 +112,12 @@
                     (attribute infer?))
    "#:infer specified, but local-element-name not initialized in context"
    #:fail-when (and (attribute infer?)
-                    (attribute raw-accessor))
+                    (attribute accessor-kw))
    "#:infer not compatible with explicit #:accessor option"
-   #:with accessor (or (attribute raw-accessor)
-                       (infer-accessor-id #'name))
+   #:with accessor (if (attribute infer?)
+                       (infer-accessor-id #'name)
+                       (or (attribute raw-accessor)
+                           #'#f))
    #`(parsed-field original-datum
                    name
                    [#:check #,(if (attribute check.c)
@@ -139,6 +145,18 @@
                                          (attribute accessor)
                                          (attribute check)))))
 
+(define-syntax-parser lift-begin/derived
+  #:context (syntax-parse this-syntax
+              [(_ orig-datum _ ...)
+               #'orig-datum])
+  [(_ orig-datum body:expr ...)
+   #`(parsed-lift-begin orig-datum body ...)])
+
+(begin-for-syntax
+  (define-syntax-class parsed-lift-begin-stx
+    #:literals {parsed-lift-begin}
+    #:attributes {[body 1] orig-datum}
+    (pattern (parsed-lift-begin orig-datum body:expr ...))))
 
 (define-syntax-parser lift-property/derived
   #:context (syntax-parse this-syntax
@@ -197,6 +215,7 @@
       
 (define-constructor-subforms
   [parsed-field parsed-field-stx]
+  [parsed-lift-begin parsed-lift-begin-stx]
   [parsed-lift-property parsed-lift-property-stx]
   [parsed-lift-methods parsed-lift-methods-stx])
 
@@ -353,6 +372,17 @@
                            (regexp-match? #px"^\\s*$" v)))
     v))
 
+(define (filter-elements-only lst)
+  (define new
+    (filter tei-element? lst))
+  (if (equal? lst new)
+      lst
+      new))
+
+(define-syntax-parameter local-this-thunk
+  (λ (stx)
+    (raise-syntax-error #f "used out of context" stx)))
+
 (begin-for-syntax
   (struct context-value ()
     #:property prop:liberal-define-context #t)
@@ -363,6 +393,7 @@
                [fields-so-far null]
                [props-so-far null]
                [methods-so-far null]
+               [begin-bodies-so-far null]
                [value-ids-so-far null]
                [bodies-so-far null])
       (match to-go
@@ -370,6 +401,7 @@
          (values (reverse fields-so-far)
                  (reverse props-so-far)
                  (reverse methods-so-far)
+                 begin-bodies-so-far ;; in order
                  (reverse value-ids-so-far)
                  (reverse bodies-so-far))]
         [(cons this to-go)
@@ -378,6 +410,7 @@
                                      (list #'parsed-field
                                            #'parsed-lift-property
                                            #'parsed-lift-methods
+                                           #'parsed-lift-begin
                                            #'define-values
                                            #'define-syntaxes
                                            #'begin ;; it's implicitly added, but let's be clear
@@ -390,6 +423,7 @@
                   fields-so-far
                   props-so-far
                   methods-so-far
+                  begin-bodies-so-far
                   value-ids-so-far
                   bodies-so-far)]
            [f:parsed-field-stx
@@ -398,6 +432,7 @@
                         fields-so-far)
                   props-so-far
                   methods-so-far
+                  begin-bodies-so-far
                   value-ids-so-far
                   bodies-so-far)]
            [p:parsed-lift-property-stx
@@ -406,6 +441,7 @@
                   (cons (attribute p.parsed)
                         props-so-far)
                   methods-so-far
+                  begin-bodies-so-far
                   value-ids-so-far
                   bodies-so-far)]
            [m:parsed-lift-methods-stx
@@ -414,6 +450,16 @@
                   props-so-far
                   (cons (attribute m.parsed)
                         methods-so-far)
+                  begin-bodies-so-far
+                  value-ids-so-far
+                  bodies-so-far)]
+           [b:parsed-lift-begin-stx
+            (loop to-go
+                  fields-so-far
+                  props-so-far
+                  methods-so-far
+                  (append begin-bodies-so-far
+                          (syntax->list #'(b.body ...)))
                   value-ids-so-far
                   bodies-so-far)]
            [(define-values (id ...) _)
@@ -421,6 +467,7 @@
                   fields-so-far
                   props-so-far
                   methods-so-far
+                  begin-bodies-so-far
                   (append (syntax->list #'(id ...))
                           value-ids-so-far)
                   (cons this-syntax
@@ -430,6 +477,7 @@
                   fields-so-far
                   props-so-far
                   methods-so-far
+                  begin-bodies-so-far
                   value-ids-so-far
                   (cons this-syntax
                         bodies-so-far))])])))
@@ -463,6 +511,7 @@
            #:name-arg [name-arg-id (generate-temporary "name-arg")]
            #:attributes-arg [attributes-arg-id (generate-temporary "attributes-arg")]
            #:body-arg [body-arg-id (generate-temporary "body-arg")]
+           #:this/thunk [this/thunk-id #f]
            #:body/elements-only [body/elements-only-id (generate-temporary "body/elements-only")])
     #`(λ (raw-name-arg raw-attributes-arg raw-body-arg)
         ;; prevent set!
@@ -475,7 +524,11 @@
         #,@(if contains-text?
                null
                (list #`(define-immutable #,body/elements-only-id
-                         (filter tei-element? #,body-arg-id))))
+                         (filter-elements-only #,body-arg-id))))
+        #,(if this/thunk-id
+              #`(define-immutable #,this/thunk-id
+                  local-this-thunk)
+              #'(begin))
         #,@body-forms-list
         (#,raw-constructor-id raw-name-arg raw-attributes-arg #,body-arg-id
                               #,@(if contains-text?
@@ -486,7 +539,7 @@
                                          #:raw-constructor raw-constructor-id
                                          #:element-name element-name)
     #:description "constructor spec"
-    #:attributes {fields properties methods
+    #:attributes {fields properties methods [lift-begin-body 1]
                          wrapped-constructor-expr raw-constructor}
     (pattern [(~alt (~optional (~seq #:name name-arg:id)
                                #:name "name arg binding"
@@ -505,13 +558,15 @@
                                #:name "body/elements-only binding"
                                #:defaults ([body/elements-only
                                             (generate-temporary "body/elements-only")]))
+                    (~optional (~seq #:this/thunk this/thunk:id)
+                               #:name "this/thunk binding")
                     )
               ...
               raw-body:expr ...]
              #:fail-when (and contains-text?
                               (attribute body/elements-only-clause))
              "not allowed for a text-containing element"
-             #:do [(define-values {l-fields l-props l-methods l-value-ids l-bodies}
+             #:do [(define-values {l-fields l-props l-methods l-begin-bodies l-value-ids l-bodies}
                      (expand-constructor-body
                       (syntax->list #'(raw-body ...))))]
              #:fail-when (check-duplicate-identifier
@@ -520,8 +575,9 @@
              #:attr fields l-fields
              #:attr properties l-props
              #:attr methods l-methods
+             #:with (lift-begin-body ...) l-begin-bodies
              #:with raw-constructor raw-constructor-id
-             #:with wrapped-constructor-expr
+             #:with basic-wraped-ctor
              (make-wrapped-constructor-expr
               #:contains-text? contains-text?
               #:raw-constructor raw-constructor-id
@@ -532,7 +588,18 @@
               #:name-arg #'name-arg
               #:attributes-arg #'attributes-arg
               #:body-arg #'body-arg
+              #:this/thunk (attribute this/thunk)
               #:body/elements-only #'body/elements-only)
+             #:with wrapped-constructor-expr
+             (if (attribute this/thunk)
+                 #`(λ (name attrs body)
+                     (define rslt
+                       (syntax-parameterize
+                           ([local-this-thunk (λ (stx)
+                                                #'(λ () rslt))])
+                         (basic-wraped-ctor name attrs body)))
+                     rslt)
+                 #'basic-wraped-ctor)
              #|END define-syntax-class constructor-spec|#)))
 
                                        
@@ -577,11 +644,18 @@
                        ([constructor.fields null]
                         [constructor.properties null]
                         [constructor.methods null]
+                        [[constructor.lift-begin-body 1] null]
                         [constructor.raw-constructor raw-constructor-id]
                         [constructor.wrapped-constructor-expr
                          (make-wrapped-constructor-expr
                           #:contains-text? (attribute outer.contains-text?)
                           #:raw-constructor raw-constructor-id)]))
+            (~optional (~seq #:begin
+                             (~describe "parenthesized sequence of definitions and expressions"
+                                        [kw-begin-body:expr ...]))
+                       #:name "#:begin clause"
+                       #:defaults
+                       ([[kw-begin-body 1] null]))
             (~seq #:property prop-expr:expr prop-val-expr:expr)
             outer-methods:methods-clause
             )
@@ -637,14 +711,23 @@
                          ([field-name struct-name-field-name] ...)
                          #,@body)])))
          #|END define-struct/derived|#)
+       
        #,@(if (attribute predicate-external-name)
               (list #`(define-immutable predicate-external-name predicate-name))
               null)
+       
        (define-accessors
          #,@(for/list ([accessor (in-list (map field-record-maybe-accessor fields))]
                        [raw-accessor (in-syntax #'(struct-name-field-name ...))]
                        #:when accessor)
               #`[#,accessor #,raw-accessor]))
+
+       (with-get-field-context
+        #:splicing
+        ([field-name struct-name-field-name] ...)
+        kw-begin-body ... 
+        constructor.lift-begin-body ...)
+       
        (define-immutable outer.wrapped-constructor-name
          constructor.wrapped-constructor-expr)
        

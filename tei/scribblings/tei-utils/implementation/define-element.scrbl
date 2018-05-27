@@ -15,56 +15,62 @@
                      ))
 
 
-@defform[#:literals (field field/derived 
-                           lift-property lift-property/derived
-                           lift-methods lift-methods/derived
-                           1+ 0-1 0+)
-         (define-element name-id
-           maybe-inset
-           contract-option ...
-           type+prose)
-         #:grammar
-         [(maybe-inset code:blank
-                       (code:line #:inset? inset?-expr))
-          (contract-option #:contains-text
-                           (code:line #:extra-check extra-check-expr)
-                           (code:line #:attr-contracts attr-contracts-spec)
-                           (code:line #:required-attrs (attr-name-id ...))
-                           (code:line #:children children-spec)
-                           (code:line #:required-order (child-name-id ...)))
-          (attr-contracts-spec ([attr-name-id attr-contract-expr] ...))
-          (children-spec ([repeat-constraint child-name-id] ...))
-          (repeat-constraint 1 1+ 0-1 0+)
-          (type+prose (code:line struct-type-def #:prose [prose-body ...+])
-                      (code:line #:prose [prose-body ...+] struct-type-def))
-          (struct-type-def (code:line struct-type-def-part ...))
-          (struct-type-def-part (code:line #:predicate predicate-name-id)
-                                (code:line #:constructor ctor-spec)
-                                (code:line #:property prop-expr prop-val-expr)
-                                (code:line #:methods generic-id [methods-body ...]))
-          (ctor-spec [ctor-arg-binding ...
-                      ctor-body ...])
-          (ctor-arg-binding (code:line #:name name-arg-id)
-                            (code:line #:attributes attributes-arg-id)
-                            (code:line #:body body-arg-id)
-                            (code:line #:body/elements-only body/elements-only-arg-id))
-          (ctor-body plain-ctor-body
-                     (code:line special-ctor-form (code:comment "after partial expansion")))
-          (special-ctor-declaration (field . _)
-                                    (field/derived . _)
-                                    (lift-property . _)
-                                    (lift-property/derived . _)
-                                    (lift-methods . _)
-                                    (lift-methods/derived . _))
-          ]
-         #:contracts ([extra-check-expr
-                       (or/c #f (-> raw-xexpr-element/c
-                                    (or/c blame? #f)
-                                    any/c
-                                    any/c))]
-                      [attr-contract-expr flat-contract?]
-                      [prop-expr struct-type-property?]
-                      )]{
+@defform[
+ #:literals (field field/derived
+                   lift-begin lift-begin/derived
+                   lift-property lift-property/derived
+                   lift-methods lift-methods/derived
+                   1+ 0-1 0+)
+ (define-element name-id
+   maybe-inset
+   contract-option ...
+   type+prose)
+ #:grammar
+ [(maybe-inset code:blank
+               (code:line #:inset? inset?-expr))
+  (contract-option #:contains-text
+                   (code:line #:extra-check extra-check-expr)
+                   (code:line #:attr-contracts attr-contracts-spec)
+                   (code:line #:required-attrs (attr-name-id ...))
+                   (code:line #:children children-spec)
+                   (code:line #:required-order (child-name-id ...)))
+  (attr-contracts-spec ([attr-name-id attr-contract-expr] ...))
+  (children-spec ([repeat-constraint child-name-id] ...))
+  (repeat-constraint 1 1+ 0-1 0+)
+  (type+prose (code:line struct-type-def #:prose [prose-body ...+])
+              (code:line #:prose [prose-body ...+] struct-type-def))
+  (struct-type-def (code:line struct-type-def-part ...))
+  (struct-type-def-part (code:line #:predicate predicate-name-id)
+                        (code:line #:constructor ctor-spec)
+                        (code:line #:property prop-expr prop-val-expr)
+                        (code:line #:methods generic-id [methods-body ...])
+                        (code:line #:begin [begin-body ...]))
+  (ctor-spec [ctor-arg-binding ...
+              ctor-body ...])
+  (ctor-arg-binding (code:line #:name name-arg-id)
+                    (code:line #:attributes attributes-arg-id)
+                    (code:line #:body body-arg-id)
+                    (code:line #:body/elements-only body/elements-only-arg-id)
+                    (code:line #:this/thunk this/thunk-id))
+  (ctor-body plain-ctor-body
+             (code:line special-ctor-form (code:comment "after partial expansion")))
+  (special-ctor-declaration (field . _)
+                            (field/derived . _)
+                            (lift-begin . _)
+                            (lift-begin/derived . _)
+                            (lift-property . _)
+                            (lift-property/derived . _)
+                            (lift-methods . _)
+                            (lift-methods/derived . _))
+  ]
+ #:contracts ([extra-check-expr
+               (or/c #f (-> raw-xexpr-element/c
+                            (or/c blame? #f)
+                            any/c
+                            any/c))]
+              [attr-contract-expr flat-contract?]
+              [prop-expr struct-type-property?]
+              )]{
 
  The @racket[define-element] form declares the specification
  for the TEI XML element @racket[name-id], including documentation,
@@ -130,6 +136,10 @@
  the @racket[get-field] form may be used to access
  @tech{tei element struct fields} (discussed below) if
  any are defined.
+ A @racket[#:begin] clause causes its @racket[begin-body] forms
+ to be spliced into the surrounding context,
+ but wraped to cooperate with @racket[get-field] like
+ @racket[prop-val-expr] and @racket[methods-body] forms.
 
  The @racket[ctor-spec] (when given) defines an initialization
  function for the @tech{tei element struct type}.
@@ -152,6 +162,15 @@
  Note that it is a syntax error for the keywords 
  @racket[#:body/elements-only] and @racket[#:contains-text]
  to appear together.
+ 
+ The @racket[#:this/thunk] @racket[ctor-arg-binding] clause
+ is slightly different: its presence causes @racket[this/thunk-id]
+ to be bound to a thunk that returns the @tech{tei element struct}
+ currently being constructed (i.e. ``this'').
+ Such a thunk obviously cannot be called during the dynamic extent
+ of the constructor without raising a use-before-definition error,
+ but it can be useful in creating fields that contain promises,
+ for example.
 
  The @racket[ctor-body] forms are partially expanded
  (including flattening @racket[begin]) to distinguish
@@ -169,8 +188,10 @@
             #:grammar
             [(field-option accessor-opt check-opt)
              (accessor-opt code:blank
+                           infer-opt
                            (code:line #:accessor maybe-accessor)
                            [#:accessor maybe-accessor])
+             (infer-opt #:infer [#:infer])
              (maybe-accessor accessor-id #f)
              (check-opt code:blank
                         (code:line #:check check-expr)
@@ -206,13 +227,21 @@
   only once, and the contract is applied just before the
   @tech{tei element struct} instance is created.
   
-  If an @racket[accessor-id] is given, it is bound in the context of
-  the enclosing @racket[define-element] form to a function that accesses
-  the value of the field.
-  A field with no @racket[accessor-id] specified can still be
-  accessed via the @racket[get-field] form inside the text of a
-  @racket[prop-val-expr] or @racket[methods-body] subform
-  of @racket[define-element]. Read on for details.
+  If an @racket[accessor-id] or @racket[infer-opt] is given,
+  a function that accesses the value of the field is bound 
+  in the context of the enclosing @racket[define-element] form.
+  If an @racket[accessor-id] is given, it is used as the name of
+  the defined function (including its lexical context).
+  Otherwise, if @racket[infer-opt] is given, an identifier is
+  synthesized with the lexical context of @racket[field-name-id]
+  in the form @racket[name-id]@racketidfont{-}@racket[field-name-id],
+  where @racket[name-id] is the name of the element currently
+  being defined.
+  
+  A field with no @racket[accessor-id] or @racket[infer-opt] specified 
+  can still be accessed via the @racket[get-field] form inside the text of a
+  @racket[begin-body], @racket[prop-val-expr], or @racket[methods-body]
+  subform of @racket[define-element]. Read on for details.
  }                   
 
  @deftogether/indent[              
@@ -220,7 +249,8 @@
              (get-field field-name-id target-expr)]] 
    @defform*[[(get-field/derived orig-datum field-name-id)
               (get-field/derived orig-datum field-name-id target-expr)]])]{
-  Inside the text of a @racket[prop-val-expr] or @racket[methods-body] subform
+  Inside the text of a @racket[begin-body], @racket[prop-val-expr],
+  or @racket[methods-body] subform
   of @racket[define-element], @racket[(get-field field-name-id)]
   expands to a procedure that accesses the field @racket[field-name-id]
   (which must have been declared with @racket[field])
@@ -241,10 +271,10 @@
  Macros can take advantage of @racket[field] and @racket[get-field]'s
  respect for scope to add fields
  to a @tech{tei element struct type} ``hygenically''.
- The @racket[lift-property] and @racket[lift-methods]
+ The @racket[lift-begin], @racket[lift-property], and @racket[lift-methods]
  @racket[special-ctor-declaration] forms are designed to make it
  convienient for a macro to expand to both a @racket[field] declaration
- and the use of the defined
+ and the use of the defined field.
 
  @deftogether/indent[              
  (@defform[(lift-property prop-expr prop-val-expr)]
@@ -254,7 +284,7 @@
   the constructor definition to attach a structure type property
   to the @tech{tei element struct type} being defined, roughly
   as though it were @racket[#:property prop-expr prop-val-expr].
-  Because it is lifted, binding from the @racket[plain-ctor-body] forms
+  Because it is lifted, bindings from the @racket[plain-ctor-body] forms
   are not in scope in the @racket[prop-expr] or @racket[prop-val-expr];
   however, in the @racket[prop-val-expr], @racket[get-field] may be used
   to access @tech{tei element struct fields}.
@@ -267,6 +297,12 @@
                                   [methods-body ...])])]{
   Like @racket[lift-property], but for a @racket[#:methods] clause.
  }          
+
+ @deftogether/indent[             
+ (@defform[(lift-begin begin-body ...)]
+   @defform[(lift-begin/derived orig-datum begin-body ...)])]{
+  Like @racket[lift-property], but for a @racket[#:begin] clause.
+ }
 }
 
 
@@ -288,15 +324,20 @@ Several derived forms are included as alternatives to the
 primative @racket[field] declaration.
 
 @deftogether[
- (@defform[(define/field field/opts
+ (@defform[(define/field maybe-infer field/opts
              rhs ...)]
-   @defform[(define/field/derived orig-datum field/opts
+   @defform[(define/field/derived orig-datum maybe-infer field/opts
               rhs ...)
-            #:grammar ([field/opts field-name-id
-                        [field-name-id field-option ...]])])]{
+            #:grammar [(maybe-infer code:blank #:infer)
+                       (field/opts field-name-id
+                                   [field-name-id field-option ...])]])]{
  Combines @racket[define] with a @racket[field] declaration,
  where @racket[field-option], if present, is the same as
  for @racket[field].
+ 
+ When the @racket[#:infer] keyword is given for @racket[maybe-infer],
+ @racket[#:infer] is implicitly added before the first
+ @racket[field-option].
  
  Multiple @racket[rhs] forms are implicitly wrapped with
  @racket[let] if needed.
@@ -306,23 +347,31 @@ primative @racket[field] declaration.
  left-hand side.
 }
 
-@defform[(define-fields [field/opts rhs ...] ...)]{
+@defform[(define-fields maybe-infer [field/opts rhs ...] ...)]{
  Like @racket[def], but based on @racket[define/field]
  instead of @racket[define].
+ 
+ When the @racket[#:infer] keyword is given for @racket[maybe-infer],
+ it applies to all of the @racket[field/opts] subforms 
+ as with @racket[define/field].
 }
 
 @deftogether[
- (@defform[(define-values/fields (field/opts ...)
+ (@defform[(define-values/fields maybe-infer (field/opts ...)
              rhs ...)]
-   @defform[(define-values/fields/derived orig-datum (field/opts ...)
+   @defform[(define-values/fields/derived orig-datum maybe-infer (field/opts ...)
               rhs ...)])]{
  Like @racket[define/field], but based on @racket[define-values].
  The last @racket[rhs] form must be an expression that
  produces as many values as there are @racket[field/opts] forms.
+
+ When the @racket[#:infer] keyword is given for @racket[maybe-infer],
+ it applies to all of the @racket[field/opts] subforms 
+ as with @racket[define/field].
 }
 
 @defproc[#:kind "syntax class"
-         (field-name/maybe-opts [orig-datum syntax?])
+         (field-name/maybe-opts [orig-datum syntax?] [infer? #f])
          @#,tech[#:doc '(lib "syntax/scribblings/syntax.scrbl")]{syntax class}]{
  A syntax class recognizing the @racket[field/opts] subform
  of @racket[define/field].
@@ -330,6 +379,9 @@ primative @racket[field] declaration.
  @racket[name] is bound to the field name identifier,
  and @racket[declaration] is bound to a synthesized @racket[field/derived]
  declaration for the field, using @racket[orig-datum] for error reporting.
+
+ When @racket[infer?] is non-false, the @racket[#:infer] option is
+ implicitly added as with @racket[define/field].
 }
 
 

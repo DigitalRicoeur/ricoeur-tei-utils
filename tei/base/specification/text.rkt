@@ -11,6 +11,27 @@
                                 )
                      ))
 
+ƒ(begin-for-runtime
+   (require (submod ricoeur/tei/kernel private)
+            roman-numeral
+            )
+   (provide tei-pb?
+            tei-note?
+            (contract-out
+             [pb-get-page-string
+              (-> tei-pb? (maybe/c string?))]
+             [pb-get-kind
+              (-> tei-pb? (or/c 'none 'number 'roman 'other))]
+             [pb-get-numeric
+              (-> tei-pb? (maybe/c natural-number/c))]
+             [tei-note-get-place
+              (-> tei-note? (or/c 'foot 'end))]
+             [tei-note-get-n
+              (-> tei-note? string?)]
+             [tei-note-get-transl?
+              (-> tei-note? (or/c #f 'transl))]
+             )))
+
 ƒ(define-element text
    #:children ([0-1 front]
                [1 body]
@@ -95,13 +116,33 @@
  })
 
 ƒ(define-element pb
-   #:attr-contracts ([n any/c])
+   #:attr-contracts ([n string?])
    #:prose ƒ[]{
  The ƒtag{pb} element has no contents.
  Unless the corresponding page is not numbered in the source,
  it should have an ƒattr{n} attribute giving the page number
  as given in the source (i.e. possibly as a Roman numeral).
- })
+}
+   #:predicate tei-pb?
+   #:property prop:element->plain-text (λ (this) "\f")
+   #:constructor [
+ #:attributes attrs
+ (define n
+   (attributes-ref attrs 'n))
+ (define/field #:infer get-page-string
+   (false->maybe n))
+ (define-values/fields #:infer (get-kind get-numeric)
+   (match n
+     [#f (values 'none nothing)]
+     [(app string->number (? exact-nonnegative-integer? it))
+      (values 'number (just it))]
+     [(app (λ (n)
+             (exn->maybe exn:fail? roman->number n))
+           (just it))
+      (values 'roman (just it))]
+     [_
+      (values 'other nothing)]))
+ #|END pb|#])
 
 ƒ(define-element list
    #:children ([0+ head]
@@ -160,7 +201,37 @@
  element may contain a combination of
  free-form text and ƒtag{list}, ƒtag{note},
  and ƒtag{pb} elements.
- })
+}
+   #:property prop:element->plain-text
+   (λ (this)
+     (define body
+       (tei-element-get-body this))
+     (cond
+       [(null? body)
+        ""]
+       [else
+        (let* ([body (for/list ([child (in-list body)])
+                       (if (tei-element? child)
+                           child
+                           (element-or-xexpr->plain-text child)))]
+               [body (if (string? (first body))
+                         (cons (string-trim (first body)
+                                            #:right? #f)
+                               (rest body))
+                         body)]
+               [body (if (string? (last body))
+                         (append (drop-right body 1)
+                                 (list (string-trim (last body)
+                                                    #:left? #f)))
+                         body)]
+               [body (for/list ([child (in-list body)])
+                       (if (string? child)
+                           (string-normalize-spaces child #:trim? #f)
+                           (element-or-xexpr->plain-text child)))])
+          (string-join body
+                       ""
+                       #:before-first "\n"
+                       #:after-last "\n"))])))
 
 ƒ(define-element head
    #:contains-text
@@ -182,23 +253,34 @@
                      [type "transl"]
                      [n any/c])
    #:required-attrs (place n)
+   #:predicate tei-note?
+   #:constructor
+   [#:attributes attrs
+    (define-fields
+      ([n #:accessor tei-note-get-n]
+       (attributes-ref attrs 'n))
+      ([place #:accessor tei-note-get-place]
+       (string->symbol (attributes-ref attrs 'place)))
+      ([transl? #:accessor tei-note-get-transl?]
+       (and (attributes-ref attrs 'transl)
+            'transl)))]
    #:prose ƒ{
- The ƒtag{note} element
- may contain a combination of free-form text
- and ƒtag{list}, ƒtag{note}, ƒtag{p}, and
- ƒtag{ab} elements.
- It must have a ƒtt{place} attribute with
- a value of either ƒracket["foot"] or
- ƒracket["end"].
- It must also have an ƒattr{n} attribute giving the
- the number or symbol for the footnote or endnote.
- Translation notes should have a ƒattr{type} attribute
- with a value of ƒracket["transl"].
- Any ƒtag{note} element may, and a ƒtag{note} representing a
- note not by Paul Ricœur must, have a ƒattr{resp} attribute
- that is valid per the TEI standard, as discussed above under
- ƒsecref["Sections_Not_by_Ric_ur"].
- })
+     The ƒtag{note} element
+     may contain a combination of free-form text
+     and ƒtag{list}, ƒtag{note}, ƒtag{p}, and
+     ƒtag{ab} elements.
+     It must have a ƒtt{place} attribute with
+     a value of either ƒracket["foot"] or
+     ƒracket["end"].
+     It must also have an ƒattr{n} attribute giving the
+     the number or symbol for the footnote or endnote.
+     Translation notes should have a ƒattr{type} attribute
+     with a value of ƒracket["transl"].
+     Any ƒtag{note} element may, and a ƒtag{note} representing a
+     note not by Paul Ricœur must, have a ƒattr{resp} attribute
+     that is valid per the TEI standard, as discussed above under
+     ƒsecref["Sections_Not_by_Ric_ur"].
+     })
 
 ƒ(define-element item
    #:contains-text

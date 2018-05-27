@@ -3,6 +3,7 @@
 (require racket/contract
          racket/class
          gregor
+         adjutor
          (for-syntax racket/base
                      syntax/parse
                      ))
@@ -11,14 +12,23 @@
          plain-TEI-info?
          TEI-info<%>
          guess-paragraphs-status/c
+         tei-title 
+         tei-citation 
+         tei-orig-publication-date 
+         tei-publication-date 
+         tei-publication-original? 
+         tei-book/article 
+         tei-document-paragraphs-status
          (contract-out
+          [tei-get-resp-string
+           (-> TEI-info? symbol? string?)]
           [get-plain-TEI-info
            (-> TEI-info?
                plain-TEI-info?)]
           [prop:TEI-info
            (struct-type-property/c
             (-> any/c plain-TEI-info?))]
-          [TEI-info-mixin ;needs contract
+          [TEI-info-mixin 
            (and/c mixin-contract
                   (-> TEI-info-mixin-arg/c
                       (class/c
@@ -50,21 +60,6 @@
         'done
         'skip))
         
-#|
-get-title
-get-publication-date
-get-orig-publication-date
-get-citation
-get-book/article
-get-resp-string
-;; get-guess-paragraphs-status currently exists, but
-;; may want to abstract over more details for public interface
-get-guess-paragraphs-status
-;;;;;;;;;;;
-;; Things that probably should be added:
-get-this-is-original?
-
-|#
 
 (struct plain-TEI-info (title
                         resp-table
@@ -95,8 +90,43 @@ get-this-is-original?
                   book/article
                   guess-paragraphs-status)) 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (define (get-plain-TEI-info v)
   ((get-get-plain v) v))
+
+(define-syntax-rule (define-simple/plain [name simple-proc] ...)
+  (begin (define (name this)
+           (simple-proc (get-plain-TEI-info this)))
+         ...))
+
+(define-simple/plain
+  [tei-title plain-TEI-info-title]
+  [tei-citation plain-TEI-info-citation]
+  [tei-orig-publication-date plain-TEI-info-orig-publ-date]
+  [tei-publication-date plain-TEI-info-this-publ-date]
+  [tei-publication-original? plain-TEI-info-publication-original?]
+  [tei-book/article plain-TEI-info-book/article]
+  [tei-document-paragraphs-status plain-TEI-info-guess-paragraphs-status])
+
+   
+(define (plain-TEI-info-get-resp-string plain
+                                        resp
+                                        [who 'plain-TEI-info-get-resp-string])
+  (or (hash-ref (plain-TEI-info-resp-table plain) resp #f)
+      (raise-arguments-error who
+                             "given resp symbol not found"
+                             "given" resp)))
+  
+(define (tei-get-resp-string info resp)
+  (plain-TEI-info-get-resp-string (get-plain-TEI-info info)
+                                  resp 
+                                  'tei-get-resp-string))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define-values {TEI-info<%> TEI-info-mixin-arg/c TEI-info-mixin}
   (let ()
@@ -122,8 +152,15 @@ get-this-is-original?
          (TEI-info<%>)
          ([prop:TEI-info 
            (λ (this) 
-             (send-generic this gen:get-plain))]))
-        ))
+             (send-generic this gen:get-plain))])
+         get-title 
+         get-citation 
+         get-orig-publication-date 
+         get-publication-date 
+         get-publication-original? 
+         get-book/article 
+         get-guess-paragraphs-status 
+         [get-resp-string (->m symbol? string?)])))
     (values
      TEI-info<%>
      absent/c
@@ -134,7 +171,32 @@ get-this-is-original?
          (get-plain-TEI-info raw))
        (define/public-final (get-plain)
          plain)
+       (define/public-final (get-resp-string resp)
+         (plain-TEI-info-get-resp-string plain resp 'get-resp-string))
+       (define-syntax-rule (define-simple-methods/plain [name simple-proc] ...)
+         (begin (define/public-final (name)
+                  (simple-proc plain))
+                ...))
+       (define-simple-methods/plain
+         [get-title plain-TEI-info-title]
+         [get-citation plain-TEI-info-citation]
+         [get-orig-publication-date plain-TEI-info-orig-publ-date]
+         [get-publication-date plain-TEI-info-this-publ-date]
+         [get-publication-original? plain-TEI-info-publication-original?]
+         [get-book/article plain-TEI-info-book/article]
+         [get-guess-paragraphs-status plain-TEI-info-guess-paragraphs-status])
        #|END mixin|#))))
+
+(TODO/void Split TEI-info interface into a bibliographic part
+           and a document-specific part.)
+;; TODO: I think it might make sense in connection with 
+;; this ongoing round of breaking API changes
+;; to split the TEI-info interface into a bibliographic information part
+;; and a document-specific part, so that the bibliographic part
+;; might eventually come from our bibliographic database rather than
+;; the TEI XML files.
+;; The document-specific part might eventually contain the
+;; value from tei-document-md5 as well as tei-document-paragraphs-status.
 
 
 

@@ -28,9 +28,7 @@
    @defproc[(tei-element-get-body [e tei-element?])
             (listof (or/c tei-element? normalized-xexpr-atom/c))]
    @defproc[(tei-get-body/elements-only [e elements-only-element?])
-            (listof tei-element?)]
-   @defproc[(tei-element-to-xexpr [e tei-element?])
-            (and/c any-tei-xexpr/c normalized-xexpr-element/c)])]{
+            (listof tei-element?)])]{
 
  This library uses @deftech{tei element structs}, a layer of
  abstraction over @tech{normalized x-expressions},
@@ -45,7 +43,7 @@
  However, the specific representations of many
  @tech{tei element struct types} are kept private to this library:
  for robustness against future changes to Digital @|Ricoeur|'s TEI schema,
- clients are encouraged to use high-level interfaces that abstract
+ clients are urged to use high-level interfaces that abstract
  over the details of the document structure.
 
  All @tech{tei element struct types} support the common set of
@@ -53,12 +51,6 @@
  contents; however, these functions are fairly low-level and
  should primarily be used to implement higher-level abstractions,
  ordinarily as part of this library.
-
- Any @tech{tei element struct} may be converted to a
- @tech{normalized x-expression} using @racket[tei-element-to-xexpr].
- The XML representation is the cannonical serialized form:
- @tech{tei element structs} are not serializable in the sense of
- @racketmodname[racket/serialize].
 
  Every @tech{tei element struct} satisfies either
  @racket[content-containing-element?] or @racket[elements-only-element?]
@@ -69,96 +61,40 @@
  @racket[tei-element-get-body] will never contain any strings:
  any insignificant whitespace inside such elements is 
  dropped when the @tech{tei element struct} is constructed.
- 
 }
 
-
-
-@section{TEI Info Values}
-@defpredicate[TEI-info?]{
-
- A @deftech{TEI info} value encapsulates some high-level
- information about a TEI XML document following
- Digital @|Ricoeur|'s schema.
- (It does not retain necessarily retain the actual content of
- the document.)
- The predicate @racket[TEI-info?] recognizes @tech{TEI info} values.
-
- All @tech{TEI info} values support the same high-level API,
- and new kinds of values (including class-based objects)
- can implement the @tech{TEI info} interface.
- 
+@defproc[(tei-element->xexpr [e tei-element?])
+         (and/c any-tei-xexpr/c normalized-xexpr-element/c)]{
+ Any @tech{tei element struct} may be converted to a
+ @tech{normalized x-expression} using @racket[tei-element->xexpr].
+ XML is the cannonical serialized form of a tei element struct:
+ tei element structs are not serializable in the sense of
+ @racketmodname[racket/serialize].
 }
 
-@defproc[(get-plain-TEI-info [info TEI-info?])
-         plain-TEI-info?]{
- Converts any @tech{TEI info} value to a @deftech{plain TEI info} value,
- which serves as a cannonical form of the encapsulated information.
+@defproc[(element-or-xexpr->plain-text [v (or/c tei-element? raw-xexpr-atom/c)])
+         string?]{
+ Converts @racket[v] to a plain-text string.
+ The resulting string is @bold{not} the XML representation of @racket[v]:
+ it is formated for uses that expect unstructured plain text.
+
+ For implementation details, see @racket[prop:element->plain-text].
 }
 
-@TODO/scrbl[[TEI info: implement & document the actual methods]]
-
-@subsection{Derived TEI Info}
-@defthing[prop:TEI-info (struct-type-property/c
-                         (-> any/c plain-TEI-info?))]{
- New kinds of values can support the @tech{TEI info} API 
- through the structure type property @racket[prop:TEI-info].
- The value for the @racket[prop:TEI-info] must be a function
- that, given an instance of the new structure type,
- returns a @tech{plain TEI info} value.
- The function should always return the same
- @tech{plain TEI info} value when called with the same argument:
- this requirement is not currently enforced, but may be
- in the future.
-
- Special support is provided for using class-based objects
- as @tech{TEI info} values via @racket[TEI-info-mixin].
+@defthing[prop:element->plain-text (struct-type-property/c
+                                    (-> any/c string?))]{
+ The definition of a @tech{tei element struct type} can use
+ @racket[prop:element->plain-text] to override the default
+ behavior of @racket[element-or-xexpr->plain-text].
+ Note that attaching @racket[prop:element->plain-text] to
+ unrelated struct types has no effect: it is only used
+ for @tech{tei element structs}.
+                                                         
+ @TODO/scrbl[[prop:element->plain-text |shouldn't| be documented here.]]{
+  @bold{TODO:} Document this somewhere else.}
 }
 
-@defpredicate[plain-TEI-info?]{
- Recognizes @tech{plain TEI info} values.
-}
-
-
-@subsubsection{Class-based Objects}
-@defmixin[TEI-info-mixin () (TEI-info<%>)]{
-
- An instance of a class extended with @racket[TEI-info-mixin]
- can be used as a @tech{TEI info} value.
- This is the prefered way for class-based objects
- to support the @tech{TEI info} API.
-
- The resulting class will implement the @racket[TEI-info<%>]
- interface, which also makes some of the @tech{TEI info}
- functions available as methods for use with @racket[inherit],
- @racket[send], etc.
-                                           
- @defconstructor/auto-super[([TEI-info TEI-info?])]{                  
-
-  The @racket[TEI-info] initialization argument determines
-  the behavior of @(this-obj) when used as a @tech{TEI info} value.
-  
-  Specifically, @racket[(get-plain-TEI-info #,(this-obj))]
-  will return the same @tech{plain TEI info} value as
-  @racket[(get-plain-TEI-info TEI-info)].
-                                                    
-}}
-
-@definterface[TEI-info<%> ()]{
-
- An interface identifying classes which have been extended
- with @racket[TEI-info-mixin].
- Objects which implement @racket[TEI-info<%>] can be used
- as @tech{TEI info} values.
-
- In addition to the methods documented below,
- @racket[TEI-info<%>] also includes additional, private methods:
- @racket[TEI-info<%>] can only be implemented
- using @racket[TEI-info-mixin].
-
- 
-                              
-}
+@include-section["tei-info.scrbl"]
 
 
 
@@ -170,13 +106,13 @@
                     )
 
 @defproc[(file->TEI [file (and/c path-string? file-exists?)])
-         TEI?]{
+         tei-document?]{
  Produces a @tech{tei element struct} representing
  the TEI XML document @racket[file].
 }
 
 @defproc[(read-TEI [in input-port? (current-input-port)])
-         TEI?]{
+         tei-document?]{
  Produces a @tech{tei element struct} representing the TEI XML
  document read from @racket[in].
 }
@@ -187,17 +123,101 @@
  representation of a TEI XML element to a @tech{tei element struct}.
 }
 
-@defpredicate[TEI?]{
+@defpredicate[tei-document?]{
  Recognizes @tech{tei element structs} that represent
  the root @tag{TEI} element of a document.
 }
 
+@defproc[(write-tei-document [doc tei-document?]
+                             [out output-port? (current-output-port)])
+         any]{
+ Writes the XML representation of @racket[doc] to out,
+ prettyprinted using @racket[call/prettyprint-xml-out].
 
+ Use @racket[write-tei-document] rather than
+ @racket[(write-xexpr (tei-element->xexpr doc) out)]
+ because @racket[write-tei-document] also writes
+ an XML declaration and appropriate DOCTYPE declaration.
+}
 
+@defproc[(tei-document-md5 [doc tei-document?])
+         string?]{
+ Returns the md5 checksum of @racket[doc],
+ based on a standardized XML representation.
 
+ @TODO/scrbl[[tei-document-md5 or equal-hash-code]]{
+  @bold{TODO:} Could this purpose be served by @racket[equal-hash-code]?
+  Unclear.
+  
+  The docs say ``For any @racket[v] that could be produced by @racket[read],
+  if @racket[v2] is produced by @racket[read] for the same input characters,
+  the @racket[(equal-hash-code v)] is the same as @racket[(equal-hash-code v2)]
+  — even if @racket[v] and @racket[v2] do not exist at the same time
+  (and therefore could not be compared by calling @racket[equal?]).''
 
+  I'm not sure if this applies across multiple runs, and it sounds like this
+  guarantee is @italic{only} for @racket[read]-able values.
+  If I would have to make an normalized xexpr anyway, maybe just stick with md5.
+ }
+}
 
+@subsection{Page-break Elements}
+@defpredicate[tei-pb?]{
+ Recognizes @tech{tei element structs} that represent
+ @tag{pb} (page-break) elements.
+}
 
+@deftogether[
+ (@defproc[(pb-get-kind [pb tei-pb?])
+           (or/c 'none 'number 'roman 'other)]
+   @defproc[(pb-get-numeric [pb tei-pb?])
+            (maybe/c natural-number/c)]
+   @defproc[(pb-get-page-string [pb tei-pb?])
+            (maybe/c string?)])]{
+ This library groups page-breaks into several kinds based on
+ their number, i.e. the @attr{n} attribute of the @tag{pb} element.
+ The kind of number can be identified
+ by the result of @racket[pb-get-kind]:
+ @(itemlist
+   @item{@racket['none]: The page was not numbered.}
+   @item{@racket['number]: The page was numbered with an Arabic numeral.}
+   @item{@racket['roman]: The page was numbered with a Roman numeral.}
+   @item{@racket['other]: The page has a ``number''
+  according to the @attr{n} attribute, but the @attr{n} attribute value
+  is not in a format this library can understand.
+  })
+
+ When the kind is @racket['number] or @racket['roman],
+ @racket[pb-get-numeric] returns a @racket[just] value containing
+ the page number as a Racket integer.
+
+ Unless the kind is @racket['none], @racket[pb-get-page-string] returns
+ a @racket[just] value containing the raw string given as the @attr{n} attribute.
+
+ Recall that a @tag{pb} element marks the beginning the specified page.
+}
+
+@subsection{Footnote and Endnote Elements}
+@defpredicate[tei-note?]{
+ Recognizes @tech{tei element structs} that represent
+ @tag{note} elements, which are used for footnotes and endnotes.
+}
+
+@defproc[(tei-note-get-place [note tei-note?])
+         (or/c 'foot 'end)]{
+ Indicates whether @racket[note] represents a footnote or an endnote. 
+}
+
+@defproc[(tei-note-get-n [note tei-note?])
+         string?]{
+ Returns a string representing how @racket[note]
+ was identified in the original, e.g. @racket["1"] or @racket["*"]. 
+}
+
+@defproc[(tei-note-get-transl? [note tei-note?])
+         (or/c #f 'transl)]{
+ Returns @racket['transl] if @racket[note] is a translation note.
+}
 
 
 @include-section["implementation.scrbl"]

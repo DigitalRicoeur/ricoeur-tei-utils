@@ -8,19 +8,23 @@
                   document-element
                   read-xml)
          "specification/specification.rkt"
+         (except-in "specification/text.rkt"
+                    text-spec)
          )
 
 (provide tei-xexpr/c
          static-tei-xexpr/c
          any-tei-xexpr/c
          tei-element-name/c
-         TEI?
+         (all-from-out "specification/text.rkt")
+         (except-out (all-from-out "specification/specification.rkt")
+                     main-spec)
          (contract-out
           [file->TEI
            (-> (and/c path-string? file-exists?)
-               TEI?)] 
+               tei-document?)] 
           [read-TEI
-           (->* {} {input-port?} TEI?)] 
+           (->* {} {input-port?} tei-document?)] 
           [xexpr->element
            (-> any-tei-xexpr/c tei-element?)]
           ))
@@ -59,5 +63,8 @@
 
 
 (module+ test
-  (file->TEI "/Users/philip/code/ricoeur/texts/TEI/ways_of_Worldmaking.xml"))
+  (provide example)
+  (define example
+    (file->TEI "/Users/philip/code/ricoeur/texts/TEI/ways_of_Worldmaking.xml"))
+  (tei-document-md5 example))
 
