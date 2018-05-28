@@ -323,6 +323,17 @@
 Several derived forms are included as alternatives to the
 primative @racket[field] declaration.
 
+@defform[(declare-resp-field option ...)
+         #:grammar [(option (code:line attributes-expr (code:comment "required"))
+                            (code:line #:key key-id))]]{
+ Creates a field (protected by lexical scope) and attaches assosciated
+ properties to make the element being defined work with
+ @racket[tei-element-resp].
+ The @racket[attributes-expr] should be the element's attribute list,
+ probably obtained via an @racket[#:attributes] @racket[_ctor-arg-binding]
+ clause in @racket[define-element].
+}
+
 @deftogether[
  (@defform[(define/field maybe-infer field/opts
              rhs ...)]
@@ -383,6 +394,7 @@ primative @racket[field] declaration.
  When @racket[infer?] is non-false, the @racket[#:infer] option is
  implicitly added as with @racket[define/field].
 }
+
 
 
 @section{Linking & Invoking}

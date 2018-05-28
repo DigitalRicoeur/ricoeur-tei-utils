@@ -5,11 +5,11 @@
 ƒtitle{The text Element}
 
 ƒ(require (for-label ricoeur/tei/kernel
+                     (submod "..")
                      (except-in racket
                                 date?
                                 date
-                                )
-                     ))
+                                )))
 
 ƒ(begin-for-runtime
    (require (submod ricoeur/tei/kernel private)
@@ -17,6 +17,8 @@
             )
    (provide tei-pb?
             tei-note?
+            div?
+            div-type/c
             (contract-out
              [pb-get-page-string
               (-> tei-pb? (maybe/c string?))]
@@ -30,6 +32,10 @@
               (-> tei-note? string?)]
              [tei-note-get-transl?
               (-> tei-note? (or/c #f 'transl))]
+             [div-get-type
+              (-> div? div-type/c)]
+             [div-get-n
+              (-> div? (maybe/c string?))]
              )))
 
 ƒ(define-element text
@@ -92,32 +98,41 @@
                 "ack"
                 "intro"
                 "index")]
+    [n string?]
     [resp #rx"^#.+$"])
    #:required-attrs (type)
+   #:predicate div?
+   #:begin [(define/final-prop div-type/c
+              (or/c 'chapter 'part 'section 'dedication
+                    'contents 'intro 'bibl 'ack 'index))]
    #:constructor [
  #:attributes attrs
- (add-resp-field attrs)
+ (declare-resp-field attrs)
+ (define-fields
+   #:infer
+   [get-type (string->symbol (attributes-ref attrs 'type))]
+   [get-n (false->maybe (attributes-ref attrs 'n))])
  #|END #:constructor|#]
    #:prose ƒ{
- The ƒtag{div} element may contain
- ƒtag{head}, ƒtag{list}, ƒtag{p},
- ƒtag{pb}, ƒtag{ab}, ƒtag{sp}, or nested ƒtag{div} elements.
- It must have a ƒattr{type} attribute with a value of
- ƒracket["chapter"], ƒracket["part"], ƒracket["section"],
- ƒracket["dedication"], ƒracket["contents"], ƒracket["intro"],
- ƒracket["bibl"] (for a bibliography),
- ƒracket["ack"] (for acknowledgements), or ƒracket["index"].
- If the division is numbered, it should have an
- ƒattr{n} attribute giving the page number
- as given in the source (i.e. possibly as a Roman numeral).
- Any ƒtag{div} element may, and a ƒtag{div} representing a
- section not by Paul Ricœur must, have a ƒattr{resp} attribute
- that is valid per the TEI standard, as discussed above under
- ƒsecref["Sections_Not_by_Ric_ur"].
- ƒmargin-note{If a type of division arises that does not
-  fit neatly into these categories, we should decide on a standard
-  value for the ƒtt{type} attribute and amend this document.}
- })
+      The ƒtag{div} element may contain
+      ƒtag{head}, ƒtag{list}, ƒtag{p},
+      ƒtag{pb}, ƒtag{ab}, ƒtag{sp}, or nested ƒtag{div} elements.
+      It must have a ƒattr{type} attribute with a value of
+      ƒracket["chapter"], ƒracket["part"], ƒracket["section"],
+      ƒracket["dedication"], ƒracket["contents"], ƒracket["intro"],
+      ƒracket["bibl"] (for a bibliography),
+      ƒracket["ack"] (for acknowledgements), or ƒracket["index"].
+      If the division is numbered, it should have an
+      ƒattr{n} attribute giving the page number
+      as given in the source (i.e. possibly as a Roman numeral).
+      Any ƒtag{div} element may, and a ƒtag{div} representing a
+      section not by Paul Ricœur must, have a ƒattr{resp} attribute
+      that is valid per the TEI standard, as discussed above under
+      ƒsecref["Sections_Not_by_Ric_ur"].
+      ƒmargin-note{If a type of division arises that does not
+       fit neatly into these categories, we should decide on a standard
+       value for the ƒtt{type} attribute and amend this document.}
+      })
 
 ƒ(define-element pb
    #:attr-contracts ([n string?])
@@ -173,12 +188,12 @@
    #:attr-contracts ([who #rx"^#.+$"])
    #:required-attrs (who)
    #:constructor [#:attributes attrs
-                  (add-resp-field attrs #:key who)]
+                  (declare-resp-field attrs #:key who)]
    #:prose ƒ{
- The ƒtag{sp} ("speech") element must have a valid ƒattr{who}
- attribute and may contain ƒtag{list}, ƒtag{p}, ƒtag{pb}, or ƒtag{ab}
- elements.
- })
+                   The ƒtag{sp} ("speech") element must have a valid ƒattr{who}
+                   attribute and may contain ƒtag{list}, ƒtag{p}, ƒtag{pb}, or ƒtag{ab}
+                   elements.
+                   })
 
 
 ƒsection{Content-Containing Elements}
@@ -262,7 +277,7 @@
    #:predicate tei-note?
    #:constructor
    [#:attributes attrs
-    (add-resp-field attrs)
+    (declare-resp-field attrs)
     (define-fields
       ([n #:accessor tei-note-get-n]
        (attributes-ref attrs 'n))

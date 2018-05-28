@@ -94,6 +94,21 @@
   @bold{TODO:} Document this somewhere else.}
 }
 
+@deftogether[
+ (@defproc[(tei-element-can-have-resp? [e any/c]) any/c]
+   @defproc[(tei-element-resp [e tei-element-can-have-resp?]
+                              [default (or/c 'ricoeur #f) 'ricoeur])
+            (if default
+                symbol?
+                (or/c symbol? #f))])]{
+ A uniform interface for accessing the @attr{resp} attribute of
+ @tag{div} and @tag{note} elements and the @attr{who} attribute of
+ @tag{sp} elements.
+ See also @racket[tei-get-resp-string].
+
+ For implementation details, see @racket[declare-resp-field].
+}
+
 @include-section["tei-info.scrbl"]
 
 
@@ -204,6 +219,18 @@
  Returns @racket['transl] if @racket[note] is a translation note.
 }
 
+@subsection{Chapter & Section Elements}
+@deftogether[
+ (@defpredicate[div?]
+   @defproc[(div-get-n [elem div?])
+            (maybe/c string?)]
+   @defproc[(div-get-type [elem div?])
+            div-type/c]
+   @defthing[div-type/c flat-contract?
+             #:value (or/c 'chapter 'part 'section 'dedication
+                           'contents 'intro 'bibl 'ack 'index)])]{
+@TODO/scrbl[[document div API]]{@bold{TODO:}} Document these.
+}
 
 @include-section["implementation.scrbl"]
 

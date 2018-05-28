@@ -10,10 +10,10 @@
                      syntax/parse
                      ))
 
-(provide add-resp-field
+(provide declare-resp-field
          )
 
-(define-syntax-parser add-resp-field
+(define-syntax-parser declare-resp-field
   [(_ (~alt (~once (~seq attrs)
                    #:name "attributes expression")
             (~optional (~seq #:key key-id:id)
@@ -24,7 +24,8 @@
                            #:name "attributes expression")
    #:with (f.name) (generate-temporaries '(resp-field))
    #`(begin
-       (define/field f.name
+       (define/field [f.name #:check (or/c symbol? #f)]
+         ;; FIXME
          (attributes-ref attrs.c 'key-id))
        (lift-property prop:resp
                       (λ (this)

@@ -7,7 +7,7 @@
 (provide tei-element-can-have-resp?
          (contract-out
           [tei-element-resp
-           (->* {tei-element?}
+           (->* {tei-element-can-have-resp?}
                 {(or/c 'ricoeur #f)}
                 (or/c symbol? #f))]
           ))
