@@ -168,16 +168,12 @@
                [0+ item]
                [0+ pb])
    #:attr-contracts
-   ([type (or/c "numbered" "bulleted")])
+   ([rend (or/c "numbered" "bulleted")])
    #:prose ƒ[]{
  The ƒtag{list} element may contain
  the ƒtag{head}, ƒtag{item}, and ƒtag{pb} elements.
  It may have a ƒattr{rend} attribute with a value of either
  ƒracket["numbered"] or ƒracket["bulleted"] (the default).
-
- ƒTODO/scrbl[[list element attribute #: Should it be rend or type?]]{
-  ƒbold{TODO!!} Is the attribute supposed to be ƒattr{rend}
-  or ƒattr{type}?}
  })
 
 ƒ(define-element sp
