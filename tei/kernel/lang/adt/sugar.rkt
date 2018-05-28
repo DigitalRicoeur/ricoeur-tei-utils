@@ -19,8 +19,6 @@
          (for-syntax field-name/maybe-opts
                      ))
 
-;; #:infer should be an option for field, not managed here
-
 (begin-for-syntax
   (define-syntax-rule (splice1-when expr)
     (let ([stx expr])

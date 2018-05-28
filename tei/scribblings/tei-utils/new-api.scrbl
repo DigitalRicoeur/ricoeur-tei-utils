@@ -144,21 +144,6 @@
          string?]{
  Returns the md5 checksum of @racket[doc],
  based on a standardized XML representation.
-
- @TODO/scrbl[[tei-document-md5 or equal-hash-code]]{
-  @bold{TODO:} Could this purpose be served by @racket[equal-hash-code]?
-  Unclear.
-  
-  The docs say ``For any @racket[v] that could be produced by @racket[read],
-  if @racket[v2] is produced by @racket[read] for the same input characters,
-  the @racket[(equal-hash-code v)] is the same as @racket[(equal-hash-code v2)]
-  — even if @racket[v] and @racket[v2] do not exist at the same time
-  (and therefore could not be compared by calling @racket[equal?]).''
-
-  I'm not sure if this applies across multiple runs, and it sounds like this
-  guarantee is @italic{only} for @racket[read]-able values.
-  If I would have to make an normalized xexpr anyway, maybe just stick with md5.
- }
 }
 
 @subsection{Page-break Elements}

@@ -33,6 +33,14 @@
          lift-property/derived
          lift-methods/derived
          lift-begin/derived
+         local-name-arg
+         local-attributes-arg
+         local-body-arg
+         local-body/elements-only
+         local-name-arg/derived
+         local-attributes-arg/derived
+         local-body-arg/derived
+         local-body/elements-only/derived
          )
 
 (module+ private
@@ -379,9 +387,51 @@
       lst
       new))
 
-(define-syntax-parameter local-this-thunk
+(define-syntax-parameter local-this/thunk
   (λ (stx)
     (raise-syntax-error #f "used out of context" stx)))
+
+;;;;
+
+(define-for-syntax raise-outside-constructor-context-error
+  (syntax-parser
+    [(_ orig-datum)
+     (raise-syntax-error
+      #f "only allowed inside an element definition constructor spec"
+      #'orig-datum)]))
+
+(define-syntax-parser define-arg-forms
+  [(_ name:id)
+   #:with name* (format-id #'name
+                           "~a*" #'name
+                           #:source #'name)
+   #:with name/derived (format-id #'name
+                                  "~a/derived" #'name
+                                  #:source #'name)
+   #`(begin (define-syntax-parameter name*
+              raise-outside-constructor-context-error)
+            (define-syntax-parser name
+              [n:id
+               #'(name* n)])
+            (define-syntax-parser name/derived
+              [(_ orig-datum)
+               #'(name* orig-datum)]))]
+  [(_ name:id more:id ...+)
+   #'(begin (define-arg-forms name)
+            (define-arg-forms more ...))])
+
+(define-arg-forms
+  local-name-arg
+  local-attributes-arg
+  local-body-arg
+  local-body/elements-only)
+
+
+(define-for-syntax local-body/elements-only*:error-contains-text
+  (syntax-parser
+    [(_ orig-datum)
+     (raise-syntax-error
+      #f "not allowed with #:contains-text" #'orig-datum)]))
 
 (begin-for-syntax
   (struct context-value ()
@@ -411,6 +461,10 @@
                                            #'parsed-lift-property
                                            #'parsed-lift-methods
                                            #'parsed-lift-begin
+                                           #'local-name-arg*
+                                           #'local-attributes-arg*
+                                           #'local-body-arg*
+                                           #'local-body/elements-only*
                                            #'define-values
                                            #'define-syntaxes
                                            #'begin ;; it's implicitly added, but let's be clear
@@ -521,15 +575,27 @@
           #,(if contains-text?
                 #'raw-body-arg
                 #'(filter-whitespace raw-body-arg)))
-        #,@(if contains-text?
-               null
-               (list #`(define-immutable #,body/elements-only-id
-                         (filter-elements-only #,body-arg-id))))
+        #,(if contains-text?
+              #'(begin)
+              #`(define-immutable #,body/elements-only-id
+                  (filter-elements-only #,body-arg-id)))
         #,(if this/thunk-id
               #`(define-immutable #,this/thunk-id
-                  local-this-thunk)
+                  local-this/thunk)
               #'(begin))
-        #,@body-forms-list
+        (splicing-syntax-parameterize
+            ([local-name-arg*
+              (make-variable-like-transformer #'raw-name-arg)]
+             [local-attributes-arg*
+              (make-variable-like-transformer #'raw-attributes-arg)]
+             [local-body-arg*
+              (make-variable-like-transformer #'#,body-arg-id)]
+             [local-body/elements-only*
+              #,(if contains-text?
+                    #'local-body/elements-only*:error-contains-text
+                    #'(make-variable-like-transformer
+                       #'#,body/elements-only-id))])
+          #,@body-forms-list)
         (#,raw-constructor-id raw-name-arg raw-attributes-arg #,body-arg-id
                               #,@(if contains-text?
                                      null
@@ -595,7 +661,7 @@
                  #`(λ (name attrs body)
                      (define rslt
                        (syntax-parameterize
-                           ([local-this-thunk (λ (stx)
+                           ([local-this/thunk (λ (stx)
                                                 #'(λ () rslt))])
                          (basic-wraped-ctor name attrs body)))
                      rslt)

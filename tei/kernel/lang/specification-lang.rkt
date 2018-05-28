@@ -24,6 +24,7 @@
                  racket/list
                  "stxparam.rkt"
                  "adt.rkt"
+                 "interface-macros.rkt"
                  )
 
 (provide (except-out (all-from-out racket/base)
