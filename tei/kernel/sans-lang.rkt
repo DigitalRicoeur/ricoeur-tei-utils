@@ -11,6 +11,7 @@
 
 (require-provide "base-structs.rkt"
                  "tei-info.rkt"
+                 "interfaces.rkt"
                  "xmllint.rkt"
                  "xexpr/plain-contracts.rkt"
                  "xexpr/normalize.rkt"

@@ -92,8 +92,12 @@
                 "ack"
                 "intro"
                 "index")]
-    [resp #rx"#.+"])
+    [resp #rx"^#.+$"])
    #:required-attrs (type)
+   #:constructor [
+ #:attributes attrs
+ (add-resp-field attrs)
+ #|END #:constructor|#]
    #:prose ƒ{
  The ƒtag{div} element may contain
  ƒtag{head}, ƒtag{list}, ƒtag{p},
@@ -166,8 +170,10 @@
                [0+ p]
                [0+ pb]
                [0+ ab])
-   #:attr-contracts ([who #rx"#.+"])
+   #:attr-contracts ([who #rx"^#.+$"])
    #:required-attrs (who)
+   #:constructor [#:attributes attrs
+                  (add-resp-field attrs #:key who)]
    #:prose ƒ{
  The ƒtag{sp} ("speech") element must have a valid ƒattr{who}
  attribute and may contain ƒtag{list}, ƒtag{p}, ƒtag{pb}, or ƒtag{ab}
@@ -249,13 +255,14 @@
                [0+ p]
                [0+ ab])
    #:attr-contracts ([place (or/c "foot" "end")]
-                     [resp #rx"#.+"]
+                     [resp #rx"^#.+$"]
                      [type "transl"]
-                     [n any/c])
+                     [n string?])
    #:required-attrs (place n)
    #:predicate tei-note?
    #:constructor
    [#:attributes attrs
+    (add-resp-field attrs)
     (define-fields
       ([n #:accessor tei-note-get-n]
        (attributes-ref attrs 'n))
