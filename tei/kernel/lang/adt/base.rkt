@@ -5,6 +5,7 @@
          (submod ricoeur/tei/kernel/base-structs
                  private)
          "../stxparam.rkt"
+         (submod "../stxparam.rkt" private)
          racket/contract
          racket/stxparam
          racket/splicing
@@ -338,14 +339,18 @@
                         
 (define-syntax-parser define-element-struct
   [(_ outer:outer-declarations body ...)
-   #`(define-element-struct/derived* #,this-syntax outer body ...)])
+   #`(splicing-syntax-parameterize-local-element-name
+      outer.element-name
+      (define-element-struct/derived* #,this-syntax outer body ...))])
 
 (define-syntax-parser define-element-struct/derived
   ;; Like define-element-struct/derived*, but blames
   ;; this-syntax (not original-datum) for bad outer-declarations.
   [(_ original-datum outer:outer-declarations
       body ...)
-   #`(define-element-struct/derived* original-datum outer body ...)])
+   #`(splicing-syntax-parameterize-local-element-name
+      outer.element-name
+      (define-element-struct/derived* original-datum outer body ...))])
 
 
 ;                                                                                          
@@ -569,7 +574,7 @@
              "not allowed for a text-containing element"
              #:do [(define-values {l-fields l-props l-methods l-begin-bodies l-value-ids l-bodies}
                      (expand-constructor-body
-                      (syntax->list #'(raw-body ...))))]
+                      (syntax->list #`(raw-body ...))))]
              #:fail-when (check-duplicate-identifier
                           (map field-record-name l-fields))
              "duplicate field name"
@@ -623,7 +628,9 @@
 ;                                                  
 ;                                                  
 
-(define-syntax-parser define-element-struct/derived* 
+(define-syntax-parser define-element-struct/derived*
+  ;; The "sugar" macro that expands to me is responsible
+  ;; for splicing-syntax-parameterize-local-element-name
   #:context (syntax-parse this-syntax
               [(_ original-datum _ ...)
                #'original-datum])

@@ -277,16 +277,14 @@
        (splicing-syntax-parameterize
            ([define-element error-inside-struct-def]
             [define-elements-together error-inside-struct-def])
-         (splicing-syntax-parameterize-local-element-name
-          name
-          (define-element-struct/derived
-            #,this-syntax
-            [#:wrapped-constructor-name wrapped-constructor-name
-             #:element-name name
-             #,(if (element-options-text? (attribute opts.parsed))
-                   #'#:contains-text
-                   #'#:elements-only)]
-            datatype ...))))
+         (define-element-struct/derived
+           #,this-syntax
+           [#:wrapped-constructor-name wrapped-constructor-name
+            #:element-name name
+            #,(if (element-options-text? (attribute opts.parsed))
+                  #'#:contains-text
+                  #'#:elements-only)]
+           datatype ...)))
    #:attr parsed
    (element-definition-group
     (list (element-info (syntax->datum #'name)
@@ -336,16 +334,14 @@
                                 (in-list
                                  (map syntax->list
                                       (syntax->list #'([datatype ...] ...))))])
-                      #`(splicing-syntax-parameterize-local-element-name
-                         #,name-stx
-                         (define-element-struct/derived
-                           #,this-syntax
-                           [#:wrapped-constructor-name #,wrapped
-                            #:element-name #,name-stx
-                            #,(if text?
-                                  #'#:contains-text
-                                  #'#:elements-only)]
-                           #,@datatype-splice)))))
+                      #`(define-element-struct/derived
+                          #,this-syntax
+                          [#:wrapped-constructor-name #,wrapped
+                           #:element-name #,name-stx
+                           #,(if text?
+                                 #'#:contains-text
+                                 #'#:elements-only)]
+                          #,@datatype-splice))))
            #:attr parsed
            (element-definition-group
             (for/list ([name-stx (in-syntax #'(decl.name ...))]

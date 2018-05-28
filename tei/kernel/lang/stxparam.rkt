@@ -64,7 +64,7 @@
                   splicing-syntax-parameterize-local-element-name}
   (let ([make (λ (stx-parameterize-id)
                 (syntax-parser
-                  [(_ name:id body:expr ...+)
+                  [(_ name:id body:expr ...)
                    #:with stx-parameterize stx-parameterize-id
                    #`(stx-parameterize 
                       ([local-element-name-stxparam #'name])
