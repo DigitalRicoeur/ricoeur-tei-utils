@@ -10,7 +10,7 @@
 
 ;; Dependencies:
 (define deps '(("base" #:version "6.12")
-               ("adjutor" #:version "0.2.3")
+               ("adjutor" #:version "0.2.4")
                "functional-lib"
                "roman-numeral"
                "gregor-lib"
