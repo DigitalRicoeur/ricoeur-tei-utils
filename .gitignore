@@ -16,7 +16,7 @@ compiled/
 *.toc
 *.sxref
 synced.rktd
-blueboxes.rkts
+blueboxes.rktd
 *IGNORE*
 migration-assistant.icns
 migration-assistant.ico
