@@ -2,6 +2,7 @@
 
 (require ricoeur/tei/tools/tei-lint/lib
          ricoeur/tei/tools/tei-lint/splash
+         ricoeur/tei/oop-kernel
          )
 
 (define splash-frame/no-button%
@@ -40,7 +41,7 @@
 
 (define abstract-splash-frame%
   (class splash-frame/no-button%
-    #;
+    ;
     (unless (xmllint-available?)
       (show-xmllint-warning this))
     (init 
