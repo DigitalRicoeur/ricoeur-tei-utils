@@ -14,6 +14,9 @@ compiled/
 *.synctex.gz
 *.tex
 *.toc
+*.sxref
+synced.rktd
+blueboxes.rkts
 *IGNORE*
 migration-assistant.icns
 migration-assistant.ico
