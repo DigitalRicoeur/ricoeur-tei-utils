@@ -36,7 +36,7 @@
   (or (find-executable-path "xmllint")
       (and (not (null? list:xmllint-win32-x86_64))
            (dynamic-require (car list:xmllint-win32-x86_64)
-                            'xml-lint
+                            'xmllint
                             (λ () #f)))
       (begin 
         (log-warning "xmllint not found")
