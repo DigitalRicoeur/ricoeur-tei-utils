@@ -1,17 +1,8 @@
 #lang racket/gui
 
-(require ricoeur/tei/oop
-         racket/runtime-path
-         data/maybe
-         xml/path
-         gregor
-         adjutor
-         pict
-         "lib.rkt"
-         )
-
-(provide abstract-splash-frame%
-         splash-frame/no-button%
+(require ricoeur/tei/tools/tei-lint/lib
+         ricoeur/tei/tools/tei-lint/splash
+         ricoeur/tei/oop-kernel
          )
 
 (define splash-frame/no-button%
@@ -28,14 +19,17 @@
       (new message%
            [parent col]
            [label "Digital Ricœur"]
+           ;
            [font (make-font #:family 'system
                             #:size 24)])
       (new message%
            [parent col]
            [label subtitle]
+           ;
            [font (make-font #:family 'system
                             #:size 36
                             #:weight 'bold)])
+      ;
       (new editor-message%
            [parent col]
            [content message])
@@ -45,17 +39,15 @@
     (show #t)
     #|END abstract-splash-frame/no-button%|#))
 
-
-
-
 (define abstract-splash-frame%
   (class splash-frame/no-button%
+    ;
+    (unless (xmllint-available?)
+      (show-xmllint-warning this))
     (init 
      [message "To begin, choose a directory containing TEI XML files."])
     (super-new 
      [message message])
-    (unless (xmllint-available?)
-      (show-xmllint-warning this))
     (abstract on-choose-directory)
     (define/override (on-initialize-col col)
       (new button%
@@ -68,6 +60,19 @@
           (on-choose-directory dir))))))
 
 
+
+
+
+
+
+(new (class abstract-splash-frame%
+       (super-new)
+       (define/override (on-choose-directory dir)
+         (void)))
+     [label "label"]
+     [subtitle "subtitle"]
+     [bitmap "bitmap"]
+     [message "message"])
 
 
 
