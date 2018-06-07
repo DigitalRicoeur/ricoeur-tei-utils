@@ -4,6 +4,8 @@
          )
 
 (require-provide ricoeur/tei/kernel
-                 ricoeur/tei/base/def-from-spec
-                 )
+                 (multi ricoeur/tei/base
+                        (def-from-spec
+                         get-page-breaks
+                         )))
 

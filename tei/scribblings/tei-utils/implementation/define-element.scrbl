@@ -167,10 +167,13 @@
  is slightly different: its presence causes @racket[this/thunk-id]
  to be bound to a thunk that returns the @tech{tei element struct}
  currently being constructed (i.e. ``this'').
- Such a thunk obviously cannot be called during the dynamic extent
- of the constructor without raising a use-before-definition error,
- but it can be useful in creating fields that contain promises,
- for example.
+ Internally, calling the thunk forces a thread-safe
+ @tech[#:doc '(lib "scribblings/reference/reference.scrbl")]{promise}
+ (see @racket[delay/sync]) that returns the instance.
+ Such a thunk cannot be used in a reentrant way,
+ which would be the moral equivalent of use-before-definition,
+ but it can immediately be used in background threads,
+ such as to create fields that contain @racket[delay/thread] promises.
 
  The @racket[ctor-body] forms are partially expanded
  (including flattening @racket[begin]) to distinguish
@@ -186,13 +189,18 @@
  (@defform[(field field-name-id field-option ...)]
    @defform[(field/derived orig-datum field-name-id field-option ...)
             #:grammar
-            [(field-option accessor-opt check-opt)
+            [(field-option accessor-opt print-opt check-opt)
              (accessor-opt code:blank
                            infer-opt
                            (code:line #:accessor maybe-accessor)
                            [#:accessor maybe-accessor])
              (infer-opt #:infer [#:infer])
              (maybe-accessor accessor-id #f)
+             (print-opt code:blank
+                        (code:line #:print? bool-literal)
+                        [#:print? bool-literal]
+                        #:hide
+                        [#:hide])
              (check-opt code:blank
                         (code:line #:check check-expr)
                         [#:check check-expr]
@@ -242,6 +250,12 @@
   can still be accessed via the @racket[get-field] form inside the text of a
   @racket[begin-body], @racket[prop-val-expr], or @racket[methods-body]
   subform of @racket[define-element]. Read on for details.
+
+  A @racket[print-opt] clause, when given, controls whether the field
+  is used for printing (as with @racket[print], @racket[write], and
+  @racket[display]).
+  The field is not printed if @racket[#:hide] appears or it
+  @racket[#:print?] is used with @racket[#f].
  }                   
 
  @deftogether/indent[              

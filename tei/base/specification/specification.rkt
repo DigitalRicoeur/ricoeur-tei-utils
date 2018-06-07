@@ -4,7 +4,7 @@
   #:extends teiHeader-spec text-spec
   #:with-local local-spec]
 
-ƒtitle[#:version ""]{Formal Specification}
+ƒtitle[#:version "" #:style '(toc)]{Formal Specification}
 
 ƒ(require (for-label ricoeur/tei/kernel
                      (except-in racket
@@ -41,7 +41,7 @@ the TEI XML elements remains in sync with the Racket code that
 enforces those requirements, this section is generated from
 the same source file that defines the Racket enforcement code.
 
-ƒsection{Document Structure}
+ƒ;section{Document Structure}
 ƒ(define-element TEI
    #:children ([1 teiHeader]
                [1 text])
@@ -53,18 +53,22 @@ the same source file that defines the Racket enforcement code.
    #:constructor
    [#:body/elements-only body/elements-only
     #:this/thunk get-this
-    (field teiHeader)
-    (field text)
+    (field teiHeader #:hide)
+    (field text #:hide)
     (match-define (list teiHeader text)
       body/elements-only)
+    (declare-paragraphs-status-field
+     (tei-document-paragraphs-status teiHeader))
     (define/field pr:md5
-      (delay/sync
+      (delay/thread
        (TODO/void Should md5 really use prettyprint?
                   #: Might be a lot faster to just use write-xexpr
                   and not launch a subprocess.
                   I think the original rationale was not being sensitive
                   to |"changes"| like comments and ignored whitespace:
                   maybe I should handle those explicitly.
+                  Prettyprint would still be sensitive to "comments,"
+                  and ignored whitespace is already dropped.
                   )
        (define-values (in-from-pipe out-to-pipe)
          (make-pipe))
@@ -113,6 +117,8 @@ the same source file that defines the Racket enforcement code.
  <!DOCTYPE TEI SYSTEM "DR-TEI.dtd">})
           (write-xexpr (tei-element->xexpr doc) out))))))
 
+
+ƒ(local-table-of-contents)
          
 ƒinclude-section[(submod "teiHeader.rkt" doc)]
 ƒinclude-section[(submod "text.rkt" doc)]

@@ -11,6 +11,7 @@
                      ))
 
 (provide declare-resp-field
+         declare-paragraphs-status-field
          )
 
 (define-syntax-parser declare-resp-field
@@ -30,3 +31,17 @@
        (lift-property prop:resp
                       (λ (this)
                         (get-field f.name this))))])
+
+(define-syntax-parser declare-paragraphs-status-field
+  [(_ body)
+   #:declare body (expr/c #'guess-paragraphs-status/c
+                          #:name "guess paragraphs status expression")
+   #'(begin (define/field par-status
+              body.c)
+            (lift-property prop:guess-paragraphs-status
+                           (λ (this)
+                             (get-field par-status this))))])
+
+
+
+                          

@@ -7,6 +7,7 @@
          "../stxparam.rkt"
          (submod "../stxparam.rkt" private)
          racket/contract
+         racket/promise
          racket/stxparam
          racket/splicing
          syntax/location
@@ -84,6 +85,16 @@
               (syntax-local-introduce field-id)
               0 second-len 0.5 1)))))
                      
+(begin-for-syntax
+  (define-splicing-syntax-class show?/hide-clause
+    #:description #f
+    #:attributes {bool}
+    (pattern (~seq #:print? bool:boolean))
+    (pattern (~seq [#:print? bool:boolean]))
+    (pattern (~seq #:hide)
+             #:with bool #'#f)
+    (pattern (~seq [#:hide])
+             #:with bool #'#f)))
 
 (define-syntax-parser field/derived
   #:context (syntax-parse this-syntax
@@ -97,7 +108,10 @@
                                     (~or* raw-accessor:id #f)])
                              (~seq (~and infer? #:infer))
                              (~seq [(~and infer? #:infer)]))
-                       #:name "#:accessor or#:infer  clause")
+                       #:name "#:accessor or #:infer  clause")
+            (~optional show?:show?/hide-clause
+                       #:name "#:hide or #:print? clause"
+                       #:defaults ([show?.bool #'#t]))
             (~optional (~or* (~seq #:check
                                    (~var check
                                          (expr/c #'contract?
@@ -127,24 +141,27 @@
                                    ;; anonymous functions
                                    #'check.c)
                                   #'#f)]
+                   [#:show? show?.bool]
                    [#:accessor accessor])])
      
 (begin-for-syntax
   (define (fmt-check-name name-stx)
     (format "#:check argument for ~v" (syntax->datum name-stx)))
-  (struct field-record (name maybe-accessor maybe-check)
+  (struct field-record (name maybe-accessor maybe-check show?)
     #:transparent)
   (define-syntax-class parsed-field-stx
     #:literals {parsed-field}
-    #:attributes {name record orig-datum}
+    #:attributes {name record orig-datum show?}
     (pattern (parsed-field orig-datum
                            name:id
                            (~alt (~once (~seq [#:accessor (~or* accessor:id #f)]))
+                                 (~once (~seq [#:show? show?:boolean]))
                                  (~once (~seq [#:check (~or* check:id #f)])))
                            ...)
              #:attr record (field-record #'name
                                          (attribute accessor)
-                                         (attribute check)))))
+                                         (attribute check)
+                                         #'show?))))
 
 (define-syntax-parser lift-begin/derived
   #:context (syntax-parse this-syntax
@@ -493,7 +510,7 @@
     (define (q v)
       (dat (format "~v" (syntax->datum v))))
     (match-lambda
-      [(field-record name _ maybe-check)
+      [(field-record name _ maybe-check _)
        (unless (member name l-value-ids bound-identifier=?)
          (raise-syntax-error
           #f "unbound field name in element definition constructor spec"
@@ -600,11 +617,13 @@
              (if (attribute this/thunk)
                  #`(λ (name attrs body)
                      (define rslt
-                       (syntax-parameterize
-                           ([local-this/thunk (λ (stx)
-                                                #'(λ () rslt))])
-                         (basic-wraped-ctor name attrs body)))
-                     rslt)
+                       (delay/sync
+                        (syntax-parameterize
+                            ([local-this/thunk
+                              (λ (stx)
+                                #'(λ () (force rslt)))])
+                          (basic-wraped-ctor name attrs body))))
+                     (force rslt))
                  #'basic-wraped-ctor)
              #|END define-syntax-class constructor-spec|#)))
 
@@ -677,6 +696,7 @@
                    (attribute outer-methods.parsed)))
          (define l-field-names
            (map field-record-name fields))]
+   #:with (show-field? ...) (map field-record-show? fields)
    #:with (field-name ...) l-field-names
    #:with struct-name (format-id #f "tei-~a-struct" #'outer.element-name)
    #:with (plain-struct-field-name ...)
@@ -693,11 +713,12 @@
    #`(begin
        (define-struct/derived original-datum
          (struct-name #,(if (attribute outer.contains-text?)
-                            #'content-containing-element
-                            #'elements-only-element))
+                            #'super:content-containing-element
+                            #'super:elements-only-element))
          (plain-struct-field-name ...)
          #:transparent
          #:constructor-name constructor.raw-constructor
+         #:property prop:element-fields-to-print '(show-field? ...)
          #,@(apply
              append
              (for/list ([prop (in-syntax #'(lifted-prop-expr ... prop-expr ...))]

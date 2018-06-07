@@ -19,6 +19,7 @@
             tei-note?
             div?
             div-type/c
+            tei-text-element?
             (contract-out
              [pb-get-page-string
               (-> tei-pb? (maybe/c string?))]
@@ -43,6 +44,7 @@
                [1 body]
                [0-1 back])
    #:required-order (front body back)
+   #:predicate tei-text-element?
    #:prose ƒ{
 
  The ƒtag{text} element may contain only (in order) 

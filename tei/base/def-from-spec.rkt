@@ -10,6 +10,8 @@
          "specification/specification.rkt"
          (except-in "specification/text.rkt"
                     text-spec)
+         (except-in "specification/teiHeader.rkt"
+                    teiHeader-spec)
          )
 
 (provide tei-xexpr/c
@@ -17,6 +19,7 @@
          any-tei-xexpr/c
          tei-element-name/c
          (all-from-out "specification/text.rkt")
+         (all-from-out "specification/teiHeader.rkt")
          (except-out (all-from-out "specification/specification.rkt")
                      main-spec)
          (contract-out
@@ -66,5 +69,6 @@
   (provide example)
   (define example
     (file->TEI "/Users/philip/code/ricoeur/texts/TEI/ways_of_Worldmaking.xml"))
-  (tei-document-md5 example))
+  (tei-document-md5 example)
+  example)
 

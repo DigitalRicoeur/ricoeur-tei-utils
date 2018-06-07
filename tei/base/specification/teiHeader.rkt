@@ -14,6 +14,11 @@
    (require (submod ricoeur/tei/kernel private)
             (submod ricoeur/tei/kernel
                     private-plain-TEI-info)
+            )
+   (provide teiHeader?
+            profileDesc? ;; TODO: make this semi-private
+            textClass?
+            tei-keywords?
             ))
 
 
@@ -22,21 +27,23 @@
    #:required-order (fileDesc profileDesc)
    #:children ([1 fileDesc]
                [1 profileDesc])
+   #:predicate teiHeader?
    #:constructor
    [#:body/elements-only body/elements-only
     (match-define (list fileD (app profileDesc-textClass
                                    textC))
       body/elements-only)
+    (declare-paragraphs-status-field
+     (textClass-guess-paragraphs-status textC))
     (define/field info
-     (make-plain-TEI-info
-      #:title (fileDesc-title fileD)
-      #:resp-table (fileDesc-resp-table fileD)
-      #:citation (fileDesc-citation fileD)
-      #:orig-publication-date (fileDesc-orig-publ-date fileD)
-      #:publication-date (fileDesc-this-publ-date fileD)
-      #:publication-original? (fileDesc-this-is-orig? fileD)
-      #:guess-paragraphs-status (textClass-guess-paragraphs-status textC)
-      #:book/article (textClass-book/article textC)))
+      (make-plain-TEI-info
+       #:title (fileDesc-title fileD)
+       #:resp-table (fileDesc-resp-table fileD)
+       #:citation (fileDesc-citation fileD)
+       #:orig-publication-date (fileDesc-orig-publ-date fileD)
+       #:publication-date (fileDesc-this-publ-date fileD)
+       #:publication-original? (fileDesc-this-is-orig? fileD)
+       #:book/article (textClass-book/article textC)))
     (lift-property prop:TEI-info
                    (λ (this) (get-field info this)))
     #|END teiHeader|#]]
@@ -60,11 +67,10 @@
    #|END fileDesc|#)]]
   [profileDesc
    #:children ([1 textClass])
-   #:constructor
-   [#:body/elements-only body/elements-only
-    (field textClass #:infer)
-    (match-define (list textClass)
-      body/elements-only)]])]{
+   #:predicate profileDesc?
+   #:begin
+   [(define (profileDesc-textClass this)
+      (car (tei-get-body/elements-only this)))]])]{
 
  The ƒtag{teiHeader} element contains (in order) one
  ƒtag{fileDesc} element followed by one
@@ -79,6 +85,20 @@
 
 }
 
+
+ƒ;{                                                                          
+ ;                                                                          
+ ;    ;;        ;     ;;     ;;;;              ;;     ;;              ;;    
+ ;    ;;        ;;    ;;       ;;             ;  ;    ;;              ;;    
+ ;  ;;;;;;;  ;;;;;  ;;;;;;;    ;;      ;;;   ;;     ;;;;;;; ; ;; ;; ;;;;;;; 
+ ;    ;;        ;;    ;;       ;;    ;;   ;   ;;      ;;    ;; ;; ;   ;;    
+ ;    ;;        ;;    ;;       ;;    ;    ;     ;     ;;    ;; ;; ;;  ;;    
+ ;    ;;        ;;    ;;       ;;   ;;;;;;;;     ;    ;;    ;; ;; ;;  ;;    
+ ;    ;;        ;;    ;;       ;;    ;           ;;   ;;    ;; ;; ;;  ;;    
+ ;     ;        ;;     ;        ;    ;;   ;  ;   ;     ;    ;; ;; ;;   ;    
+ ;      ;;;     ;;      ;;;      ;;    ;;;    ;;;       ;;; ;; ;; ;;    ;;; 
+ ;                                                                          
+}                                                                         
 
 ƒsection{The Title Statement}
 ƒ(define-element titleStmt
@@ -183,6 +203,21 @@
  })
 
 
+ƒ;{                                                                                          
+ ;                   ;;      ;;;;       ;                     ;;        ;                   
+ ;                   ;;        ;;       ;;                    ;;        ;;                  
+ ;   ; ;;    ;;  ;;  ;;;;      ;;    ;;;;;      ;;;    ;;   ;;;;;;;  ;;;;;    ;;;    ;; ;   
+ ;   ;;  ;   ;;  ;;  ;;  ;     ;;       ;;    ;;   ;  ;  ;    ;;        ;;   ;   ;   ;;; ;  
+ ;   ;;  ;   ;;  ;;  ;;  ;     ;;       ;;    ;          ;;   ;;        ;;   ;   ;   ;;  ;; 
+ ;   ;;  ;;  ;;  ;;  ;;  ;;    ;;       ;;   ;;        ;;;;   ;;        ;;  ;;   ;;  ;;  ;; 
+ ;   ;;  ;   ;;  ;;  ;;  ;     ;;       ;;    ;       ;  ;;   ;;        ;;   ;   ;   ;;  ;; 
+ ;   ;;  ;    ; ;;;  ;;  ;      ;       ;;    ;;   ; ;;  ;;    ;        ;;   ;   ;   ;;  ;; 
+ ;   ;;;;      ; ;;  ; ;;        ;;     ;;      ;;;   ;;; ;     ;;;     ;;    ;;;    ;;  ;; 
+ ;   ;;                                                                                     
+ ;   ;;                                                                                     
+ ;   ;;                                                                                     
+}                                                                                          
+
 ƒsection{The Publication Statement}
 ƒdefine-elements-together[
  ([publicationStmt
@@ -207,6 +242,19 @@
     ƒtt{</publicationStmt>}))
 }
 
+
+ƒ;{                                                                                  
+ ;                                                   ;;;;                           
+ ;                                                   ;;  ;;                         
+ ;     ;;     ;;;    ;;  ;;  ;; ;;;     ;;;    ;;;   ;;   ;    ;;;     ;;       ;;; 
+ ;   ;;  ;   ;   ;   ;;  ;;  ;;;      ;;   ; ;;   ;  ;;   ;  ;;   ;  ;;  ;    ;;   ;
+ ;    ;      ;   ;   ;;  ;;  ;;       ;      ;    ;  ;;   ;; ;    ;   ;       ;     
+ ;     ;;   ;;   ;;  ;;  ;;  ;;      ;;     ;;;;;;;; ;;   ; ;;;;;;;;   ;;    ;;     
+ ;       ;;  ;   ;   ;;  ;;  ;;       ;      ;       ;;   ;  ;           ;;   ;     
+ ;   ;   ;   ;   ;    ; ;;;  ;;       ;;   ; ;;   ;  ;;  ;;  ;;   ;  ;   ;    ;;   ;
+ ;    ;;;     ;;;      ; ;;  ;;         ;;;    ;;;   ;;;;      ;;;    ;;;       ;;; 
+ ;                                                                                  
+}                                                                                
 
 ƒsection{The Source Description}
 ƒdefine-elements-together[
@@ -293,10 +341,25 @@
 }
 
 
+ƒ;{                                                                          
+ ;                                                                          
+ ;    ;;                      ;;       ;;;   ;;;;                           
+ ;    ;;                      ;;      ;   ;    ;;                           
+ ;  ;;;;;;;    ;;;  ;;   ;; ;;;;;;;  ;         ;;      ;;      ;;      ;;   
+ ;    ;;     ;;   ;   ;  ;    ;;     ;         ;;     ;  ;   ;;  ;   ;;  ;  
+ ;    ;;     ;    ;   ; ;     ;;    ;;         ;;        ;;   ;       ;     
+ ;    ;;    ;;;;;;;;   ;      ;;     ;         ;;      ;;;;    ;;      ;;   
+ ;    ;;     ;        ; ;     ;;     ;         ;;     ;  ;;      ;;      ;; 
+ ;     ;     ;;   ;  ;   ;     ;      ;   ;     ;    ;;  ;;  ;   ;   ;   ;  
+ ;      ;;;    ;;;  ;;   ;;     ;;;    ;;;       ;;   ;;; ;   ;;;     ;;;   
+ ;                                                                          
+}                                                                          
+
 ƒsection{The Text Classification}
 ƒ(define-element textClass
    #:children ([1 catRef]
                [1 keywords])
+   #:predicate textClass?
    #:constructor
    [#:body/elements-only body/elements-only
     (field guess-paragraphs-status #:infer)

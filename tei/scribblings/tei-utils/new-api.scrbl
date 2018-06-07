@@ -28,7 +28,17 @@
    @defproc[(tei-element-get-body [e tei-element?])
             (listof (or/c tei-element? normalized-xexpr-atom/c))]
    @defproc[(tei-get-body/elements-only [e elements-only-element?])
-            (listof tei-element?)])]{
+            (listof tei-element?)]
+   @defform[#:kind "match expander"
+            (tei-element name-pat attributes-pat body-pat)]
+   @defform[#:kind "match expander"
+            (content-containing-element name-pat attributes-pat body-pat)]
+   @defform[#:kind "match expander"
+            (elements-only-element name-pat attributes-pat body-pat maybe-elements-only)
+            #:grammar
+            [(maybe-elements-only code:blank
+                                  (code:line #:elements-only body/elements-only-pat))]]
+   )]{
 
  This library uses @deftech{tei element structs}, a layer of
  abstraction over @tech{normalized x-expressions},
@@ -61,6 +71,19 @@
  @racket[tei-element-get-body] will never contain any strings:
  any insignificant whitespace inside such elements is 
  dropped when the @tech{tei element struct} is constructed.
+
+ For the match expanders @racket[tei-element],
+ @racket[content-containing-element], and @racket[elements-only-element],
+ the patterns @racket[name-pat], @racket[attributes-pat], and
+ @racket[body-pat] are matched against the results of
+ @racket[tei-element-get-name], @racket[tei-element-get-attributes], and
+ @racket[tei-element-get-body], respectively.
+ A @racket[tei-element] pattern can match any @tech{tei element struct},
+ whereas @racket[content-containing-element] and
+ @racket[elements-only-element] patterns only match values that satisfy
+ the corresponding predicate.
+ If a @racket[body/elements-only-pat] pattern appears, it is matched
+ against the result of @racket[tei-get-body/elements-only].
 }
 
 @defproc[(tei-element->xexpr [e tei-element?])
@@ -70,6 +93,12 @@
  XML is the cannonical serialized form of a tei element struct:
  tei element structs are not serializable in the sense of
  @racketmodname[racket/serialize].
+}
+
+@defproc[(tei-element->xexpr* [e (or/c tei-element? normalized-xexpr-atom/c)])
+         normalized-xexpr/c]{
+ Like @racket[tei-element->xexpr], but also accepts @tech{normalized xexprs}
+ satisfying @racket[normalized-xexpr-atom/c], which are returned directly.
 }
 
 @defproc[(element-or-xexpr->plain-text [v (or/c tei-element? raw-xexpr-atom/c)])
@@ -197,6 +226,15 @@
  Recall that a @tag{pb} element marks the beginning the specified page.
 }
 
+@defproc[(get-page-breaks [elem tei-element?])
+         (listof tei-pb?)]{
+ Returns a list, in order, of all of the @tech{tei element structs}
+ recursively contained by @racket[elem] that represent
+ @tag{pb} (page-break) elements.
+ If @racket[elem] itself represents a page-break element,
+ the result is @racket[(list elem)].
+}
+
 @subsection{Footnote and Endnote Elements}
 @defpredicate[tei-note?]{
  Recognizes @tech{tei element structs} that represent
@@ -229,7 +267,7 @@
    @defthing[div-type/c flat-contract?
              #:value (or/c 'chapter 'part 'section 'dedication
                            'contents 'intro 'bibl 'ack 'index)])]{
-@TODO/scrbl[[document div API]]{@bold{TODO:}} Document these.
+ @TODO/scrbl[[document div API]]{@bold{TODO:}} Document these.
 }
 
 @include-section["implementation.scrbl"]

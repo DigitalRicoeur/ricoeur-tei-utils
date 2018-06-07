@@ -8,17 +8,21 @@
                      syntax/parse
                      ))
 
+;; With the removal of tei-document-paragraphs-status,
+;; TEI-info is now exclusively bibliographic,
+;; rather than about the state of the file.
+;; It might be better to use a different name, since
+;; the "info" now is about the work, not the TEI document.
+
 (provide TEI-info?
          plain-TEI-info?
          TEI-info<%>
-         guess-paragraphs-status/c
          tei-title 
          tei-citation 
          tei-orig-publication-date 
          tei-publication-date 
          tei-publication-original? 
          tei-book/article 
-         tei-document-paragraphs-status
          (contract-out
           [tei-get-resp-string
            (-> TEI-info? symbol? string?)]
@@ -46,19 +50,11 @@
                  #:publication-date date?
                  #:publication-original? any/c
                  #:book/article (or/c 'book 'article)
-                 #:guess-paragraphs-status guess-paragraphs-status/c
                  plain-TEI-info?)]
             )))
 
 (define-values {prop:TEI-info TEI-info? get-get-plain}
   (make-struct-type-property 'prop:TEI-info))
-
-(define/final-prop guess-paragraphs-status/c
-  (or/c 'todo
-        'line-breaks
-        'blank-lines
-        'done
-        'skip))
         
 
 (struct plain-TEI-info (title
@@ -68,7 +64,6 @@
                         this-publ-date
                         publication-original?
                         book/article
-                        guess-paragraphs-status
                         )
   #:transparent
   #:property prop:TEI-info values)
@@ -79,16 +74,14 @@
                              #:orig-publication-date orig-publ-date
                              #:publication-date this-publ-date
                              #:publication-original? publication-original?
-                             #:book/article book/article
-                             #:guess-paragraphs-status guess-paragraphs-status)
+                             #:book/article book/article)
   (plain-TEI-info title
                   resp-table
                   citation
                   orig-publ-date
                   this-publ-date
                   publication-original?
-                  book/article
-                  guess-paragraphs-status)) 
+                  book/article)) 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -107,8 +100,7 @@
   [tei-orig-publication-date plain-TEI-info-orig-publ-date]
   [tei-publication-date plain-TEI-info-this-publ-date]
   [tei-publication-original? plain-TEI-info-publication-original?]
-  [tei-book/article plain-TEI-info-book/article]
-  [tei-document-paragraphs-status plain-TEI-info-guess-paragraphs-status])
+  [tei-book/article plain-TEI-info-book/article])
 
    
 (define (plain-TEI-info-get-resp-string plain
@@ -159,7 +151,6 @@
          get-publication-date 
          get-publication-original? 
          get-book/article 
-         get-guess-paragraphs-status 
          [get-resp-string (->m symbol? string?)])))
     (values
      TEI-info<%>
@@ -183,20 +174,10 @@
          [get-orig-publication-date plain-TEI-info-orig-publ-date]
          [get-publication-date plain-TEI-info-this-publ-date]
          [get-publication-original? plain-TEI-info-publication-original?]
-         [get-book/article plain-TEI-info-book/article]
-         [get-guess-paragraphs-status plain-TEI-info-guess-paragraphs-status])
+         [get-book/article plain-TEI-info-book/article])
        #|END mixin|#))))
 
-(TODO/void Split TEI-info interface into a bibliographic part
-           and a document-specific part.)
-;; TODO: I think it might make sense in connection with 
-;; this ongoing round of breaking API changes
-;; to split the TEI-info interface into a bibliographic information part
-;; and a document-specific part, so that the bibliographic part
-;; might eventually come from our bibliographic database rather than
-;; the TEI XML files.
-;; The document-specific part might eventually contain the
-;; value from tei-document-md5 as well as tei-document-paragraphs-status.
+
 
 
 
