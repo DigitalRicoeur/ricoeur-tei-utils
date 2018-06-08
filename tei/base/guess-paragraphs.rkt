@@ -5,6 +5,35 @@
          syntax/parse/define
          )
 
+(provide (contract-out
+          [tei-document-skip-guess-paragraphs
+           (update-guess-paragraphs-proc/c 'todo 'skip)]
+          [tei-document-unskip-guess-paragraphs
+           (update-guess-paragraphs-proc/c 'skip 'todo)]
+          [tei-document-guess-paragraphs
+           (->i #:chaperone
+                ([doc (document/paragraphs-status/c
+                       (or/c 'todo 'skip))])
+                (#:mode [mode (or/c 'line-breaks 'blank-lines)])
+                [_ (mode)
+                   (document/paragraphs-status/c
+                    (case mode
+                      [(line-breaks) 'line-breaks]
+                      [else 'blank-lines]))])]
+          ))
+           
+(module+ test
+  (require rackunit
+           (submod "..")))
+
+(define/final-prop (document/paragraphs-status/c status/c)
+  (and/c tei-document?
+         (has-tei-document-paragraphs-status/c status/c)))
+
+(define (update-guess-paragraphs-proc/c from/c to/c)
+  (-> (document/paragraphs-status/c from/c)
+      (document/paragraphs-status/c to/c)))
+
 (define (guess-paragraphs-status->term status)
   (case status
     [(todo) '(term () "todo")]
@@ -104,7 +133,7 @@
 
 (define/contract ((make-teiHeader-update-par-status status) e)
   (-> guess-paragraphs-status/c
-      (-> (and/c teiHeader? (tei-document-with-paragraphs-status/c
+      (-> (and/c teiHeader? (has-tei-document-paragraphs-status/c
                              (or/c 'todo 'skip)))
           (static-tei-xexpr/c teiHeader)))
   (tei-element-update-1-child/xexpr
@@ -126,23 +155,125 @@
               (guess-paragraphs-status->term status))))))))))
 
 
-(define/contract tei-document-skip-guess-paragraphs
-  (-> (and/c tei-document? (tei-document-with-paragraphs-status/c 'todo))
-      (and/c tei-document? (tei-document-with-paragraphs-status/c 'skip)))
+(define tei-document-skip-guess-paragraphs
   (make-document-paragraphs-status-updater
    (make-teiHeader-update-par-status 'skip)))
 
 
-(define/contract tei-document-unskip-guess-paragraphs
-  (-> (and/c tei-document? (tei-document-with-paragraphs-status/c 'skip))
-      (and/c tei-document? (tei-document-with-paragraphs-status/c 'todo)))
+(define tei-document-unskip-guess-paragraphs
   (make-document-paragraphs-status-updater
    (make-teiHeader-update-par-status 'todo)))
 
+(define/contract (make-tei-document-guess-paragraphs mode)
+  (->i #:chaperone
+       ([mode (or/c 'line-breaks 'blank-lines)])
+       [_ (mode)
+          (update-guess-paragraphs-proc/c (or/c 'todo 'skip)
+                                          mode)])
+  (make-document-paragraphs-status-updater
+   (make-teiHeader-update-par-status mode)
+   (make-text-guess-paragraphs mode)))
 
+(define* (tei-document-guess-paragraphs elem #:mode [mode 'blank-lines])
+  #:with [(define do-line-breaks
+            (make-tei-document-guess-paragraphs 'line-breaks))
+          (define do-blank-lines
+            (make-tei-document-guess-paragraphs 'blank-lines))]
+  (case mode
+    [(line-breaks)
+     (do-line-breaks elem)]
+    [else
+     (do-blank-lines elem)]))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define ((make-text-guess-paragraphs mode) elem)
+  (other-element-guess-paragraphs elem #:mode mode))
 
+;; tei-element? #:mode (or/c 'line-breaks 'blank-lines)
+;;   -> xexpr/c
+(define (other-element-guess-paragraphs elem #:mode [mode 'blank-lines])
+  (tei-element-update/xexpr*
+   elem
+   (λ (body)
+     (apply append
+            (for/list ([child (in-list body)])
+              (child-do-guess-paragraphs child #:mode mode))))))
 
+;; (or/c tei-element? normalized-xexpr-atom/c
+;; #:mode (or/c 'line-breaks 'blank-lines)
+;;   -> (listof xexpr/c)
+(define (child-do-guess-paragraphs this #:mode [mode 'blank-lines])
+  (cond
+    [(tei-ab? this)
+     (ab-do-guess-paragraphs this #:mode mode)]
+    [(tei-element? this)
+     (list (other-element-guess-paragraphs this #:mode mode))]
+    [else
+     this]))
+  
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define (merge-adjacent-strings lst)
+  (define (merge/after-string so-far lst)
+    (match lst
+      [(cons (? string? this) lst)
+       (merge/after-string (string-append so-far this) lst)]
+      [lst
+       (cons so-far (merge-adjacent-strings lst))]))
+  (match lst
+    ['() '()]
+    [(cons (? string? this) lst)
+     (merge/after-string this lst)]
+    [(cons this lst)
+     (cons this (merge-adjacent-strings lst))]))
+             
+
+(struct parbreak ())
+
+(define (insert-parbreaks elem #:mode [mode 'blank-lines])
+  (define split-pat
+    (if (eq? 'blank-lines mode)
+        #px"\n[ \t\f\r]*\n|\r[ \t\f]*\r"
+        #rx"\n"))
+  (flatten
+   (for/list ([child (in-list (merge-adjacent-strings
+                               (tei-element-get-body elem)))])
+     (cond
+       [(string? child)
+        (add-between (regexp-split split-pat child)
+                     (parbreak))]
+       [else
+        child]))))
+
+(define (group-by-parbreaks elem #:mode [mode 'blank-lines])
+  (let loop ([this-group null]
+             [to-go (insert-parbreaks elem #:mode mode)])
+    (match to-go
+      ['() (list this-group)]
+      [(cons (? parbreak?) more)
+       (cons this-group
+             (loop null more))]
+      [(cons (pregexp #px"^\\s*$") more)
+       (loop this-group more)]
+      [(cons this-item more)
+       (loop (append this-group
+                     (list this-item))
+             more)])))
+
+;; tei-ab? #:mode (or/c 'line-breaks 'blank-lines)
+;;   -> (listof xexpr/c)
+(define (ab-do-guess-paragraphs elem #:mode [mode 'blank-lines])
+  (for/list ([pargroup (in-list (group-by-parbreaks elem #:mode mode))]
+             #:unless (null? pargroup))
+    (match pargroup
+      [(list (? tei-pb? elem))
+       (tei-element->xexpr elem)]
+      [_
+       `(p () ,@(for/list ([child (in-list pargroup)])
+                  (if (tei-element? child)
+                      (other-element-guess-paragraphs child #:mode mode)
+                      child)))])))
 

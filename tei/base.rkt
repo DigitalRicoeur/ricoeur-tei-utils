@@ -7,5 +7,7 @@
                  (multi ricoeur/tei/base
                         (def-from-spec
                          get-page-breaks
+                         guess-paragraphs
+                         pre-segments
                          )))
 

@@ -3,7 +3,7 @@
 (require "adt.rkt"
          "../interfaces.rkt"
          (submod "../interfaces.rkt" for-lang)
-         "../xexpr/contract-utils.rkt"
+         "../pre-kernel-lib.rkt"
          racket/contract
          syntax/parse/define
          (for-syntax racket/base
@@ -23,14 +23,18 @@
       ...)
    #:declare attrs (expr/c #'(listof (list/c symbol? string?))
                            #:name "attributes expression")
-   #:with (f.name) (generate-temporaries '(resp-field))
+   #:with (str-field-name sym-field-name)
+   (generate-temporaries '(str-field-name sym-field-name))
    #`(begin
-       (define/field [f.name #:check (or/c symbol? #f)]
-         ;; FIXME
+       (define/field [str-field-name #:check (or/c resp-string/c #f)
+                                     #:hide]
          (attributes-ref attrs.c 'key-id))
+       (define/field [sym-field-name #:check (or/c symbol? #f)]
+         (and str-field-name
+              (resp-string->symbol str-field-name)))
        (lift-property prop:resp
-                      (λ (this)
-                        (get-field f.name this))))])
+                      (cons (λ (this) (get-field sym-field-name this))
+                            (λ (this) (get-field str-field-name this)))))])
 
 (define-syntax-parser declare-paragraphs-status-field
   [(_ body)

@@ -1,48 +1,74 @@
-#lang racket
+#lang racket/base
 
-(require data/maybe
+(require ricoeur/tei/kernel
+         racket/contract
+         racket/list
+         racket/string
+         racket/match
          json
-         ricoeur/tei/oop-base
-         ricoeur/tei/base/pre-segments/location-stack
-         (submod ricoeur/tei/base/pre-segments/location-stack
+         "def-from-spec.rkt"
+         "get-page-breaks.rkt"
+         (submod "pre-segments/location-stack.rkt"
                  private)
          (for-syntax racket/base
                      syntax/parse
                      ))
 
+(require-provide "pre-segments/location-stack.rkt"
+                 )
+
 (provide pre-segment-meta/c
          (contract-out
           [prepare-pre-segments
-           (-> (is-a?/c TEI<%>) (listof pre-segment?))]
+           (-> tei-document? (listof pre-segment?))]
           [struct pre-segment ([title string?]
                                [counter natural-number/c]
                                [body string?]
                                [meta pre-segment-meta/c]
-                               [resp #rx"^#.+"])
+                               [resp resp-string/c])
             #:omit-constructor]
           ))
 
+(TODO/void pre-segment-meta/c
+           #: Store resolved resp.
+           Make a struct that can be converted to a jsexpr.)
+
 (struct pre-segment (title counter body meta resp))
 
-;; prepare-pre-segments
-;; The outer function which sets everything up for a TEI<%> document
+(define the-default-pb
+  (xexpr->element '(pb)))
+
+(define cache
+  (make-weak-hasheq))
+
 (define (prepare-pre-segments doc)
-  (parameterize ([current-title (send doc get-title)])
+  (hash-ref cache
+            doc
+            (λ ()
+              (define rslt
+                (prepare-pre-segments* doc))
+              (hash-set! cache doc rslt)
+              rslt)))
+
+;; prepare-pre-segments*
+;; The outer function which sets everything up for a TEI<%> document
+(define (prepare-pre-segments* doc)
+  (parameterize ([current-title (tei-title doc)])
     (for/fold/define ([segs null]
                       [i 0]
-                      [pb (tag->element '(pb))])
+                      [pb the-default-pb])
                      ([child (in-list
                               ;; the children of the text element,
                               ;; i.e. body, perhaps with front and/or back
-                              (send (last (send doc get-body/elements-only))
-                                    get-body/elements-only))])
+                              (tei-get-body/elements-only
+                               (tei-document-text-element doc)))])
       (do-prepare-segments child #:segs segs #:i i #:pb pb))
     segs))
 
 (define current-title
   (make-parameter #f))
 
-(define current-resp
+(define current-resp-string
   (make-parameter "#ricoeur"))
 
 (define-syntax (eprintf* stx)
@@ -57,9 +83,9 @@
 
 (define (pb-or-non-element? v)
   (or (not (tei-element? v))
-      (eq? 'pb (send v get-name))))
+      (tei-pb? v)))
 
-(define page-spec/c
+(define/final-prop page-spec/c
   (or/c (maybe/c string?)
         (list/c (maybe/c string?) (maybe/c string?))))
 
@@ -101,33 +127,33 @@
 (define/?contract (do-prepare-segments child
                                        #:segs [segs null]
                                        #:i [i 0]
-                                       #:pb [pb (tag->element '(pb))])
+                                       #:pb [pb the-default-pb])
   (->* {tei-element?}
        {#:segs (listof pre-segment?)
         #:i natural-number/c
-        #:pb (is-a?/c pb<%>)}
+        #:pb tei-pb?}
        (values (listof pre-segment?)
                natural-number/c
-               (is-a?/c pb<%>)))
+               tei-pb?))
   (eprintf* "do-prepare-segments\n")
-  (parameterize ([current-resp (get-updated-resp child)]
+  (parameterize ([current-resp-string (get-updated-resp child)]
                  [current-location-stack (get-updated-location-stack child)])
-    (match (send child get-name)
+    (match child 
       ;; content-containing elements
-      [(or 'ab 'p 'head 'note 'item)
+      [(? content-containing-element?)
        (eprintf* "\t~v\n" '(ab p head note item))
        (do-prepare-segments/content child #:segs segs #:i i #:pb pb)]
       ;; page breaks
-      ['pb
+      [(tei-element 'pb _ _)
        (eprintf* "\tpb\n")
        (values segs i child)]
       ;; the ignored div types
-      ['div
-       #:when (case (dict-ref (send child get-attributes) 'type #f)
-                [(("contents")("index")) #t]
+      [(tei-element 'div attrs _)
+       #:when (case (attributes-ref attrs 'type)
+                [("contents" "index") #t]
                 [else #f])
        (eprintf* "\tignored div\n")
-       (values segs i (or (for/last ([pb (in-list (send child get-page-breaks))])
+       (values segs i (or (for/last ([pb (in-list (tei-get-page-breaks child))])
                             pb)
                           pb))]
       ;; all other elements (non-content-containing)
@@ -136,7 +162,7 @@
        (for/fold ([segs segs]
                   [i i]
                   [pb pb])
-                 ([child (in-list (send child get-body/elements-only))])
+                 ([child (in-list (tei-get-body/elements-only child))])
          (do-prepare-segments child #:segs segs #:i i #:pb pb))])))
 
 
@@ -151,18 +177,18 @@
 (define/?contract (do-prepare-segments/content child
                                                #:segs [segs null]
                                                #:i [i 0]
-                                               #:pb [init-pb (tag->element '(pb))])
-  (->* {tei-element?}
+                                               #:pb [init-pb the-default-pb])
+  (->* {content-containing-element?}
        {#:segs (listof pre-segment?)
         #:i natural-number/c
-        #:pb (is-a?/c pb<%>)}
+        #:pb tei-pb?}
        (values (listof pre-segment?)
                natural-number/c
-               (is-a?/c pb<%>)))
+               tei-pb?))
   (eprintf* "do-prepare-segments/content\n")
-  (define name
-    (send child get-name))
-  (kw-loop prepare-content (#:to-go [to-go (send child get-body)]
+  (match-define (content-containing-element name _ to-go)
+    child)
+  (kw-loop prepare-content (#:to-go [to-go to-go]
                             #:this-so-far [this-so-far null] 
                             #:segs [segs segs]
                             #:i [i i]
@@ -186,7 +212,7 @@
       ;; accumulate from this-so-far, dispatch to child element,
       ;; then continue with new acc, i, and init-pb from child
       [(cons (? tei-element? child) to-go)
-       #:when (not (eq? 'pb (send child get-name)))
+       #:when (not (tei-pb? child))
        (eprintf* "\telement (not pb)\n")
        (define-values {new-segs new-i new-pb}
          (do-prepare-segments child
@@ -201,7 +227,7 @@
                         #:latest-pb new-pb)]
       ;; on a pb child of a non-ab,
       ;; continue with new latest-pb
-      [(cons (? pb? latest-pb) to-go)
+      [(cons (? tei-pb? latest-pb) to-go)
        #:when (not (eq? 'ab name))
        (eprintf* "\tpb (not in ab)\n")
        (prepare-content #:to-go to-go
@@ -232,7 +258,7 @@
        (for/fold/define ([num-pbs 0]
                          [latest-pb init-pb])
                         ([child (in-list plain-children)]
-                         #:when (pb? child))
+                         #:when (tei-pb? child))
          (values (add1 num-pbs) child))
        (define-values {new-segs new-i new-pb}
          (cond
@@ -244,7 +270,7 @@
                      (string-normalize-spaces
                       (string-join
                        (for/list ([child (in-list plain-children)]
-                                  #:unless (pb? child))
+                                  #:unless (tei-pb? child))
                          (element-or-xexpr->plain-text child))
                        " "))
                      #:segs segs
@@ -282,10 +308,10 @@
   (-> (listof pb-or-non-element?)
       #:segs (listof pre-segment?)
       #:i natural-number/c
-      #:pb (is-a?/c pb<%>)
+      #:pb tei-pb?
       (values (listof pre-segment?)
               natural-number/c
-              (is-a?/c pb<%>)))
+              tei-pb?))
   (eprintf* "prepare-content/ugly-ab\n")
   ;; Ugly case: this handles massive ab%s that have not been segmented.
   ;; In this case, each page is used as a segment.
@@ -301,7 +327,7 @@
         (string-join (reverse this-so-far) " "))
        #:segs segs 
        #:i i
-       #:page (send pb get-page-string)))
+       #:page (pb-get-page-string pb)))
     (match to-go
       ;; base case: finish up
       ['()
@@ -310,7 +336,7 @@
                (add1 i)
                pb)]
       ;; page break
-      [(cons (? pb? new-pb) to-go)
+      [(cons (? tei-pb? new-pb) to-go)
        (eprintf* "\tpb\n")
        (loop #:to-go to-go
              #:i (add1 i)
@@ -348,29 +374,25 @@
 ;                                                          
 
 (define (get-updated-resp child)
-  (TODO/void get-updated-resp maybe method for resp?)
-  (or (car (dict-ref (send child get-attributes) 'resp '(#f)))
-      (and (eq? 'sp (send child get-name))
-           (car (dict-ref (send child get-attributes) 'who)))
-      (current-resp)))
+  (or (and (tei-element-can-have-resp? child)
+           (tei-element-resp/string child))
+      (current-resp-string)))
 
 (define (get-updated-location-stack child)
-  (match (send child get-name)
-    [(and sym (or 'front 'body 'back))
+  (match child
+    [(tei-element (and sym (or 'front 'body 'back)) _ _)
      (when (current-location-stack)
-       (TODO better error message
-             #:expr
-             (error 'get-updated-location-stack
-                    "can't add root element to non-empty location stack")))
+       (error 'get-updated-location-stack
+              "can't add root element to non-empty location stack"))
      sym]
-    ['div
-     (location-stack-entry:div (send child get-type)
-                               (send child get-n)
+    [(? div?)
+     (location-stack-entry:div (div-get-type child)
+                               (div-get-n child)
                                (current-location-stack))]
-    ['note 
-     (location-stack-entry:note (send child get-place)
-                                (send child get-n)
-                                (send child get-transl?)
+    [(? tei-note?) 
+     (location-stack-entry:note (tei-note-get-place child)
+                                (tei-note-get-n child)
+                                (tei-note-get-transl? child)
                                 (current-location-stack))]
     [_
      (current-location-stack)]))
@@ -388,7 +410,7 @@
     [(regexp-match? #px"^\\s*$"  body)
      segs]
     [else
-     (cons (let ([resp (current-resp)])
+     (cons (let ([resp (current-resp-string)])
              (pre-segment (current-title)
                           counter
                           body
@@ -420,9 +442,9 @@
 
 (define (init-pb+latest-pb->page init-pb latest-pb)
   (if (equal? init-pb latest-pb)
-      (send init-pb get-page-string)
-      (list (send init-pb get-page-string)
-            (send latest-pb get-page-string))))
+      (pb-get-page-string init-pb)
+      (list (pb-get-page-string init-pb)
+            (pb-get-page-string latest-pb))))
 
 (define pre-segment-meta/c
   (opt/c
@@ -447,18 +469,5 @@
 
 
 
-
-
-#|
-;(module+ main
-;  (provide (all-defined-out))
-  (define doc
-    (file->TEI
-     (build-path
-      "/Users/philip/code/ricoeur/texts/debug/"
-      "broken_philosophy_Ricoeur_anthology_of_work.xml")))
-
-;  (prepare-pre-segments doc))
-;|#
 
 

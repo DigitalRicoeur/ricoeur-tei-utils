@@ -6,8 +6,9 @@
          racket/serialize
          adjutor
          "common/pre-segments.rkt"
-         "common/location-stack.rkt"
-         (submod "common/location-stack.rkt" private)
+         ricoeur/tei/base/pre-segments/location-stack
+         (submod ricoeur/tei/base/pre-segments/location-stack
+                 private)
          (for-syntax syntax/parse
                      adjutor
                      ))

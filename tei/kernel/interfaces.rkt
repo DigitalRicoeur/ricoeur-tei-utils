@@ -2,18 +2,30 @@
 
 (require racket/contract
          racket/match
+         adjutor
          "base-structs.rkt"
          )
 
+(module+ test
+  (require rackunit
+           (submod "..")))
+
 (provide tei-element-can-have-resp?
+         resp-string/c
          has-tei-document-paragraphs-status?
          guess-paragraphs-status/c
-         tei-document-with-paragraphs-status/c
+         has-tei-document-paragraphs-status/c
          (contract-out
           [tei-element-resp
            (->* {tei-element-can-have-resp?}
                 {(or/c 'ricoeur #f)}
                 (or/c symbol? #f))]
+          [tei-element-resp/string
+           (->* {tei-element-can-have-resp?}
+                {(or/c 'ricoeur #f)}
+                (or/c resp-string/c #f))]
+          [resp-string->symbol
+           (-> resp-string/c symbol?)]
           [tei-document-paragraphs-status
            (-> has-tei-document-paragraphs-status?
                guess-paragraphs-status/c)]
@@ -23,21 +35,53 @@
   (provide (contract-out
             [prop:resp
              (struct-type-property/c
-              (-> any/c (or/c symbol? #f)))]
+              (cons/c (-> any/c (or/c symbol? #f))
+                      (-> any/c (or/c resp-string/c #f))))]
             [prop:guess-paragraphs-status
              (struct-type-property/c
               (-> any/c guess-paragraphs-status/c))]
             )))
 
-(define-values {prop:resp
-                tei-element-can-have-resp?
-                get-get-resp}
-  (make-struct-type-property 'prop:resp))
+(TODO/void resp-string/c and tei-element-resp/string:
+           better names
+           #: These clash with tei-get-resp-string.)
 
+(define/final-prop resp-string/c
+  #rx"^#.+$")
+
+(define (resp-string->symbol str)
+  (string->symbol (substring str 1)))
+
+(module+ test
+  (check-eq? (resp-string->symbol "#ricoeur")
+             'ricoeur))
+
+(match-define-values {prop:resp/symbol
+                      _
+                      get-get-resp}
+  (make-struct-type-property 'prop:resp/symbol))
+
+(match-define-values {prop:resp/string
+                      _
+                      get-get-resp/string}
+  (make-struct-type-property 'prop:resp/string))
+                      
+(match-define-values {prop:resp
+                      tei-element-can-have-resp?
+                      _}
+  (make-struct-type-property 'prop:resp
+                             #f
+                             (list (cons prop:resp/symbol car)
+                                   (cons prop:resp/string cdr))))
 
 (define (tei-element-resp e [default 'ricoeur])
   (or ((get-get-resp e) e)
       default))
+
+(define (tei-element-resp/string e [default 'ricoeur])
+  (or ((get-get-resp/string e) e)
+      (and default
+           "#ricoeur")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -58,7 +102,7 @@
         'done
         'skip))
 
-(define/subexpression-pos-prop (tei-document-with-paragraphs-status/c inner)
+(define/subexpression-pos-prop (has-tei-document-paragraphs-status/c inner)
   (let ([inner (coerce-flat-contract 'tei-document-paragraphs-status/c inner)])
     (paragraphs-status-contract inner
                                 (get/build-late-neg-projection inner)

@@ -8,12 +8,12 @@
          )
 
 (provide (contract-out
-          [get-page-breaks
+          [tei-get-page-breaks
            (-> tei-element?
                (listof tei-pb?))]
           ))
 
-(define (get-page-breaks this)
+(define (tei-get-page-breaks this)
   (flatten
    (get-page-breaks/raw this)))
 

@@ -40,6 +40,14 @@ and @racket[cdata?] from @racketmodname[xml].
  without checking the validity of the file or even its existance.
 }
 
+@defproc[(attributes-ref [attrs (listof (list/c symbol? string?))]
+                         [key symbol?])
+         (or/c #f string?)]{
+ Returns the string value of the @racket[key] attribute
+ in @racket[attrs] (the attributes list of an @tech{x-expression})
+ or @racket[#f] if none exists.
+}
+
 @subsection{Raw X-Expressions}
 
 @deftogether[

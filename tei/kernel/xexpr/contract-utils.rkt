@@ -21,12 +21,7 @@
 
 (provide get-attributes
          get-body
-         (contract-out
-          [attributes-ref
-           (-> (listof (list/c symbol? string?))
-               symbol?
-               (or/c #f string?))]
-          ))
+         )
 
 (module+ private
   (provide define-make-element-contract
@@ -63,11 +58,6 @@
      attrs]
     [_
      '()]))
-
-(define (attributes-ref attrs k)
-  (define rslt
-    (assq k attrs))
-  (and rslt (cadr rslt)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

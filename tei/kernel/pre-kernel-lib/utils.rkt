@@ -16,7 +16,16 @@
 (provide (contract-out
           [title<?
            (-> string? string? any/c)]
+          [attributes-ref
+           (-> (listof (list/c symbol? string?))
+               symbol?
+               (or/c #f string?))]
           ))
+
+(define (attributes-ref attrs k)
+  (define rslt
+    (assq k attrs))
+  (and rslt (cadr rslt)))
 
 (define (title<? a b)
   (string-ci<? (normalize-title a) (normalize-title b)))

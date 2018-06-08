@@ -226,7 +226,7 @@
  Recall that a @tag{pb} element marks the beginning the specified page.
 }
 
-@defproc[(get-page-breaks [elem tei-element?])
+@defproc[(tei-get-page-breaks [elem tei-element?])
          (listof tei-pb?)]{
  Returns a list, in order, of all of the @tech{tei element structs}
  recursively contained by @racket[elem] that represent

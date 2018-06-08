@@ -14,6 +14,7 @@
                      ))
 ƒ(begin-for-runtime
    (provide tei-document?
+            tei-document-text-element
             (contract-out
              [write-tei-document
               (->* {tei-document?} {output-port?} any)]
@@ -54,7 +55,7 @@ the same source file that defines the Racket enforcement code.
    [#:body/elements-only body/elements-only
     #:this/thunk get-this
     (field teiHeader #:hide)
-    (field text #:hide)
+    (field text #:accessor tei-document-text-element #:hide)
     (match-define (list teiHeader text)
       body/elements-only)
     (declare-paragraphs-status-field

@@ -478,14 +478,6 @@ in @racket[define-element] forms.
  its contract.
 }
 
-@defproc[(attributes-ref [attrs (listof (list/c symbol? string?))]
-                         [key symbol?])
-         (or/c #f string?)]{
- Returns the string value of the @racket[key] attribute
- in @racket[attrs] (the attributes list of an @tech{x-expression})
- or @racket[#f] if none exists.
-}
-
 
 
 

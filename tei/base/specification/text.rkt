@@ -19,7 +19,9 @@
             tei-note?
             div?
             div-type/c
+            div-type-string/c
             tei-text-element?
+            tei-ab?
             (contract-out
              [pb-get-page-string
               (-> tei-pb? (maybe/c string?))]
@@ -96,9 +98,9 @@
                 "section"
                 "dedication"
                 "contents"
+                "intro"
                 "bibl"
                 "ack"
-                "intro"
                 "index")]
     [n string?]
     [resp #rx"^#.+$"])
@@ -106,7 +108,12 @@
    #:predicate div?
    #:begin [(define/final-prop div-type/c
               (or/c 'chapter 'part 'section 'dedication
-                    'contents 'intro 'bibl 'ack 'index))]
+                    'contents 'intro 'bibl 'ack 'index))
+            ;; TODO: Extend DSL to integrate this w/
+            ;; #:attr-contracts contract
+            (define/final-prop div-type-string/c
+              (or/c "chapter" "part" "section" "dedication"
+                "contents" "intro" "bibl" "ack" "index"))]
    #:constructor [
  #:attributes attrs
  (declare-resp-field attrs)
@@ -200,6 +207,7 @@
    #:children ([0+ list]
                [0+ note]
                [0+ pb])
+   #:predicate tei-ab?
    #:prose ƒ[]{
  The ƒtag{ab} ("anonymous block")
  element may contain a combination of

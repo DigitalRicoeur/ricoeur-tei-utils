@@ -1,7 +1,10 @@
-#lang racket
+#lang racket/base
 
 (require data/maybe
+         racket/contract
+         racket/match
          json
+         ricoeur/tei/base/def-from-spec
          )
 
 (provide location-stack-entry?
@@ -33,9 +36,10 @@
              (-> location-stack-entry? location-stack-jsexpr/c)]
             )))
 
-(module adt racket
+(module adt racket/base
   (require data/maybe
-           ricoeur/tei/oop-base
+           racket/contract
+           ricoeur/tei/base/def-from-spec
            )
   (provide location-stack-entry?
            location-stack-entry:root?
@@ -85,8 +89,7 @@
   (and/c jsexpr?
          (flat-rec-contract location-stack-jsexpr:div/c
            (list/c "div"
-                   (or/c "chapter" "part" "section" "dedication"
-                         "contents" "intro" "bibl" "ack" "index")
+                   div-type-string/c
                    (or/c #f string?)
                    (or/c location-stack-jsexpr:root/c
                          location-stack-jsexpr:div/c)))))
