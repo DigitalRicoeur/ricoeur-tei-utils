@@ -15,6 +15,14 @@
 (module reader syntax/module-reader
   ricoeur/test-lang/runtime-lang)
 
+(define-for-syntax (make-check-syntax-original stx)
+  (syntax-property (let ([lst (syntax->list stx)])
+                     (if lst
+                         #`(#,@(map make-check-syntax-original
+                                    lst))
+                         stx))
+                   'original-for-check-syntax #t))
+                   
 (define-syntax-parser module-begin
   [(_ body:expr ...)
    #:with (lifted-stx doc-module-begin)
@@ -32,7 +40,7 @@
                                                (strip-context #'doc-lang))
                                             [#,(introduce
                                                 (datum->syntax #f
-                                                              '#%module-begin))
+                                                               '#%module-begin))
                                              doc-module-begin]))
                         (expand-for-effect doc-module-begin
                                            #,@(syntax->list
@@ -40,8 +48,10 @@
                                                 (strip-context #'(body ...))))))
                      'module-begin
                      null))
-     (map (make-syntax-delta-introducer (car (syntax-e this-syntax))
-                                        #f)
+     (map (compose1 make-check-syntax-original
+                    introduce
+                    (make-syntax-delta-introducer #'doc-lang
+                                                  #f))
           (runtime-lift-target->list target)))
    #`(#%module-begin
       (module* doc doc-lang
