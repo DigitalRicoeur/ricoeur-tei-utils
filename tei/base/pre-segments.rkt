@@ -25,7 +25,7 @@
                                [counter natural-number/c]
                                [body string?]
                                [meta pre-segment-meta/c]
-                               [resp resp-string/c])
+                               [resp resp-fragment-string/c])
             #:omit-constructor]
           ))
 
@@ -68,7 +68,7 @@
 (define current-title
   (make-parameter #f))
 
-(define current-resp-string
+(define current-resp-fragment-string
   (make-parameter "#ricoeur"))
 
 (define-syntax (eprintf* stx)
@@ -136,7 +136,7 @@
                natural-number/c
                tei-pb?))
   (eprintf* "do-prepare-segments\n")
-  (parameterize ([current-resp-string (get-updated-resp child)]
+  (parameterize ([current-resp-fragment-string (get-updated-resp child)]
                  [current-location-stack (get-updated-location-stack child)])
     (match child 
       ;; content-containing elements
@@ -375,8 +375,8 @@
 
 (define (get-updated-resp child)
   (or (and (tei-element-can-have-resp? child)
-           (tei-element-resp/string child))
-      (current-resp-string)))
+           (tei-element-resp/fragment-string child))
+      (current-resp-fragment-string)))
 
 (define (get-updated-location-stack child)
   (match child
@@ -410,7 +410,7 @@
     [(regexp-match? #px"^\\s*$"  body)
      segs]
     [else
-     (cons (let ([resp (current-resp-string)])
+     (cons (let ([resp (current-resp-fragment-string)])
              (pre-segment (current-title)
                           counter
                           body

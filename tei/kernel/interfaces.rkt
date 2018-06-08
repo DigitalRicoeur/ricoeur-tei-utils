@@ -11,7 +11,7 @@
            (submod "..")))
 
 (provide tei-element-can-have-resp?
-         resp-string/c
+         resp-fragment-string/c
          has-tei-document-paragraphs-status?
          guess-paragraphs-status/c
          has-tei-document-paragraphs-status/c
@@ -20,12 +20,12 @@
            (->* {tei-element-can-have-resp?}
                 {(or/c 'ricoeur #f)}
                 (or/c symbol? #f))]
-          [tei-element-resp/string
+          [tei-element-resp/fragment-string
            (->* {tei-element-can-have-resp?}
                 {(or/c 'ricoeur #f)}
-                (or/c resp-string/c #f))]
-          [resp-string->symbol
-           (-> resp-string/c symbol?)]
+                (or/c resp-fragment-string/c #f))]
+          [resp-fragment-string->symbol
+           (-> resp-fragment-string/c symbol?)]
           [tei-document-paragraphs-status
            (-> has-tei-document-paragraphs-status?
                guess-paragraphs-status/c)]
@@ -36,24 +36,20 @@
             [prop:resp
              (struct-type-property/c
               (cons/c (-> any/c (or/c symbol? #f))
-                      (-> any/c (or/c resp-string/c #f))))]
+                      (-> any/c (or/c resp-fragment-string/c #f))))]
             [prop:guess-paragraphs-status
              (struct-type-property/c
               (-> any/c guess-paragraphs-status/c))]
             )))
 
-(TODO/void resp-string/c and tei-element-resp/string:
-           better names
-           #: These clash with tei-get-resp-string.)
+(define/final-prop resp-fragment-string/c
+  (and/c string? #rx"^#.+$"))
 
-(define/final-prop resp-string/c
-  #rx"^#.+$")
-
-(define (resp-string->symbol str)
+(define (resp-fragment-string->symbol str)
   (string->symbol (substring str 1)))
 
 (module+ test
-  (check-eq? (resp-string->symbol "#ricoeur")
+  (check-eq? (resp-fragment-string->symbol "#ricoeur")
              'ricoeur))
 
 (match-define-values {prop:resp/symbol
@@ -78,7 +74,7 @@
   (or ((get-get-resp e) e)
       default))
 
-(define (tei-element-resp/string e [default 'ricoeur])
+(define (tei-element-resp/fragment-string e [default 'ricoeur])
   (or ((get-get-resp/string e) e)
       (and default
            "#ricoeur")))

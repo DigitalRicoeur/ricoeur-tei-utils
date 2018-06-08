@@ -31,7 +31,7 @@
          (attributes-ref attrs.c 'key-id))
        (define/field [sym-field-name #:check (or/c symbol? #f)]
          (and str-field-name
-              (resp-string->symbol str-field-name)))
+              (resp-fragment-string->symbol str-field-name)))
        (lift-property prop:resp
                       (cons (λ (this) (get-field sym-field-name this))
                             (λ (this) (get-field str-field-name this)))))])

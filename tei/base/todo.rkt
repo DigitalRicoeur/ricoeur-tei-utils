@@ -18,9 +18,14 @@
 ;; Or do we ever really care about handling those numerically?
 ;; Maybe for TEI Lint?
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; guess-paragraphs<%>, but want to rethink how
-
+;; Condition currently needed for xmllint to avoid a warning:
+(and pages-ok?
+     (not (eq? 'todo (send val get-guess-paragraphs-status)))
+     (date<=? (send val get-original-publication-date)
+              (send val get-publication-date))
+     (force promise:ricoeur-xml:id-ok?))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
