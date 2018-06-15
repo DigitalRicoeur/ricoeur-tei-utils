@@ -5,7 +5,7 @@
          "test-duplicate.rkt"
          ricoeur/tei/kernel
          (submod ricoeur/tei/kernel private)
-         (submod ricoeur/tei/kernel/lang/define
+         (submod ricoeur/tei/kernel/lang/link
                  private)
          )
 

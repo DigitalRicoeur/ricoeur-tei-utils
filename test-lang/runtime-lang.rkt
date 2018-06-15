@@ -28,7 +28,8 @@
    #:with (lifted-stx doc-module-begin)
    (generate-temporaries '(lifted-stx doc-module-begin))
    #:with doc-lang (datum->syntax this-syntax
-                                  'ricoeur/test-lang/doc-lang)
+                                  'ricoeur/test-lang/doc-lang
+                                  (vector (syntax-source this-syntax) 1 0 1 1))
    #:do [(define introduce
            (make-syntax-introducer #t))]
    #:with (runtime-body ...)

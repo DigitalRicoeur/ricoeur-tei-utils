@@ -7,7 +7,7 @@
 ;; There are no "public" exports from the lang.
 
 (module+ private
-  (require-provide "lang/define.rkt"
+  (require-provide "lang/link.rkt"
                    ))
 
 (module+ doc

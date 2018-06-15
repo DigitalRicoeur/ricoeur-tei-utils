@@ -356,18 +356,18 @@
                         
 (define-syntax-parser define-element-struct
   [(_ outer:outer-declarations body ...)
-   #`(splicing-syntax-parameterize-local-element-name
-      outer.element-name
-      (define-element-struct/derived* #,this-syntax outer body ...))])
+   #`(syntax-parameterize-local-element-name
+      outer.element-name #:splicing
+      (define-element-struct/private #,this-syntax outer body ...))])
 
 (define-syntax-parser define-element-struct/derived
   ;; Like define-element-struct/derived*, but blames
   ;; this-syntax (not original-datum) for bad outer-declarations.
   [(_ original-datum outer:outer-declarations
       body ...)
-   #`(splicing-syntax-parameterize-local-element-name
-      outer.element-name
-      (define-element-struct/derived* original-datum outer body ...))])
+   #`(syntax-parameterize-local-element-name
+      outer.element-name #:splicing
+      (define-element-struct/private original-datum outer body ...))])
 
 
 ;                                                                                          
@@ -647,9 +647,9 @@
 ;                                                  
 ;                                                  
 
-(define-syntax-parser define-element-struct/derived*
+(define-syntax-parser define-element-struct/private
   ;; The "sugar" macro that expands to me is responsible
-  ;; for splicing-syntax-parameterize-local-element-name
+  ;; for syntax-parameterize-local-element-name
   #:context (syntax-parse this-syntax
               [(_ original-datum _ ...)
                #'original-datum])

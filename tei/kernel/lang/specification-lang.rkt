@@ -1,40 +1,53 @@
 #lang racket/base
 
 (require ricoeur/tei/kernel/sans-lang
-         (submod "stxparam.rkt" private)
-         racket/splicing
          syntax/parse/define
-         (only-in "define.rkt"
+         racket/require
+         (multi-in ricoeur/tei/kernel/lang
+                   (elem-for-runtime 
+                    begin-for-runtime))
+         (only-in ricoeur/tei/kernel/lang/link
                   define-combined-elements-specification)
          (for-syntax racket/base
                      racket/list
                      racket/sequence
                      syntax/parse
                      syntax/flatten-begin
-                     racket/match
-                     "ir/struct.rkt"
-                     "ir/syntax-class.rkt"
-                     "static-info.rkt"
-                     ))
+                     syntax/strip-context
+                     (multi-in ricoeur/tei/kernel/lang
+                               (ir/struct
+                                ir/syntax-class
+                                static-info
+                                runtime-lift-state
+                                ))))
 
 (require-provide (provide-only ricoeur/tei/kernel/sans-lang)
                  racket/contract
                  racket/match
                  racket/string
                  racket/list
-                 "stxparam.rkt"
-                 "adt.rkt"
-                 "interface-macros.rkt"
-                 )
+                 (multi ricoeur/tei/kernel/lang
+                        (stxparam
+                         adt
+                         interface-macros
+                         )))
 
 (provide (except-out (all-from-out racket/base)
                      #%module-begin)
+         define-element/runtime ;; TODO: something better w/ syntax-local-require
          (rename-out
           [module-begin #%module-begin]
           ))
 
 
 (begin-for-syntax
+  (define-syntax-class whitespace-str
+    #:description "whitespace string"
+    (pattern v:str
+             #:fail-unless
+             (regexp-match? #px"^\\s*$"
+                            (syntax->datum #'v))
+             "not exclusively whitespace"))
   (define-syntax-class spec-name-declaration
     #:description "spec name declaration"
     #:attributes {name to-extend}
@@ -54,151 +67,120 @@
                  #:defaults
                  ([decl.name (datum->syntax this-syntax 'spec)]
                   [decl.to-extend #'()]))
-      body ...)
+      body-for-doc ...)
    #:with doc (datum->syntax this-syntax 'doc)
    #:with for-doc-lang
-   (datum->syntax this-syntax 'ricoeur/tei/kernel/lang/doc-lang)
+   (datum->syntax #;this-syntax
+                  (car (syntax->list #'(body-for-doc ...)))
+                  'ricoeur/tei/kernel/lang/doc-lang
+                  (vector (syntax-source this-syntax) 1 0 1 1)) ;????
+   #:do [(define doctime-introduce
+           (make-syntax-introducer #t))
+         (define runtime-introduce
+           (make-syntax-introducer #t))
+         (define target
+           (make-runtime-lift-target))
+         (define runtime-lifts
+           (parameterize ([current-runtime-lift-target target])
+             ;; Thanks https://groups.google.com/d/msg/racket-users/zpe27qAdHG0/iWWdxpuZEAAJ
+             (local-expand #`(#%plain-module-begin
+                              (require (rename-in #,(doctime-introduce
+                                                     (strip-context #'for-doc-lang))
+                                                  [#,(doctime-introduce
+                                                      (datum->syntax #f
+                                                                     '#%module-begin))
+                                                   doc-module-begin]))
+                              (expand-for-effect doc-module-begin
+                                                 doc
+                                                 #,@(syntax->list
+                                                     (doctime-introduce
+                                                      (strip-context #'(body-for-doc ...))))))
+                           'module-begin
+                           null)
+             (runtime-lift-target->list target)))]
+   #:with (runtime-body ...)
+   (map (compose1 make-check-syntax-original
+                  runtime-introduce
+                  doctime-introduce
+                  (make-syntax-delta-introducer #'for-doc-lang
+                                                #f))
+        runtime-lifts)
    #`(#%module-begin
       (provide decl.name)
       (module* doc for-doc-lang
-        doc body ...)
+        doc body-for-doc ...)
       (module+ test
         (require (submod ".." doc)))
-      (splicing-syntax-parameterize
-          ([define-element plain-d-element]
-           [define-elements-together
-             plain-d-elements-together])
-        (stratify-body decl.name
-                       decl.to-extend
-                       ()
-                       ()
-                       (body ...))))])
+      (collect-spec-parts decl.name
+                          #,(runtime-introduce #'decl.to-extend)
+                          ()
+                          (runtime-body ...)))])
 
-(define-syntax-parser stratify-body
+
+(define-syntax-parser expand-for-effect
+  [(_ doc-module-begin:id body ...)
+   (local-expand #`(doc-module-begin body ...)
+                 'module-begin
+                 null)
+   #'(void)])
+
+
+(define-for-syntax (make-check-syntax-original stx)
+  (syntax-property (let ([lst (syntax->list stx)])
+                     (if lst
+                         #`(#,@(map make-check-syntax-original
+                                    lst))
+                         stx))
+                   'original-for-check-syntax #t))
+
+
+
+(define-syntax-parser collect-spec-parts
   [(_ name:id
       to-extend
-      (for-spec-body:expr ...)
-      (spec-form:plain-element-definition-stx ...)
+      (part:elements-specification-transformer-part ...)
       ())
    #:fail-unless (eq? (syntax-local-context) 'module)
    "only allowed in a module context"
-   #`(unwrap-stratified name
-                        to-extend
-                        (for-spec-body ...)
-                        (spec-form ...))]
+   #'(prepare-spec name
+                   to-extend
+                   part ...)]
   [(_ name:id
       to-extend
-      (for-spec-body:expr ...)
-      (spec-form:plain-element-definition-stx ...)
-      (this to-go:expr ...))
+      (part:elements-specification-transformer-part ...)
+      (this:expr to-go:expr ...))
    #:fail-unless (eq? (syntax-local-context) 'module)
    "only allowed in a module context"
    (syntax-parse (local-expand #'this
                                'module
-                               (list #'begin-for-runtime
-                                     #'plain-element-definition
+                               (list #'elements-specification-transformer-part-id
                                      #'begin ;; it's implicitly added, but let's be clear
                                      ;; Need to not try to expand these:
                                      #'#%require
                                      #'#%provide
+                                     #'define-values
+                                     #'define-syntaxes
+                                     #'module #'module* #'module+
                                      ))
-     #:literals {begin begin-for-runtime}
+     #:literals {begin}
      [(begin body:expr ...)
       #:with (flattened ...) (flatten-all-begins
                               #'(begin body ...))
-      #`(stratify-body name
-                       to-extend
-                       (for-spec-body ...)
-                       (spec-form ...)
-                       (flattened ... to-go ...))]
-     [(begin-for-runtime body:expr ...)
-      #`(stratify-body name
-                       to-extend
-                       (for-spec-body ... body ...)
-                       (spec-form ...)
-                       (to-go ...))]
-     [new-spec:plain-element-definition-stx
-      #`(stratify-body name
-                       to-extend
-                       (for-spec-body ...)
-                       (spec-form ... new-spec)
-                       (to-go ...))]
-     [_
-      #`(stratify-body name
-                       to-extend
-                       (for-spec-body ...)
-                       (spec-form ...)
-                       (to-go ...))])])
-
-(define-for-syntax (error-inside-begin-for-runtime stx)
-  (raise-syntax-error
-   #f "not allowed inside begin-for-runtime" stx))
-
-(define-syntax-parser unwrap-stratified
-  [(_ name:id
-      to-extend
-      (for-spec-body:expr ...)
-      (spec-form:plain-element-definition-stx ...))
-   #`(splicing-syntax-parameterize
-         ([begin-for-runtime nested-begin-for-runtime-transformer]
-          [define-element error-inside-begin-for-runtime]
-          [define-elements-together error-inside-begin-for-runtime])
-       for-spec-body ...
-       (prepare-spec name
-                     to-extend
-                     spec-form ...))])
-
-
-(define-for-syntax ir->static-info-splice
-  (match-lambda
-    [(element-info
-      _ name-stx wrapped-constructor-name
-      (element-options children required-order
-                       attr-contracts required-attrs
-                       extra-check/false text?))
-     (list
-      #`'#,name-stx
-      #`(element-static-info
-         '#,name-stx
-         #'#,name-stx
-         #'#,wrapped-constructor-name
-         #,text?
-         #,(if children
-               #`#''(#,@(map (match-lambda
-                               [(child-spec _ repeat _ name)
-                                #`[#,repeat #,name]])
-                             children))
-               #'#''())
-         #,(if required-order
-               #`#''(#,@required-order)
-               #'#''())
-         #,(if attr-contracts
-               #`#'(list
-                    #,@(map (match-lambda
-                              [(attr-contract-info _ name _ protected)
-                               #`(cons '#,name
-                                       #,(syntax-local-lift-expression
-                                          protected))])
-                            attr-contracts))
-               #'#''())
-         #,(if required-attrs
-               #`#''(#,@required-attrs)
-               #'#''())
-         #,(match extra-check/false
-             [(extra-check _ protected)
-              #`#'#,(syntax-local-lift-expression
-                     protected)]
-             [#f
-              #'#'#f])))]))
-                  
-(define-for-syntax (ir->needed-elements-stxes ir)
-  (define children?
-    (element-options-children
-     (element-info-options ir)))
-  (if children?
-      (map child-spec-name-stx 
-           children?)
-      null))
+      #`(collect-spec-parts name
+                            to-extend
+                            (part ...)
+                            (flattened ... to-go ...))]
+     [new-part:elements-specification-transformer-part
+      #`(collect-spec-parts name
+                            to-extend
+                            (part ... new-part)
+                            (to-go ...))]
+     [other
+      #`(begin other
+               (collect-spec-parts name
+                                   to-extend
+                                   (part ...)
+                                   (to-go ...)))])])
 
 
 
@@ -206,42 +188,20 @@
 (define-syntax-parser prepare-spec
   [(_ name:id
       (local-name:id [e:id ...])
-      spec-form:plain-element-definition-stx ...)
+      part:elements-specification-transformer-part ...)
    (for ([extend-id (in-syntax #'(e ...))])
      (unless (specification-group-info?
               (syntax-local-value extend-id (λ () #f)))
+       (println (syntax-local-value extend-id (λ () #f)))
        (raise-syntax-error
         #f "not an elements specification transformer"
         extend-id)))
-   #`(begin (prepare-spec local-name () spec-form ...)
+   #`(begin (prepare-spec local-name () part ...)
             (define-combined-elements-specification name
               [local-name e ...]))]
-  [(_ name:id () spec-form:plain-element-definition-stx ...)
-   #:fail-when (check-duplicate-identifier
-                (syntax->list #'(spec-form.name ...)))
-   "duplicate element name"
-   #:with (raw-needed-name ...)
-   (apply append (map ir->needed-elements-stxes
-                      (attribute spec-form.parsed)))
-   #`(define-syntax name
-       (let ([present-assocs (list (cons 'spec-form.name
-                                         #'spec-form.name)
-                                   ...)]
-             [present-syms '(spec-form.name ...)]
-             [raw-needed-assocs (list (cons 'raw-needed-name
-                                            #'raw-needed-name)
-                                      ...)])
-             
-         (specification-group-info
-          (hasheq #,@(apply append
-                            (map ir->static-info-splice
-                                 (attribute spec-form.parsed))))
-          present-assocs
-          (filter (λ (pr)
-                    (not (memq (car pr) present-syms)))
-                  (remove-duplicates raw-needed-assocs
-                                     eq?
-                                     #:key car)))))])
+  [(_ name:id () part:elements-specification-transformer-part ...)
+   #'(define-elements-specification-transformer name
+       part ...)])
 
 
 

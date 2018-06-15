@@ -1,13 +1,10 @@
 #lang racket/base
 
 (require "base.rkt"
-         "../stxparam.rkt"
          syntax/parse/define
          (for-syntax racket/base
                      syntax/parse
-                     racket/syntax
                      (only-in adjutor list-when)
-                     racket/sequence
                      syntax/parse/experimental/template ;; coming in Racket 7
                      ))
 

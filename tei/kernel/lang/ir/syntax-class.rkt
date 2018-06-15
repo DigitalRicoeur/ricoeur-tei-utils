@@ -1,44 +1,30 @@
 #lang racket/base
 
 (require syntax/parse
-         racket/syntax
          racket/contract
          racket/match
-         racket/sequence
-         "struct.rkt"
          adjutor
+         "struct.rkt"
          (for-template racket/base
                        racket/contract
-                       racket/splicing
-                       "../stxparam.rkt"
-                       (submod "../stxparam.rkt" private)
-                       (submod "../adt.rkt" private)
                        ricoeur/tei/kernel/xexpr/plain-contracts
                        ))
 
-(provide define-element/rest
-         define-elements-together/rest
-         desugared-element-info
-         element-info->plain-element-definition
-         plain-d-element
-         plain-d-elements-together
-         plain-element-definition-stx
-         whitespace-str
+(provide element-contract-options
+         element-contract-options/term
+         element-options->stx
+         normalized-element-definition
          )
 
-(define-syntax-class whitespace-str
-  #:description "whitespace string"
-  (pattern v:str
-           #:fail-unless
-           (regexp-match? #px"^\\s*$"
-                          (syntax->datum #'v))
-           "not exclusively whitespace"))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; extra check
 
-(define-syntax-class extra-check-spec
+(define-syntax-class (extra-check-spec #:contract? [contract? #f])
   #:description "extra check expression"
   #:attributes {parsed}
   (pattern #f
-           #:attr parsed (extra-check this-syntax this-syntax))
+           #:with parsed this-syntax)
   (pattern check
            #:declare check (expr/c #'(or/c #f
                                            (-> raw-xexpr-element/c
@@ -46,30 +32,43 @@
                                                any/c
                                                any/c))
                                    #:name "extra check expression")
-           #:attr parsed (extra-check this-syntax #'check.c)))
+           #:with parsed (if contract?
+                             (syntax-local-lift-expression #'check.c)
+                             #'check)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; attributes
 
-(define-syntax-class single-attr-contract-spec
+(define-syntax-class (single-attr-contract-spec #:contract? [contract? #f])
   #:description "attribute name / contract expression pair"
   #:attributes {parsed}
+  #:literals {string? any/c}
+  (pattern [(~describe "attribute name" name:id)
+            (~or* val:str
+                  (~and val (~or* string? any/c)))]
+           #:attr parsed
+           (attr-contract-info (syntax->datum #'name)
+                               #'name
+                               #'val))
   (pattern [(~describe "attribute name" name:id) val]
            #:declare val
            (expr/c #'flat-contract?
                    #:name (format "~v attribute contract expression"
                                   (syntax->datum #'name)))
-           #:attr parsed (attr-contract-info (syntax->datum #'name)
-                                             #'name
-                                             #'val
-                                             #'val.c)))
+           #:attr parsed
+           (attr-contract-info (syntax->datum #'name)
+                               #'name
+                               (if contract?
+                                   (syntax-local-lift-expression #'val.c)
+                                   #'val))))
 
 
-(define-syntax-class attr-contracts-spec
+(define-syntax-class (attr-contracts-spec #:contract? [contract? #f])
   #:description "a parenthesized sequence of attribute/contract pairs"
   #:attributes {parsed}
-  (pattern (spec:single-attr-contract-spec ...)
+  (pattern ((~var spec (single-attr-contract-spec #:contract? contract?))
+            ...)
            #:attr parsed (attribute spec.parsed)
            #:fail-when (check-duplicate-identifier
                         (map attr-contract-info-name-stx
@@ -85,7 +84,6 @@
            #:fail-when (check-duplicate-identifier
                         (attribute lst))
            "duplicate required attribute"))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -125,6 +123,7 @@
                         (attribute lst))
            "duplicate child element name"))
 
+
 ;                                                          
 ;                                                          
 ;                                                          
@@ -143,18 +142,21 @@
 ;           ;;                                             
 ;                                                          
 
-(define-splicing-syntax-class define-element/options
+(define-splicing-syntax-class (element-contract-options #:contract? [contract? #f])
   #:description #f
   #:attributes {parsed}
   (pattern
    (~seq (~alt (~optional (~seq (~and text-kw #:contains-text))
                           #:name "#:contains-text option")
-               (~optional (~seq #:extra-check check:extra-check-spec)
+               (~optional (~seq #:extra-check
+                                (~var check (extra-check-spec
+                                             #:contract? contract?)))
                           #:name "#:extra-check clause"
                           #:defaults ([check.parsed #f]))
                ;; attributes
                (~optional (~seq #:attr-contracts
-                                attr-contracts:attr-contracts-spec)
+                                (~var attr-contracts (attr-contracts-spec
+                                                      #:contract? contract?)))
                           #:name "#:attr-contracts clause"
                           #:defaults ([attr-contracts.parsed #f]))
                (~optional (~seq #:required-attrs
@@ -220,303 +222,77 @@
                     text?)))
 
 
-;                                                                          
-;                                                                          
-;                                                                          
-;                                                                          
-;       ;;;                          ;;                                 ;; 
-;     ;;                             ;;                                 ;; 
-;   ;;;;;;; ;; ;;;   ;;;    ;; ;   ;;;;;;;            ;;;   ;; ;     ;;;;; 
-;     ;;    ;;;     ;   ;   ;;; ;    ;;             ;;   ;  ;;; ;   ;   ;; 
-;     ;;    ;;      ;   ;   ;;  ;;   ;;             ;    ;  ;;  ;;  ;   ;; 
-;     ;;    ;;     ;;   ;;  ;;  ;;   ;;            ;;;;;;;; ;;  ;; ;;   ;; 
-;     ;;    ;;      ;   ;   ;;  ;;   ;;             ;       ;;  ;;  ;   ;; 
-;     ;;    ;;      ;   ;   ;;  ;;    ;             ;;   ;  ;;  ;;  ;   ;; 
-;     ;;    ;;       ;;;    ;;  ;;     ;;;            ;;;   ;;  ;;   ;;; ; 
-;                                                                          
-;                                                                          
-;                                                                          
-;                                                                          
 
-(define (error-inside-struct-def stx)
-  (raise-syntax-error
-   #f "not allowed inside an element struct definition"
-   stx))
-
-(define-splicing-syntax-class inset-clause
+(define-splicing-syntax-class (element-contract-options/term #:contract? [contract? #f])
   #:description #f
-  #:attributes {inset?-expr}
-  (pattern (~describe "#:inset? clause"
-                      (~seq #:inset? (~describe "inset expression"
-                                                inset?-expr:expr))))
-  (pattern (~seq)
-           #:with inset?-expr #'#f))
+  #:attributes {parsed}
+  (pattern [(~var opts (element-contract-options #:contract? contract?))]
+           #:attr parsed (attribute opts.parsed)))
 
 
-(define-splicing-syntax-class define-element/rest
-  #:description #f
-  #:attributes {parsed name opts [body 1] struct-def}
-  (pattern
-   (~seq (~describe "element name"
-                    name:id)
-         inset:inset-clause
-         opts:define-element/options
-         (~or*
-          (~seq (~describe "element struct definition form"
-                           datatype)
-                ...
-                #:prose [body:expr ...]) 
-          (~seq #:prose [body:expr ...]
-                (~describe "element struct definition form"
-                           datatype)
-                ...)))
-   #:with wrapped-constructor-name
-   (generate-temporary (format-symbol "make-~a-struct" #'name))
-   #:with struct-def
-   #`(begin-for-runtime
-       (splicing-syntax-parameterize
-           ([define-element error-inside-struct-def]
-            [define-elements-together error-inside-struct-def])
-         (define-element-struct/derived
-           #,this-syntax
-           [#:wrapped-constructor-name wrapped-constructor-name
-            #:element-name name
-            #,(if (element-options-text? (attribute opts.parsed))
-                  #'#:contains-text
-                  #'#:elements-only)]
-           datatype ...)))
-   #:attr parsed
-   (element-definition-group
-    (list (element-info (syntax->datum #'name)
-                        #'name
-                        #'wrapped-constructor-name
-                        (attribute opts.parsed)))
-    #'inset.inset?-expr
-    (syntax->list #'(body ...)))))
-
-
-(define-splicing-syntax-class element-declaration-start
-  #:description #f
-  #:attributes {name opts options}
-  (pattern (~seq (~describe "element name"
-                            name:id)
-                 opts:define-element/options)
-           #:attr options (attribute opts.parsed)))
-
-
-(define-splicing-syntax-class define-elements-together/rest
-  #:description #f
-  #:attributes {parsed [name 1] [opts 1] [body 1] struct-def}
-  ;; may add more options in future
-  (pattern (~seq inset:inset-clause
-                 ([decl:element-declaration-start
-                   (~describe "element struct definition form"
-                              datatype)
-                   ...]
-                  ...+)
-                 body:expr ...)
-           #:with (name ...) #'(decl.name ...)
-           #:with (opts ...) #'(decl.opts ...)
-           #:with (wrapped-constructor-name ...)
-           (for/list ([name-stx (in-syntax #'(decl.name ...))])
-             (generate-temporary
-              (format-symbol "make-~a-struct" name-stx)))
-           #:with struct-def
-           #`(begin-for-runtime
-               (splicing-syntax-parameterize
-                   ([define-element error-inside-struct-def]
-                    [define-elements-together error-inside-struct-def])
-                 #,@(for/list ([name-stx (in-syntax #'(decl.name ...))]
-                               [wrapped (in-syntax #'(wrapped-constructor-name ...))]
-                               [text? (in-list (map element-options-text?
-                                                    (attribute decl.options)))]
-                               [datatype-splice
-                                (in-list
-                                 (map syntax->list
-                                      (syntax->list #'([datatype ...] ...))))])
-                      #`(define-element-struct/derived
-                          #,this-syntax
-                          [#:wrapped-constructor-name #,wrapped
-                           #:element-name #,name-stx
-                           #,(if text?
-                                 #'#:contains-text
-                                 #'#:elements-only)]
-                          #,@datatype-splice))))
-           #:attr parsed
-           (element-definition-group
-            (for/list ([name-stx (in-syntax #'(decl.name ...))]
-                       [wrapped (in-syntax #'(wrapped-constructor-name ...))]
-                       [opts (in-list (attribute decl.options))])
-              (element-info (syntax->datum name-stx)
-                            name-stx
-                            wrapped
-                            opts))
-            #'inset.inset?-expr
-            (syntax->list #'(body ...)))))
-
-
-;                                          
-;                                          
-;                                          
-;                                          
-;           ;;;;               ;           
-;             ;;               ;;          
-;   ; ;;      ;;      ;;    ;;;;;   ;; ;   
-;   ;;  ;     ;;     ;  ;      ;;   ;;; ;  
-;   ;;  ;     ;;        ;;     ;;   ;;  ;; 
-;   ;;  ;;    ;;      ;;;;     ;;   ;;  ;; 
-;   ;;  ;     ;;     ;  ;;     ;;   ;;  ;; 
-;   ;;  ;      ;    ;;  ;;     ;;   ;;  ;; 
-;   ;;;;        ;;   ;;; ;     ;;   ;;  ;; 
-;   ;;                                     
-;   ;;                                     
-;   ;;                                     
-;                                          
-
-
-(define-syntax-class desugared-element-info
-  #:datum-literals {1+ 0-1 0+}
-  #:attributes {parsed name}
-  (pattern
-   [name:id
-    [#:wrapped-constructor-name wrapped-constructor-name:id]
-    [#:children
-     (~optional (~and children-present
-                      ([(~and repeat
-                              (~or* 1 1+ 0-1 0+))
-                        child-name:id]
-                       ...)))]
-    [#:required-order
-     (~optional (~and required-order-present
-                      (order-name:id ...)))]
-    [#:attr-contracts
-     (~optional (~and attr-contracts-present
-                      ([attr-name:id
-                        plain-contract:expr
-                        protected-contract:expr]
-                       ...)))]
-    [#:required-attrs
-     (~optional (~and required-attrs-present
-                      (required-attr-name:id ...)))]
-    [#:extra-check
-     (~optional (~and extra-check-present
-                      [plain-check:expr
-                       protected-check:expr]))]
-    (~or* (~and text? #:contains-text)
-          #:no-text)]
-   #:attr parsed
-   (element-info
-    (syntax->datum #'name)
-    #'name
-    #'wrapped-constructor-name
-    (element-options
-     (and (attribute children-present)
-          (for/list ([r (in-list (syntax->list
-                                  #'(repeat ...)))]
-                     [n (in-list (syntax->list
-                                  #'(child-name ...)))])
-            (child-spec (syntax->datum r)
-                        r
-                        (syntax->datum n)
-                        n)))
-     (and (attribute required-order-present)
-          (syntax->list #'(order-name ...)))
-     (and (attribute attr-contracts-present)
-          (for/list ([n (in-list (syntax->list
-                                  #'(attr-name ...)))]
-                     [plain (in-list (syntax->list
-                                      #'(plain-contract ...)))]
-                     [protected (in-list
-                                 (syntax->list
-                                  #'(protected-contract ...)))])
-            (attr-contract-info (syntax->datum n)
-                                n
-                                plain
-                                protected)))
-     (and (attribute required-attrs-present)
-          (syntax->list #'(required-attr-name ...)))
-     (and (attribute extra-check-present)
-          (extra-check #'plain-check #'protected-check))
-     (any->boolean (attribute text?))))))
-
-
-
-
-(define element-info->plain-element-definition
+(define element-options->stx
   (match-lambda
-    [(element-info
-      _ name wrapped-constructor-name
-      (element-options children
-                       required-order
-                       attr-contracts
-                       required-attrs
-                       extra-check/false
-                       text?))
-     #`(plain-element-definition
-        [#,name
-         [#:wrapped-constructor-name #,wrapped-constructor-name]
-         #,(if children
-               #`[#:children
-                  (#,@(map (match-lambda
-                             [(child-spec _ repeat _ n)
-                              #`[#,repeat #,n]])
-                           children))]
-               #`[#:children])
-         #,(if required-order
-               #`[#:required-order (#,@required-order)]
-               #`[#:required-order])
-         #,(if attr-contracts
-               #`[#:attr-contracts
-                  (#,@(map (match-lambda
-                             [(attr-contract-info
-                               _ n plain protected)
-                              #`[#,n #,plain #,protected]])
-                           attr-contracts))]
-               #`[#:attr-contracts])
-         #,(if required-attrs
-               #`[#:required-attrs (#,@required-attrs)]
-               #`[#:required-attrs])
-         #,(match extra-check/false
-             [(extra-check plain protected)
-              #`[#:extra-check [#,plain #,protected]]]
-             [#f
-              #`[#:extra-check]])
-         #,(if text?
-               #'#:contains-text
-               #'#:no-text)])]))
+    [(element-options children
+                      required-order
+                      attr-contracts
+                      required-attrs
+                      extra-check/false
+                      text?)
+     #`[#,@(list-when children
+             (list #'#:children
+                   (map (match-lambda
+                          [(child-spec _ repeat _ n)
+                           #`[#,repeat #,n]])
+                        children)))
+        #,@(list-when required-order
+             (list #'#:required-order
+                   #`(#,@required-order)))
+        #,@(list-when attr-contracts
+             (list #'#:attr-contracts
+                   #`(#,@(map (match-lambda
+                                [(attr-contract-info
+                                  _ n c)
+                                 #`[#,n #,c]])
+                              attr-contracts))))
+        #,@(list-when required-attrs
+             (list #'#:required-attrs
+                   #`(#,@required-attrs)))
+        #,@(list-when extra-check/false
+             (list #'#:extra-check extra-check/false))
+        #,@(list-when text?
+             (list #'#:contains-text))]]))
 
 
-
-(define plain-d-element
-  (syntax-parser
-    [(_ it:define-element/rest)
-     #`(begin it.struct-def
-              #,(element-info->plain-element-definition
-                 (car
-                  (element-definition-group-elements
-                   (attribute it.parsed))))
-              it.body ...)]))
-
-
-(define plain-d-elements-together
-  (syntax-parser
-    [(_ it:define-elements-together/rest)
-     #`(begin it.struct-def
-              #,@(map element-info->plain-element-definition
-                      (element-definition-group-elements
-                       (attribute it.parsed)))
-              it.body ...)]))
+;                                  
+;                                  
+;                                  
+;                                  
+;      ;                ;;;        
+;      ;;             ;;           
+;   ;;;;;   ;; ;    ;;;;;;;  ;;;   
+;      ;;   ;;; ;     ;;    ;   ;  
+;      ;;   ;;  ;;    ;;    ;   ;  
+;      ;;   ;;  ;;    ;;   ;;   ;; 
+;      ;;   ;;  ;;    ;;    ;   ;  
+;      ;;   ;;  ;;    ;;    ;   ;  
+;      ;;   ;;  ;;    ;;     ;;;   
+;                                  
+;                                  
+;                                  
+;                                  
 
 
-(define-syntax-class plain-element-definition-stx
-  #:description "plain-element-definition"
-  #:attributes {parsed name}
-  #:literals {plain-element-definition}
-  (pattern (plain-element-definition
-            info:desugared-element-info)
-           #:with name #'info.name
-           #:attr parsed
-           (attribute info.parsed)))
+(define-syntax-class (normalized-element-definition #:contract? [contract? #f])
+  #:description "normalized element definition"
+  #:attributes {name parsed [struct-clause 1]}
+  (pattern [name:id
+            (~var opts (element-contract-options/term
+                        #:contract? contract?))
+            struct-clause ...]
+           #:attr parsed (element-info (syntax->datum #'name)
+                                       #'name
+                                       (attribute opts.parsed))))
+
 
 
 
