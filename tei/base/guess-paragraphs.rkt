@@ -174,17 +174,6 @@
    (make-teiHeader-update-par-status mode)
    (make-text-guess-paragraphs mode)))
 
-(define* (tei-document-guess-paragraphs elem #:mode [mode 'blank-lines])
-  #:with [(define do-line-breaks
-            (make-tei-document-guess-paragraphs 'line-breaks))
-          (define do-blank-lines
-            (make-tei-document-guess-paragraphs 'blank-lines))]
-  (case mode
-    [(line-breaks)
-     (do-line-breaks elem)]
-    [else
-     (do-blank-lines elem)]))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -276,4 +265,20 @@
                   (if (tei-element? child)
                       (other-element-guess-paragraphs child #:mode mode)
                       child)))])))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(define* (tei-document-guess-paragraphs elem #:mode [mode 'blank-lines])
+  #:with [(define do-line-breaks
+            (make-tei-document-guess-paragraphs 'line-breaks))
+          (define do-blank-lines
+            (make-tei-document-guess-paragraphs 'blank-lines))]
+  (case mode
+    [(line-breaks)
+     (do-line-breaks elem)]
+    [else
+     (do-blank-lines elem)]))
+
 
