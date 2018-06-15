@@ -1,5 +1,5 @@
 #lang ricoeur/tei/kernel
-
+ƒ;[#:spec spec4]
 This provides a definition of ƒtag{text}
 for use with ƒtt{test3.rkt}.
 

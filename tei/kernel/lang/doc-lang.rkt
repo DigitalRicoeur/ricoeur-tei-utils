@@ -21,7 +21,9 @@
                  syntax/parse/define
                  (for-syntax racket/base
                              syntax/parse
+                             syntax/flatten-begin
                              racket/match
+                             racket/sequence
                              ))
 
 (provide (except-out (all-from-out racket)
@@ -37,13 +39,44 @@
 (define-syntax-parser module-begin
   [(_ doc body:expr ...)
    ;; scribble-module-begin would expand things twice
+   #:do [(define lift-ctx
+           (gensym 'lifts))
+         (define stop-list
+           (list #'begin ;; it's implicitly added, but let's be clear
+                 ;; Need to not try to expand these:
+                 #'#%require
+                 #'#%provide
+                 #'define-values
+                 #'define-syntaxes
+                 #'module #'module* #'module+))]
    #:with (expanded-body:expr ...)
-   (syntax-parse (local-expand/capture-lifts #'(begin body ...)
-                                             'module
-                                             null)
-     [(_ expanded-body:expr ...)
-      #'(expanded-body ...)])
+   (let loop ([to-go (syntax->list #'(body ...))]
+              [lifted-so-far null]
+              [expanded-body-so-far null])
+     (match to-go
+       ['()
+        (append lifted-so-far expanded-body-so-far)]
+       [(cons body-stx to-go)
+        (syntax-parse (local-expand/capture-lifts body-stx
+                                                  'module
+                                                  stop-list
+                                                  #f
+                                                  lift-ctx)
+          #:literals {begin}
+          [(begin lifted:expr ... (begin nested:expr ...))
+           (loop (append (flatten-all-begins
+                          #'(begin nested ...))
+                         to-go)
+                 lifted-so-far
+                 expanded-body-so-far)]
+          [(begin lifted:expr ... expanded-body:expr)
+           (loop to-go
+                 (append lifted-so-far
+                         (syntax->list #'(lifted ...)))
+                 (append expanded-body-so-far
+                         (list #'expanded-body)))])]))
    #'(scribble-module-begin doc expanded-body ...)])
+      
 
 (begin-for-syntax
   (define-splicing-syntax-class inset-clause
@@ -150,17 +183,8 @@
     (pattern raw
              #:declare raw (expr/c #'pre-flow?
                                    #:name "element definition prose body expression")
-             #:do [(define expanded
-                     (parameterize ([currently-expanding-prose-body? #t])
-                       (local-expand #'raw
-                                     'expression
-                                     (list #'begin-for-runtime/private))))]
-             #:with c
-             (syntax-parse expanded
-               #:literals {begin-for-runtime/private}
-               [(begin-for-runtime/private . _)
-                expanded]
-               [_ #'raw.c]))))
+             #:with c (parameterize ([currently-expanding-prose-body? #t])
+                        (local-expand #'raw.c 'expression null)))))
              
 
 (define-syntax-parser define-elements-together/private

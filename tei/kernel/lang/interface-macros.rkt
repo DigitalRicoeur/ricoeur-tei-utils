@@ -26,7 +26,7 @@
    #:with (str-field-name sym-field-name)
    (generate-temporaries '(str-field-name sym-field-name))
    #`(begin
-       (define/field [str-field-name #:check (or/c resp-string/c #f)
+       (define/field [str-field-name #:check (or/c resp-fragment-string/c #f)
                                      #:hide]
          (attributes-ref attrs.c 'key-id))
        (define/field [sym-field-name #:check (or/c symbol? #f)]

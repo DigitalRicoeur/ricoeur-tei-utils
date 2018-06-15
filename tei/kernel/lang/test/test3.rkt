@@ -17,6 +17,11 @@
 
  })
 
+ƒ(begin-for-runtime
+   (provide test)
+   (define (test)
+     'ok))
+
 ƒ(define-element teiHeader
    #:contains-text
    #:attr-contracts ([some-attr (or/c "Apples"

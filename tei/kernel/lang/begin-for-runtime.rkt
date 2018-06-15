@@ -17,7 +17,10 @@
 (define-syntax-parser begin-for-runtime/private
   [(_ #:expr doctime-expr:expr
       body:expr ...)
-   (lift-for-runtime! (syntax->list #'(body ...)))
+   ;; syntax-local-introduce is needed here to manually
+   ;; remove the macro scope, since the body syntax is stashed
+   ;; away instead of being returned to the expander
+   (lift-for-runtime! (syntax->list (syntax-local-introduce #'(body ...))))
    #'doctime-expr])
 
 (begin-for-syntax

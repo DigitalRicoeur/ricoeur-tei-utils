@@ -48,10 +48,14 @@
              (regexp-match? #px"^\\s*$"
                             (syntax->datum #'v))
              "not exclusively whitespace"))
+  (define (make-input-delta-introducer ext-stx)
+    (make-syntax-delta-introducer ext-stx #f))
   (define-syntax-class spec-name-declaration
     #:description "spec name declaration"
-    #:attributes {name to-extend}
+    #:attributes {name to-extend input-delta-introducer}
     (pattern [#:spec name:id]
+             #:attr input-delta-introducer
+             (make-input-delta-introducer #'name)
              #:with to-extend #'())
     (pattern [#:spec name:id
               (~alt (~once (~seq #:with-local local-name:id)
@@ -59,24 +63,30 @@
                     (~once (~seq #:extends e:id ...+)
                            #:name "#:extends declaration"))
               ...]
+             #:attr input-delta-introducer
+             (make-input-delta-introducer #'name)
              #:with to-extend #'(local-name [e ...]))))
+
 
 (define-syntax-parser module-begin
   [(_ (~optional (~seq _:whitespace-str ...
-                       decl:spec-name-declaration)
-                 #:defaults
-                 ([decl.name (datum->syntax this-syntax 'spec)]
-                  [decl.to-extend #'()]))
+                       decl:spec-name-declaration))
       body-for-doc ...)
-   #:with doc (datum->syntax this-syntax 'doc)
+   #:with spec-name (or (attribute decl.name)
+                        (syntax-local-introduce
+                         (datum->syntax #'define 'spec)))
+   #:do [(define input-delta-introducer
+           (or (attribute decl.input-delta-introducer)
+               (make-input-delta-introducer #'spec-name)))]
+   #:with to-extend (or (attribute decl.to-extend)
+                        #'())
+   #:with doc (input-delta-introducer
+               (datum->syntax #f 'doc))
    #:with for-doc-lang
-   (datum->syntax #;this-syntax
-                  (car (syntax->list #'(body-for-doc ...)))
+   (datum->syntax #'doc 
                   'ricoeur/tei/kernel/lang/doc-lang
                   (vector (syntax-source this-syntax) 1 0 1 1)) ;????
    #:do [(define doctime-introduce
-           (make-syntax-introducer #t))
-         (define runtime-introduce
            (make-syntax-introducer #t))
          (define target
            (make-runtime-lift-target))
@@ -85,51 +95,57 @@
              ;; Thanks https://groups.google.com/d/msg/racket-users/zpe27qAdHG0/iWWdxpuZEAAJ
              (local-expand #`(#%plain-module-begin
                               (require (rename-in #,(doctime-introduce
-                                                     (strip-context #'for-doc-lang))
+                                                     (strip-context #'for-doc-lang)
+                                                     'add)
                                                   [#,(doctime-introduce
                                                       (datum->syntax #f
-                                                                     '#%module-begin))
+                                                                     '#%module-begin)
+                                                      'add)
                                                    doc-module-begin]))
                               (expand-for-effect doc-module-begin
                                                  doc
                                                  #,@(syntax->list
                                                      (doctime-introduce
-                                                      (strip-context #'(body-for-doc ...))))))
+                                                      (strip-context #'(body-for-doc ...))
+                                                      'add))))
                            'module-begin
                            null)
              (runtime-lift-target->list target)))]
-   #:with (runtime-body ...)
-   (map (compose1 make-check-syntax-original
-                  runtime-introduce
-                  doctime-introduce
-                  (make-syntax-delta-introducer #'for-doc-lang
-                                                #f))
-        runtime-lifts)
+   #:with (runtime-body ...) (map (λ (stx)
+                                    (make-check-syntax-original
+                                     (doctime-introduce
+                                      (input-delta-introducer stx)
+                                      'remove)))
+                                  runtime-lifts)
    #`(#%module-begin
-      (provide decl.name)
+      (provide spec-name)
       (module* doc for-doc-lang
-        doc body-for-doc ...)
+        doc #,@(syntax->list
+                (input-delta-introducer #'(body-for-doc ...))))
       (module+ test
         (require (submod ".." doc)))
-      (collect-spec-parts decl.name
-                          #,(runtime-introduce #'decl.to-extend)
+      (collect-spec-parts spec-name
+                          to-extend
                           ()
                           (runtime-body ...)))])
+
 
 
 (define-syntax-parser expand-for-effect
   [(_ doc-module-begin:id body ...)
    (local-expand #`(doc-module-begin body ...)
                  'module-begin
-                 null)
+                 (list #'#%module-begin))
    #'(void)])
+
 
 
 (define-for-syntax (make-check-syntax-original stx)
   (syntax-property (let ([lst (syntax->list stx)])
                      (if lst
-                         #`(#,@(map make-check-syntax-original
-                                    lst))
+                         (datum->syntax stx
+                                        (map make-check-syntax-original
+                                             lst))
                          stx))
                    'original-for-check-syntax #t))
 
@@ -156,8 +172,8 @@
                                (list #'elements-specification-transformer-part-id
                                      #'begin ;; it's implicitly added, but let's be clear
                                      ;; Need to not try to expand these:
-                                     #'#%require
-                                     #'#%provide
+                                     #'#%require 
+                                     #'#%provide 
                                      #'define-values
                                      #'define-syntaxes
                                      #'module #'module* #'module+
