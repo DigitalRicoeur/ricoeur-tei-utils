@@ -106,7 +106,7 @@ the same source file that defines the Racket enforcement code.
           (displayln ƒstring-append{
  <?xml version="1.0" encoding="utf-8"?>
  <!DOCTYPE TEI SYSTEM "DR-TEI.dtd">})
-          (write-xexpr (tei-element->xexpr doc) out))))))
+          (write-xexpr (tei-element->xexpr doc)))))))
 
 
 ƒ(local-table-of-contents)

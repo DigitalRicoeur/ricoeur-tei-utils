@@ -2,17 +2,6 @@
 
 #|
 
-;; TODO: I think it might make sense in connection with 
-;; this ongoing round of breaking API changes
-;; to split the TEI-info interface into a bibliographic information part
-;; and a document-specific part, so that the bibliographic part
-;; might eventually come from our bibliographic database rather than
-;; the TEI XML files.
-;; The document-specific part might eventually contain the
-;; value from tei-document-md5 as well as tei-document-paragraphs-status.
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 ;; Should there be an abstraction for pb<%>-like sophistication of
 ;; n attributes to be shared by note<%> and div<%>?
 ;; Or do we ever really care about handling those numerically?

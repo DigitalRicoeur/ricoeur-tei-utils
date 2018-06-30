@@ -2,8 +2,7 @@
 #lang racket/base
 
 (module+ main
-  (require ricoeur/tei/oop-base
-           racket/class
+  (require ricoeur/tei/base
            racket/cmdline
            )
   
@@ -21,16 +20,14 @@
      #:args (path)
      (unless mode
        (error "either \"--line-breaks\" or \"--blank-lines\" must be given"))
-     (define obj
-       (call-with-input-file path
-         #:mode 'text
-         read-TEI))
+     (define doc
+       (file->tei-document path))
      (with-output-to-file/unless-exn path
        #:exists 'replace
        #:mode 'text
        (λ ()
-         (send (send obj guess-paragraphs #:mode mode)
-               write-TEI))))))
+         (write-tei-document
+          (tei-document-guess-paragraphs doc #:mode mode)))))))
 
 
      
