@@ -10,7 +10,7 @@
                      xml
                      data/maybe
                      ricoeur/tei/oop
-                     (submod ricoeur/tei/search/common private)
+                     (submod ricoeur/tei/oop/old-high-level/search/common private)
                      gregor
                      ))
 

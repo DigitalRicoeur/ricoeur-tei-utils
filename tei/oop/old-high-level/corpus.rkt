@@ -1,7 +1,7 @@
 #lang racket
 
 (require ricoeur/tei/oop-base
-         ricoeur/tei/search
+         "search.rkt"
          adjutor
          )
 
@@ -10,7 +10,7 @@
 
 (provide postgresql-data-source/c
          empty-corpus
-         (except-out (all-from-out ricoeur/tei/search)
+         (except-out (all-from-out "search.rkt")
                      search-documents
                      searchable-document-set?
                      noop-searchable-document-set

@@ -15,6 +15,8 @@ in @other-doc['(lib "ricoeur/tei/scribblings/tei-utils/tei-utils.scrbl")].
 All of our command-line tools will accept the flags
 @DFlag{help} or @Flag{h} to print usage information.
 
+
+
 @section{TEI Lint}
 
 Most comprehensively, the GUI program ``TEI Lint'' is a ``linter'' for
@@ -32,6 +34,8 @@ are well-formed XML and meet the project-specific requirements
 expressed in Racket code, but can't actually check that the 
 documents are valid in terms of the DTD.
 
+
+
 @section{encode-xml-entities}
 
 The command-line tool @exec{encode-xml-entities} should be run on
@@ -41,7 +45,9 @@ with the corresponding XML entities as described under
 @secref["Prerequisites"] above.
 Run it with the flag @DFlag{help} or @Flag{h} for usage information.
 
-@section{raco tei}
+
+
+@section{@exec{raco tei}}
 
 The @exec{raco tei} command extends @exec{raco} with some further
 subcommands for processing TEI documents.
@@ -87,10 +93,7 @@ in the @tt{PATH} under most circumstances.
   run @exec{raco tei-to-plain-text -h} for usage information.
   }]
 
-@section{DR Migration Assistant}
 
-The GUI program ``DR Migration Assistant'' is a tool to help make
-batch updates to TEI XML documents.
 
 @section{tei-guess-paragraphs}
 
@@ -100,7 +103,7 @@ breaks have been guessed using the method
 @(xmethod guess-paragraphs<%> guess-paragraphs).
 Run it with the flag @DFlag{help} or @Flag{h} for usage information.
 
-When @tt{xmllint} is available, the output will be prettyprinted.
+When @exec{xmllint} is available, the output will be prettyprinted.
 
 Please always check the output of this tool: it operates on
 a best-effort basis. If, for example, you notice that it has simply

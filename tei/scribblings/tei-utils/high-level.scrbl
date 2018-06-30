@@ -12,12 +12,12 @@
                      ricoeur/tei/oop
                      db
                      json
-                     (only-in ricoeur/tei/search
+                     (only-in ricoeur/tei/oop/old-high-level/search
                               search-documents
                               searchable-document-set?
                               regexp-searchable-document-set
                               postgresql-searchable-document-set)
-                     (submod ricoeur/tei/search/common private)
+                     (submod ricoeur/tei/oop/old-high-level/search/common private)
                      setup/matching-platform
                      gregor
                      ))

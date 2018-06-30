@@ -1,0 +1,846 @@
+#lang racket/gui
+
+(require ricoeur/tei/oop
+         racket/runtime-path
+         data/maybe
+         xml/path
+         gregor
+         adjutor
+         pict
+         pict/snip
+         "lib.rkt"
+         "splash.rkt"
+         "check-diverge.rkt"
+         "paragraphs.rkt"
+         )
+
+(module+ main
+  (void (new splash-frame%)))
+
+(def
+  [(red-text-message str)
+   (pict->message% (red-text-pict str))]
+  [no-ricoeur-xml:id-message%
+   (red-text-message "No author element with xml:id=\"ricoeur\"")]
+  [bad-date-order-message%
+   (red-text-message "Original publication date after this publication date.")]
+  [not-done-message%
+   (red-text-message "Not Done")]
+  [serious-error-message%
+   (red-text-message "SERIOUS ERROR")]
+  [please-move-message%
+   (red-text-message "Please move this file out of harm's way!!!")]
+  [none-message%
+   (red-text-message "NONE")])
+
+
+;                                                  
+;                                                  
+;                                                  
+;                                                  
+;                   ;;;;                    ;;     
+;                     ;;                    ;;     
+;     ;;    ; ;;      ;;      ;;      ;;    ;; ;   
+;   ;;  ;   ;;  ;     ;;     ;  ;   ;;  ;   ;;; ;  
+;    ;      ;;  ;     ;;        ;;   ;      ;;  ;; 
+;     ;;    ;;  ;;    ;;      ;;;;    ;;    ;;  ;; 
+;       ;;  ;;  ;     ;;     ;  ;;      ;;  ;;  ;; 
+;   ;   ;   ;;  ;      ;    ;;  ;;  ;   ;   ;;  ;; 
+;    ;;;    ;;;;        ;;   ;;; ;   ;;;    ;;  ;; 
+;           ;;                                     
+;           ;;                                     
+;           ;;                                     
+;                                                  
+
+(define splash-frame%
+  (class abstract-splash-frame%
+    (super-new [label "TEI Lint"]
+               [subtitle "TEI Lint"]
+               [bitmap photo-bitmap]
+               [height (floor (* 5/4 (send photo-bitmap get-height)))])
+    (inherit show)
+    (define/override-final (on-choose-directory dir)
+      (show #f)
+      (new directory-frame% [dir dir]))))
+
+
+;                                                                  
+;                                                                  
+;                                                                  
+;                                                                  
+;                                           ;;                     
+;                                           ;;                     
+;  ; ;; ;;    ;;;   ;; ;    ;;  ;;          ;;;;      ;;    ;; ;;; 
+;  ;; ;; ;  ;;   ;  ;;; ;   ;;  ;;          ;;  ;    ;  ;   ;;;    
+;  ;; ;; ;; ;    ;  ;;  ;;  ;;  ;;          ;;  ;       ;;  ;;     
+;  ;; ;; ;;;;;;;;;; ;;  ;;  ;;  ;;          ;;  ;;    ;;;;  ;;     
+;  ;; ;; ;; ;       ;;  ;;  ;;  ;;          ;;  ;    ;  ;;  ;;     
+;  ;; ;; ;; ;;   ;  ;;  ;;   ; ;;;          ;;  ;   ;;  ;;  ;;     
+;  ;; ;; ;;   ;;;   ;;  ;;    ; ;;          ; ;;     ;;; ;  ;;     
+;                                                                  
+;                                                                  
+;                                                                  
+;                                                                  
+
+
+(define (add-file-menu mb dir-frame #:directory? [directory? #f])
+  (define m-file (new menu% [label "File"] [parent mb]))
+  (unless directory?
+    (new menu-item%
+         [parent m-file]
+         [label "Show directory"]
+         [callback (λ (i e) (send dir-frame show #t))]))
+  (new menu-item%
+       [parent m-file]
+       [label "Open additional directory …"]
+       [callback (λ (i e)
+                   (let ([dir (get-xml-directory)])
+                     (when dir
+                       (new directory-frame% [dir dir]))))]
+       [shortcut #\O])
+  (new menu-item%
+       [parent m-file]
+       [label "Refresh"]
+       [callback (λ (i e)
+                   (send dir-frame refresh-directory))]
+       [shortcut #\R]))
+
+;                                                                          
+;                                                                          
+;                                                                          
+;                                                                          
+;       ;;     ;                             ;;                            
+;       ;;     ;;                            ;;                            
+;    ;;;;;  ;;;;;   ;; ;;;    ;;;      ;;; ;;;;;;;   ;;;    ;; ;;; ;     ; 
+;   ;   ;;     ;;   ;;;     ;;   ;   ;;   ;  ;;     ;   ;   ;;;     ;   ;  
+;   ;   ;;     ;;   ;;      ;    ;   ;       ;;     ;   ;   ;;      ;   ;  
+;  ;;   ;;     ;;   ;;     ;;;;;;;; ;;       ;;    ;;   ;;  ;;       ;  ;  
+;   ;   ;;     ;;   ;;      ;        ;       ;;     ;   ;   ;;       ; ;   
+;   ;   ;;     ;;   ;;      ;;   ;   ;;   ;   ;     ;   ;   ;;       ; ;   
+;    ;;; ;     ;;   ;;        ;;;      ;;;     ;;;   ;;;    ;;        ;    
+;                                                                     ;    
+;                                                                    ;     
+;                                                                  ;;      
+;                                                                          
+
+(define loading-frame%
+  (class frame%
+    (init dir
+          [dir-string (path->string dir)])
+    (super-new [label (string-append "Loading "
+                                     dir-string
+                                     "… - TEI Lint")]
+               [alignment '(center top)])
+    (inherit show)
+    (new message%
+         [parent this]
+         [label (string-append "Checking files in "
+                               dir-string
+                               " …")])
+    (define progress
+      (new progress-gauge%
+           [parent this]))
+    (show #t)
+    (define/public-final (set-range v)
+      (send progress set-range v))
+    (define/public-final (++)
+      (send progress ++))))
+           
+
+
+(define directory-frame%
+  (class frame%
+    (init-field dir)
+    (super-new [label (string-append (path->string dir)
+                                     " - TEI Lint")]
+               [width 800]
+               [height 600]
+               [alignment '(left top)])
+    (inherit show)
+    (define file-snips
+      (let ([progress (new loading-frame%
+                           [dir dir])])
+        (let ([row (new horizontal-pane%
+                        [parent this]
+                        [stretchable-height #f]
+                        [alignment '(left center)])])
+          (new message%
+               [parent row]
+               [label (path->string dir)])
+          (new button%
+               [parent row]
+               [label "Refresh"]
+               [callback (λ (b e) (refresh-directory))]))
+        (define ed
+          (new text%))
+        (define ec
+          (new editor-canvas%
+               [style '(transparent auto-hscroll auto-vscroll)]
+               [parent this]
+               [editor ed]))
+        (define file-snips
+          (let ([pths (for/list ([pth (in-directory dir)]
+                                 #:when (xml-path? pth))
+                        pth)])
+            (send progress set-range (length pths))
+            (define dir-valid?
+              (directory-validate-xml #:quiet? #t
+                                      dir))
+            ;; Doing a lot of file->TEI seems to be slow.
+            ;; I think threads are helping with the IO bottleneck,
+            ;; but I haven't rigorously tested.
+            (define val-promises
+              (for/list ([pth (in-list pths)])
+                (delay/thread
+                 (let ([xmllint-out (open-output-string)])
+                   (cond
+                     [(not (or dir-valid?
+                               (parameterize ([current-output-port xmllint-out]
+                                              [current-error-port xmllint-out])
+                                 (valid-xml-file? #:quiet? #f pth))))
+                      (xmllint-error (get-output-string xmllint-out))]
+                     [else
+                      (with-handlers ([exn:fail? values])
+                        (file->TEI pth))])))))
+            (for/list ([pth (in-list pths)]
+                       [pr:val (in-list val-promises)])
+              (begin0 (new file-snip%
+                           [pth pth]
+                           [dir dir]
+                           [dir-valid? dir-valid?]
+                           [val (force pr:val)]
+                           [progress-frame progress]
+                           [dir-frame this])
+                      (send progress ++)))))
+        (for ([snip (in-list (sort file-snips
+                                   file-snip-before?))])
+          (send ed insert snip))
+        (scroll-editor-to-top ed)
+        (send ed lock #t)
+        (send ed hide-caret #t)
+        (add-file-menu (new menu-bar% [parent this])
+                       this
+                       #:directory? #t)
+        ;; Refresh the editor-canvas here b/c otherwise some strange
+        ;; circumstance sometimes makes it appear empty.
+        (send ec refresh) 
+        (send progress show #f)
+        (show #t)
+        file-snips))
+    (define revoke-st
+      (weak-seteq))
+    (define/public (register-revoke it)
+      (set-add! revoke-st it))
+    (define/public (refresh-directory)
+      (show #f)
+      (for-each (λ (w) (send w revoke))
+                file-snips)
+      (for ([it (in-weak-set revoke-st)])
+        (send it show #f))
+      (new this% [dir dir]))))
+
+;                                  
+;                                  
+;                                  
+;                                  
+;                      ;           
+;                      ;;          
+;     ;;    ;; ;    ;;;;;   ; ;;   
+;   ;;  ;   ;;; ;      ;;   ;;  ;  
+;    ;      ;;  ;;     ;;   ;;  ;  
+;     ;;    ;;  ;;     ;;   ;;  ;; 
+;       ;;  ;;  ;;     ;;   ;;  ;  
+;   ;   ;   ;;  ;;     ;;   ;;  ;  
+;    ;;;    ;;  ;;     ;;   ;;;;   
+;                           ;;     
+;                           ;;     
+;                           ;;     
+;                                  
+
+(define (status-more-urgent? a b)
+  (case a
+    [(ok) #f]
+    [(error) (not (eq? 'error b))]
+    [(warning) (eq? 'ok b)]))
+
+
+(define (file-snip-before? a b)
+  (let ([a-status (send a get-status)]
+        [b-status (send b get-status)])
+    (or (status-more-urgent? a-status b-status)
+        (and (eq? a-status b-status)
+             (title<? (send a get-title)
+                      (send b get-title))))))
+
+(define hand-cursor
+  (make-object cursor% 'hand))
+
+(define (file-snip-pict #:status status
+                        #:path path
+                        #:title [title #f])
+  (define padding 1.0)
+  (define line-padding 1.0)
+  (define gutter (/ STATUS_DOT_SIZE 2))
+  (define path-pict
+    (path->wrapped-pict path
+                        #:max-width 600
+                        #:font (if title
+                                   normal-control-font
+                                   bold-system-font)))
+  (define rhs-pict
+    (cond
+      [title
+       (define title-pict
+         (text title (cons 'aligned bold-system-font)))
+       (vl-append line-padding
+                  title-pict
+                  path-pict)]
+      [else
+       path-pict]))
+  (define base
+    (hc-append gutter (status-dot-pict status) rhs-pict))
+  (cc-superimpose
+   (blank (+ (* 2 padding) (pict-width base))
+          (+ (* 2 padding) (pict-height base)))
+   base))
+
+(define file-snip%
+  (class pict-snip%
+    (inherit get-flags
+             set-flags)
+    (init progress-frame)
+    (init-field dir
+                pth
+                dir-frame
+                val
+                [dir-valid? #f]
+                #|[val
+                 (let ([xmllint-out (open-output-string)])
+                   (cond
+                     [(not (or dir-valid?
+                               (parameterize ([current-output-port xmllint-out]
+                                              [current-error-port xmllint-out])
+                                 (valid-xml-file? #:quiet? #f pth))))
+                      (xmllint-error (get-output-string xmllint-out))]
+                     [else
+                      (with-handlers ([exn:fail? values])
+                        (file->TEI pth))]))]|#
+                [frame
+                 (new (if (or (xmllint-error? val)
+                              (exn? val))
+                          error-proto-frame%
+                          file-proto-frame%)
+                      [dir dir]
+                      [pth pth]
+                      [val val]
+                      [diverge-seconds (and (infix: val is-a? TEI<%>)
+                                            (diverges? val progress-frame))]
+                      [dir-frame dir-frame]
+                      [widget this])]
+                [status (send frame get-status)]
+                [maybe-title (send frame get-title)])
+    (super-new [pict (file-snip-pict #:status status
+                                     #:path pth
+                                     #:title (from-just #f maybe-title))])
+    (set-flags (list* 'handles-events
+                      'handles-all-mouse-events
+                      'hard-newline
+                      (get-flags)))
+    (define/override (adjust-cursor dc	 
+                                    x	 
+                                    y	 
+                                    editorx	 
+                                    editory	 
+                                    event)
+      hand-cursor)
+    (define mouse-state #f)
+    (define/override-final (on-event dc x y ed-x ed-y evt)
+      (case (send evt get-event-type)
+        [(left-down)
+         (set! mouse-state 'left-down)]
+        [(left-up)
+         (when mouse-state
+           (send frame show #t))
+         (set! mouse-state #f)]
+        [else
+         (set! mouse-state #f)
+         (super on-event dc x y ed-x ed-y evt)]))
+    (define/override-final (copy)
+      (new this%
+           [dir dir]
+           [pth pth]
+           [dir-frame dir-frame]
+           [val val]
+           [frame frame]
+           [status status]
+           [maybe-title maybe-title]))
+    (define quasi-title
+      (if (or (xmllint-error? val)
+              (exn? val))
+          (path->string pth)
+          (send val get-title)))
+    (define/public-final (get-title)
+      quasi-title)
+    (define/public-final (get-status)
+      status)
+    (define/public-final (revoke)
+      (send frame show #f))))
+
+
+;                                          
+;                                          
+;                                          
+;                                          
+;                                          
+;                                          
+;     ;;;   ;; ;;;  ;; ;;;   ;;;    ;; ;;; 
+;   ;;   ;  ;;;     ;;;     ;   ;   ;;;    
+;   ;    ;  ;;      ;;      ;   ;   ;;     
+;  ;;;;;;;; ;;      ;;     ;;   ;;  ;;     
+;   ;       ;;      ;;      ;   ;   ;;     
+;   ;;   ;  ;;      ;;      ;   ;   ;;     
+;     ;;;   ;;      ;;       ;;;    ;;     
+;                                          
+;                                          
+;                                          
+;                                          
+
+(define abstract-proto-frame%
+  (class object%
+    (super-new)
+    (init-field dir pth widget dir-frame diverge-seconds)
+    (abstract get-status
+              get-title
+              do-make-frame)
+    (define real-frame #f)
+    (define/private (make-frame!)
+      (set! real-frame (do-make-frame)))
+    (define/public-final (show [should-show? #t])
+      (cond
+        [should-show?
+         (unless real-frame
+           (make-frame!))
+         (send real-frame show #t)]
+        [else
+         (when real-frame
+           (send real-frame show #f))]))))
+
+(define error-proto-frame%
+  (class abstract-proto-frame%
+    (super-new)
+    (init-field val)
+    (inherit-field dir pth widget dir-frame)
+    (define/override-final (do-make-frame)
+      (new error-frame%
+           [dir dir]
+           [pth pth]
+           [val val]
+           [widget widget]
+           [dir-frame dir-frame]))
+    (define/override-final (get-status)
+      'error)
+    (define/override-final (get-title)
+      nothing)))
+
+(define error-frame%
+  (class* frame% [TEI-frame<%>]
+    (init-field dir pth val widget dir-frame)
+    (super-new [label (string-append (path->string pth)
+                                     " - TEI Lint")]
+               [alignment '(center top)]
+               [width 400]
+               [height 500])
+    (let ([row (new horizontal-pane%
+                    [parent this]
+                    [alignment '(left center)])])
+      (new status-canvas%
+           [status 'error]
+           [parent row])
+      (new path-message%
+           [parent row]
+           [font bold-system-font]
+           [path (path->string pth)]))
+    (new message%
+         [parent this]
+         [label (if (xmllint-error? val)
+                    "xmllint found an error."
+                    "The file is invalid.")])
+    (new constant-editor-canvas%
+         [parent this]
+         [min-height 400]
+         [content (match val
+                    [(xmllint-error str) str]
+                    [(exn:fail msg _) msg])])
+    ;;;;;;;;;;;;;;;;;;;
+    (let ([mb (new menu-bar% [parent this])])
+      (add-file-menu mb dir-frame)
+      (define m-edit (new menu% [label "Edit"] [parent mb]))
+      (append-editor-operation-menu-items m-edit #t))
+    ;;;;;;;;;;;;;;;;;;;
+    (define/public-final (get-status)
+      'error)
+    (define/public-final (get-title)
+      nothing)
+    #|END class error-frame%|#))
+
+;                                  
+;                                  
+;                                  
+;                                  
+;       ;;;    ;    ;;;;           
+;     ;;       ;;     ;;           
+;   ;;;;;;; ;;;;;     ;;      ;;;  
+;     ;;       ;;     ;;    ;;   ; 
+;     ;;       ;;     ;;    ;    ; 
+;     ;;       ;;     ;;   ;;;;;;;;
+;     ;;       ;;     ;;    ;      
+;     ;;       ;;      ;    ;;   ; 
+;     ;;       ;;       ;;    ;;;  
+;                                  
+;                                  
+;                                  
+;                                  
+
+(define file-proto-frame%
+  ;; This is acceptably fast.
+  (class abstract-proto-frame%
+    (super-new)
+    (init-field val)
+    (inherit-field dir pth widget dir-frame diverge-seconds)
+    (define title
+      (send val get-title))
+    (define-values (pages-ok? page-descriptions)
+      (get-and-analyze-pages val))
+    (define promise:ricoeur-xml:id-ok?
+      (delay (member "ricoeur"
+                     (se-path*/list `(author #:xml:id)
+                                    (send val to-xexpr)))))
+    (define status
+      (cond
+        [diverge-seconds
+         'error]
+        [(and pages-ok?
+              (not (eq? 'todo (send val get-guess-paragraphs-status)))
+              (date<=? (send val get-original-publication-date)
+                       (send val get-publication-date))
+              (force promise:ricoeur-xml:id-ok?))
+         'ok]
+        [else
+         'warning]))
+    ;; Methods
+    (define/override-final (get-title)
+      (just title))
+    (define/override-final (get-status)
+      status)
+    (define/override-final (do-make-frame)
+      (new file-frame%
+           [dir dir]
+           [pth pth]
+           [val val]
+           [status status]
+           [diverge-seconds diverge-seconds]
+           [promise:ricoeur-xml:id-ok? promise:ricoeur-xml:id-ok?]
+           [page-descriptions page-descriptions]
+           [widget widget]
+           [dir-frame dir-frame]))))
+
+(define file-frame%
+  (class* frame% [TEI-frame<%>]
+    (init-field dir pth val widget dir-frame
+                diverge-seconds
+                status promise:ricoeur-xml:id-ok?
+                page-descriptions)
+    (super-new [label (string-append (path->string pth)
+                                     " - TEI Lint")]
+               [alignment '(left top)]
+               [width 400]
+               [height 500])
+    ;; Status and Path
+    (let* ([row (new horizontal-pane%
+                     [parent this]
+                     [alignment '(left center)])]
+           [status-dot-canvas (new status-canvas%
+                                   [status status]
+                                   [parent row])])
+      (new path-message%
+           [parent row]
+           [font bold-system-font]
+           [path (path->string pth)]))
+    ;; Title
+    (define title
+      (send val get-title))
+    (let ([row (new horizontal-pane%
+                    [parent this]
+                    [alignment '(left top)])])
+      (new message%
+           [parent row]
+           [font bold-system-font]
+           [label "Title:"])
+      (new message%
+           [parent row]
+           [label title]))
+    ;; Diverge notice (if any)
+    (when diverge-seconds
+      (let ([row (new group-box-panel% ;horizontal-panel%
+                      [parent this]
+                      [label ""]
+                      ;[style '(border)]
+                      [alignment '(left top)])])
+        (let ([col (new vertical-pane%
+                        [parent row]
+                        [alignment '(left top)])])
+          (new serious-error-message%
+               [parent col])
+          (new message%
+               [label "Trying to segment this document for search appears to run forever."]
+               [parent col])
+          (new message%
+               [label (string-append "You gave up after "
+                                     (real->decimal-string diverge-seconds)
+                                     " seconds.")]
+               [parent col])
+          (new message%
+               [label "Including this file in a corpus% object could break the server."]
+               [parent col])
+          (new please-move-message%
+               [parent col]))))
+    ;; Citation
+    (let ([row (new horizontal-pane%
+                    [parent this]
+                    [alignment '(left top)])])
+      (new message%
+           [parent row]
+           [font bold-system-font]
+           [label "Citation:"])
+      (new (natural-height-mixin constant-editor-canvas%)
+           [parent row]
+           [content (string-trim (send val get-citation))]))
+    ;; Type
+    (insert-message-row this
+                        "Type: "
+                        (case (send val get-book/article)
+                          [(book)
+                           "Book"]
+                          [(article)
+                           "Article"]))
+    ;; Date
+    (let ([sect (new vertical-pane%
+                     [parent this]
+                     [alignment '(left top)])]
+          [this-dt (send val get-publication-date)]
+          [orig-dt (send val get-original-publication-date)])
+      (unless (date<=? orig-dt this-dt)
+        (new bad-date-order-message%
+             [parent sect]))
+      (install-date-row sect "Publication Date:" this-dt)
+      (install-date-row sect "Original Publication Date:" orig-dt))
+    ;; "ricoeur" xml:id 
+    (unless (force promise:ricoeur-xml:id-ok?)
+      (new no-ricoeur-xml:id-message%
+           [parent (new horizontal-pane%
+                        [parent this]
+                        [alignment '(left top)])]))
+    ;; paragraphs
+    (let ([row (new horizontal-pane%
+                    [parent this]
+                    [alignment '(left center)])]
+          [paragraph-status
+           (send val get-guess-paragraphs-status)])
+      (new message%
+           [label "Paragraphs: "]
+           [font bold-system-font]
+           [parent row])
+      (define (add-button label)
+        (new button%
+             [parent row]
+             [label label]
+             [callback (λ (b e)
+                         (new paragraphs:prompt%
+                              [doc val]
+                              [parent this]
+                              [maybe-dir-frame dir-frame]))]))
+      (case paragraph-status
+        [(line-breaks blank-lines done)
+         (new message%
+              [parent row]
+              [label (case paragraph-status
+                       [(done) "Done"]
+                       [(line-breaks) "Line Breaks"]
+                       [(blank-lines) "Blank Lines"])])]
+        [(skip)
+         (new message%
+              [parent row]
+              [label "Skipped "])
+         (add-button "Try Again")]
+        [(todo)
+         (new not-done-message%
+              [parent row])
+         (add-button "Do Now")]))
+    ;; pages
+    (let ([row (new horizontal-pane%
+                    [parent this]
+                    [alignment '(left top)])])
+      (new message%
+           [parent row]
+           [font bold-system-font]
+           [label "Pages:"])
+      (cond
+        [(null? page-descriptions)
+         (new none-message%
+              [parent row])]
+        [else
+         (new constant-editor-canvas%
+              [parent row]
+              [content page-descriptions]
+              [min-height 300])]))
+    ;;;;;;;;;;;;;;;;;;;
+    (let ([mb (new menu-bar% [parent this])])
+      (add-file-menu mb dir-frame)
+      (define m-edit (new menu% [label "Edit"] [parent mb]))
+      (append-editor-operation-menu-items m-edit #t))
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;; Methods
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    (define/public-final (get-title)
+      (just title))
+    (define/public-final (get-status)
+      status)
+    #|END class file-frame%|#))
+
+(define (install-date-row parent str dt)
+  (let ([row (new horizontal-pane%
+                  [parent parent]
+                  [alignment '(left top)])])
+    (new message%
+         [parent row]
+         [font bold-system-font]
+         [label str])
+    (new message%
+         [parent row]
+         [label (~t dt "y")])))
+  
+(define/contract (get-and-analyze-pages val)
+  (-> (is-a?/c TEI<%>)
+      (values any/c (listof string?)))
+  (define pages
+    (send val get-page-breaks))
+  (if (null? pages)
+      (values #f null)
+      (let analyze-pages ([pages pages]
+                          [arabic-seen? #f]
+                          [so-far null]
+                          [all-ok? #t])
+        (cond
+          [(null? pages)
+           (values all-ok? (reverse so-far))]
+          [else
+           (define this-kind
+             (send (car pages) get-kind))
+           (let ([all-ok? (and all-ok?
+                               (if arabic-seen?
+                                   (eq? 'number this-kind)
+                                   #t))])
+             (case this-kind
+               [(none)
+                (define-values {nones more}
+                  (splitf-at pages
+                             (λ (p) (eq? 'none (send p get-kind)))))
+                (define len
+                  (length nones))
+                (analyze-pages more
+                               arabic-seen?
+                               (cons (format "• ~a non-numbered page~a\n"
+                                             len
+                                             (if (= 1 len) "" "s"))
+                                     so-far)
+                               all-ok?)]
+               [(other)
+                (define-values {other more}
+                  (splitf-at pages
+                             (λ (p) (eq? 'other (send p get-kind)))))
+                (define len
+                  (length other))
+                (analyze-pages more
+                               arabic-seen?
+                               (cons (format "• ~a page~a with ~aunreadable number~a\n"
+                                             len
+                                             (if (= 1 len) "" "s")
+                                             (if (= 1 len) "an " "")
+                                             (if (= 1 len) "" "s"))
+                                     so-far)
+                               #f)]
+               [(roman)
+                (define-values {roman more}
+                  (splitf-at pages
+                             (λ (p) (eq? 'roman (send p get-kind)))))
+                (define-values {these-ok? these-strs}
+                  (handle-numeric-pages roman))
+                (analyze-pages more
+                               arabic-seen?
+                               (append (reverse these-strs)
+                                       so-far)
+                               (and all-ok? these-ok?))]
+               [(number)
+                (define-values {arabic more}
+                  (splitf-at pages
+                             (λ (p) (eq? 'number (send p get-kind)))))
+                (define-values {these-ok? these-strs}
+                  (handle-numeric-pages arabic))
+                (analyze-pages more
+                               #t
+                               (append (reverse these-strs)
+                                       so-far)
+                               (and all-ok? these-ok?))]))]))))
+       
+
+(define/contract (handle-numeric-pages pages)
+  (-> (and/c list? (not/c null?)) 
+      (values any/c (listof string?)))
+  (define format-str
+    (case (send (car pages) get-kind)
+      [(roman) "• ~a page~a with Roman numerals from ~v to ~v\n"]
+      [else "• ~a page~a numbered from ~v to ~v\n"]))
+  (define groups
+    (group-sequential-page-breaks pages))
+  (values (= 1 (length groups))
+          (for/list ([grp (in-list groups)])
+            (match-define (list count from to)
+              grp)
+            (format format-str
+                    count
+                    (if (= 1 count) "" "s")
+                    from
+                    to))))
+
+(define (group-sequential-page-breaks pages)
+  (def
+    [init (car pages)]
+    [init-string
+     (from-just! (send init get-page-string))]
+    [init-num
+     (from-just! (send init get-numeric))])
+  (let loop ([count 1]
+             [from-str init-string]
+             [to-str init-string]
+             [expect-num (add1 init-num)]
+             [pages (cdr pages)])
+    (cond
+      [(null? pages)
+       (list (list count from-str to-str))]
+      [(= expect-num (from-just! (send (car pages) get-numeric)))
+       (loop (add1 count)
+             from-str
+             (from-just! (send (car pages) get-page-string))
+             (add1 expect-num)
+             (cdr pages))]
+      [else
+       (def
+         [next (car pages)]
+         [next-str (from-just! (send next get-page-string))])
+       (cons (list count from-str to-str)
+             (loop 1
+                   next-str
+                   next-str
+                   (add1 (from-just! (send next get-numeric)))
+                   (cdr pages)))])))
+

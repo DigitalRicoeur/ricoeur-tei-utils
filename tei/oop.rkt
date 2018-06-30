@@ -4,6 +4,6 @@
          )
 
 (require-provide ricoeur/tei/oop-base
-                 ricoeur/tei/corpus
+                 ricoeur/tei/oop/old-high-level/corpus
                  ricoeur/tei/transient/postgresql-data-source
                  )
