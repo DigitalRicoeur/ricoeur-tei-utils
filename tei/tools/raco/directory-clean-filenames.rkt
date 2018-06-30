@@ -1,6 +1,8 @@
 #!/usr/bin/env racket
 #lang racket/base
 
+;; TODO: Should the bad filename rules really live here?
+
 (module real racket/base
   (require (only-in ricoeur/tei/kernel
                     xml-path?)

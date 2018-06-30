@@ -1,7 +1,7 @@
 #!/usr/bin/env racket
 #lang racket/base
 
-(require ricoeur/tei/oop-base
+(require ricoeur/tei/base
          racket/class
          racket/cmdline)
 
@@ -16,6 +16,6 @@
    #:usage-help "Writes the given TEI XML file to STDOUT as plain text"
    #:args (TEI-XML-path)
    (void (write-string
-          (send (file->TEI TEI-XML-path)
-                to-plain-text)))))
+          (element-or-xexpr->plain-text
+           (file->tei-document TEI-XML-path))))))
 
