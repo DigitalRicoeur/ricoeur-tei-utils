@@ -23,10 +23,10 @@
          (except-out (all-from-out "specification/specification.rkt")
                      main-spec)
          (contract-out
-          [file->TEI
+          [file->tei-document
            (-> (and/c path-string? file-exists?)
                tei-document?)] 
-          [read-TEI
+          [read-tei-document
            (->* {} {input-port?} tei-document?)] 
           [xexpr->element
            (-> any-tei-xexpr/c tei-element?)]
@@ -45,7 +45,7 @@
   (void (regexp-try-match #rx"^\uFEFF" p)))
 
 
-(define (read-TEI [in (current-input-port)])
+(define (read-tei-document [in (current-input-port)])
   (discard-bom in)
   ;TODO: improve error message
   (xexpr->element
@@ -54,21 +54,21 @@
               (document-element
                (read-xml in)))
              in
-             '(definition read-TEI)
+             '(definition read-tei-document)
              (or (object-name in) in)
              #f)))
 
 
-(define (file->TEI pth-str)
+(define (file->tei-document pth-str)
   (call-with-input-file* pth-str
     #:mode 'text
-    read-TEI))
+    read-tei-document))
 
 
 (module+ test
   (provide example)
   (define example
-    (file->TEI "/Users/philip/code/ricoeur/texts/TEI/ways_of_Worldmaking.xml"))
+    (file->tei-document "/Users/philip/code/ricoeur/texts/TEI/ways_of_Worldmaking.xml"))
   (tei-document-md5 example)
   example)
 

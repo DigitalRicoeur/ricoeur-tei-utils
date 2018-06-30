@@ -22,11 +22,11 @@
                    (submod "kernel/lang-exports.rkt" private)
                    ))
 
-(module+ private-plain-TEI-info
+(module+ private-plain-instance-info
   ;; This submodule is for use only in the
   ;; implementation of the teiHeader struct.
   (require-provide (submod "kernel/sans-lang.rkt"
-                           private-plain-TEI-info)))
+                           private-plain-instance-info)))
 
 (module+ doc
   ;; The doc submodule provides things for Scribble

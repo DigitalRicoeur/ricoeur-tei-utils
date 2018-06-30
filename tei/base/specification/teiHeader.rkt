@@ -13,7 +13,7 @@
 ƒ(begin-for-runtime
    (require (submod ricoeur/tei/kernel private)
             (submod ricoeur/tei/kernel
-                    private-plain-TEI-info)
+                    private-plain-instance-info)
             )
    (provide teiHeader?
             profileDesc? ;; TODO: make this semi-private
@@ -36,7 +36,7 @@
     (declare-paragraphs-status-field
      (textClass-guess-paragraphs-status textC))
     (define/field info
-      (make-plain-TEI-info
+      (make-plain-instance-info
        #:title (fileDesc-title fileD)
        #:resp-table (fileDesc-resp-table fileD)
        #:citation (fileDesc-citation fileD)
@@ -44,7 +44,7 @@
        #:publication-date (fileDesc-this-publ-date fileD)
        #:publication-original? (fileDesc-this-is-orig? fileD)
        #:book/article (textClass-book/article textC)))
-    (lift-property prop:TEI-info
+    (lift-property prop:instance-info
                    (λ (this) (get-field info this)))
     #|END teiHeader|#]]
   [fileDesc

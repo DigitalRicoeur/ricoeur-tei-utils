@@ -53,7 +53,7 @@
 ;; prepare-pre-segments*
 ;; The outer function which sets everything up for a TEI<%> document
 (define (prepare-pre-segments* doc)
-  (parameterize ([current-title (tei-title doc)])
+  (parameterize ([current-title (instance-title doc)])
     (for/fold/define ([segs null]
                       [i 0]
                       [pb the-default-pb])

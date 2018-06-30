@@ -10,7 +10,7 @@
 ;; The exports from this module are truly public.
 
 (require-provide "base-structs.rkt"
-                 "tei-info.rkt"
+                 "instance-info.rkt"
                  "interfaces.rkt"
                  "xmllint.rkt"
                  "xexpr/plain-contracts.rkt"
@@ -26,9 +26,9 @@
   (require-provide "xexpr/contract-utils.rkt"
                    ))
 
-(module+ private-plain-TEI-info
+(module+ private-plain-instance-info
   ;; This submodule is for use only in the
   ;; implementation of the teiHeader struct.
-  (require-provide (submod "tei-info.rkt" private)
+  (require-provide (submod "instance-info.rkt" private)
                    ))
 

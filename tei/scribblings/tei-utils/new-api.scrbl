@@ -138,7 +138,7 @@
  For implementation details, see @racket[declare-resp-field].
 }
 
-@include-section["tei-info.scrbl"]
+@include-section["instance-info.scrbl"]
 
 
 
@@ -149,13 +149,13 @@
                     #:use-sources (ricoeur/tei/base) ;don't understand why
                     )
 
-@defproc[(file->TEI [file (and/c path-string? file-exists?)])
+@defproc[(file->tei-document [file (and/c path-string? file-exists?)])
          tei-document?]{
  Produces a @tech{tei element struct} representing
  the TEI XML document @racket[file].
 }
 
-@defproc[(read-TEI [in input-port? (current-input-port)])
+@defproc[(read-tei-document [in input-port? (current-input-port)])
          tei-document?]{
  Produces a @tech{tei element struct} representing the TEI XML
  document read from @racket[in].
@@ -188,6 +188,20 @@
          string?]{
  Returns the md5 checksum of @racket[doc],
  based on a standardized XML representation.
+}
+
+@deftogether[
+ @(@defproc[(tei-document-paragraphs-status [doc tei-document?])
+            guess-paragraphs-status/c]
+    @defthing[guess-paragraphs-status/c flat-contract?
+              #:value (or/c 'todo
+                            'line-breaks
+                            'blank-lines
+                            'done
+                            'skip)])]{
+ Returns a symbol indicating whether paragraph-guessing
+ has been performed for the document represented by
+ @racket[doc].
 }
 
 @subsection{Page-break Elements}

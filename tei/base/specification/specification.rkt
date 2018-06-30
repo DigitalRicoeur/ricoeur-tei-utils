@@ -62,31 +62,21 @@ the same source file that defines the Racket enforcement code.
      (tei-document-paragraphs-status teiHeader))
     (define/field pr:md5
       (delay/thread
-       (TODO/void Should md5 really use prettyprint?
-                  #: Might be a lot faster to just use write-xexpr
-                  and not launch a subprocess.
-                  I think the original rationale was not being sensitive
-                  to |"changes"| like comments and ignored whitespace:
-                  maybe I should handle those explicitly.
-                  Prettyprint would still be sensitive to "comments,"
-                  and ignored whitespace is already dropped.
-                  )
        (define-values (in-from-pipe out-to-pipe)
          (make-pipe))
        (write-xexpr (tei-element->xexpr (get-this)) out-to-pipe)
-       ;(write-TEI (get-this) out-to-pipe)
        (close-output-port out-to-pipe)
        (md5 in-from-pipe)))]
-   #:property prop:TEI-info (λ (this)
-                              (get-plain-TEI-info
-                               (get-field teiHeader this)))
+   #:property prop:instance-info (λ (this)
+                                   (get-plain-instance-info
+                                    (get-field teiHeader this)))
    #:begin [(define (tei-document-md5 doc)
               (force (get-field pr:md5 doc)))]
    #:property prop:element->plain-text
    (λ (this)
-     (string-append (tei-title this)
+     (string-append (instance-title this)
                     "\n\n"
-                    (tei-citation this)
+                    (instance-citation this)
                     "\n\nDigital Ricoeur: Not for distribution.\f"
                     (element-or-xexpr->plain-text
                      (get-field text this))))
