@@ -1,5 +1,5 @@
 #lang info
-
+#|
 (define raco-commands '(("teiOOP"
                          (submod ricoeur/tei/tools/oop/raco/raco-tei main)
                          "run Digital Ricoeur TEI commands [deprecated version]"
@@ -20,3 +20,4 @@
 (define racket-launcher-libraries
   (list "tei-guess-paragraphs.rkt"
         ))
+|#

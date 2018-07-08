@@ -4,6 +4,7 @@
          ricoeur/tei/base
          "../lib.rkt"
          "../xml-preview.rkt"
+         "../interfaces.rkt"
          )
 
 (provide (contract-out
@@ -23,6 +24,7 @@
            (->* {tei-document?}
                 {#:path (or/c #f path-string?)
                  #:seconds real?
+                 #:dir-frame dir-frame/false/c
                  #:parent (or/c #f (is-a?/c top-level-window<%>))}
                 any)]
           ))
@@ -90,6 +92,7 @@
 (define (save-unless-outdated new-doc
                               #:seconds [old-modify-seconds -inf.0]
                               #:path [pth #f]
+                              #:dir-frame [dir-frame #f]
                               #:parent [parent #f])
   (cond
     [(and pth
@@ -111,9 +114,8 @@
        "This file appears to have been modified since you "
        "last refreshed TEI Lint. Please try again.")
       parent)])
-  (TODO/void Handle refresh!)
-  #|(when maybe-dir-frame
-    (send maybe-dir-frame refresh-directory))|#)
+  (when dir-frame
+    (send dir-frame refresh-directory!)))
 
 
 

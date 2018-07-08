@@ -35,8 +35,8 @@
                         [get-quasititle
                          (->m string?)])}
     (super-new)
-    (init-field [(_proto-frame proto-frame)]
-                [(_path path)])
+    (init [(_proto-frame proto-frame)]
+          [(_path path)])
     (def
       [proto-frame _proto-frame]
       [path _path]
@@ -87,9 +87,11 @@
 (define file-snip%
   (class file-snip*%
     (init path
+          [dir-frame #f]
           [dir-valid? #f])
     (let ([proto-frame
            (file->proto-frame path
+                              #:dir-frame dir-frame
                               #:dir-valid? dir-valid?)])
       (super-new
        [path path]

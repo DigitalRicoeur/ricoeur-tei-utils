@@ -4,6 +4,7 @@
          ricoeur/tei/base
          "../lib.rkt"
          "../interfaces.rkt"
+         "../menu.rkt"
          "../proto-frame.rkt"
          )
 
@@ -26,12 +27,16 @@
     (init [(status lint-status)]
           [(secs old-modify-seconds)]
           [(pth path)]
+          [(d dir-frame) #f]
           [initialize void]
           [title pth])
     (def
+      [dir-frame d]
       [lint-status status]
       [old-modify-seconds secs]
       [path pth])
+    (define/public-final (get-dir-frame/false)
+      dir-frame)
     (define/public-final (get-lint-status)
       lint-status)
     (define/public-final (get-old-modify-seconds)
@@ -45,10 +50,9 @@
                [width 400]
                [height 500])
     (initialize this)
-    #|(let ([mb (new menu-bar% [parent this])])
-      (add-file-menu mb dir-frame)
-      (define m-edit (new menu% [label "Edit"] [parent mb]))
-      (append-editor-operation-menu-items m-edit #t))|#
+    (new menu-bar:file+edit%
+         [parent this]
+         [dir-frame dir-frame])
     #|END class tei-document-frame%|#))
 
 
@@ -58,6 +62,7 @@
     (init doc
           path
           old-modify-seconds)
+    (inherit get-dir-frame/false)
     (let-values ([(status initialize)
                   (document-frame-component-run dfc doc)])
       (define title
@@ -68,6 +73,7 @@
        [make-frame
         (λ ()
           (new tei-document-frame%
+               [dir-frame (get-dir-frame/false)]
                [lint-status status]
                [path path]
                [old-modify-seconds old-modify-seconds]

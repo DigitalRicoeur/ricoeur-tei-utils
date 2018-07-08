@@ -4,6 +4,7 @@
          ricoeur/tei/base
          "../lib.rkt"
          "../xml-preview.rkt"
+         "../interfaces.rkt"
          "common.rkt"
          "confirm.rkt"
          )
@@ -14,6 +15,7 @@
             (init-field [doc tei-document?] ;; 'skip 'todo
                         [pth (or/c #f path-string?)]
                         [old-modify-seconds real?]
+                        [dir-frame dir-frame/false/c]
                         [parent (or/c #f (is-a?/c top-level-window<%>))]))]
           ))
 
@@ -22,6 +24,7 @@
     (init-field doc
                 [pth #f]
                 [old-modify-seconds -inf.0]
+                [dir-frame #f]
                 [(my-parent parent) #f])
     (super-new [label "Convert to Paragraphs - TEI Lint"]
                [width 800]
@@ -101,6 +104,7 @@
           new-doc
           #:seconds old-modify-seconds
           #:path pth
+          #:dir-frame dir-frame
           #:parent this)]))
     (define/private (on-skip-clicked)
       (case (message-box/custom
@@ -125,6 +129,7 @@
           (tei-document-skip-guess-paragraphs doc)
           #:seconds old-modify-seconds
           #:path pth
+          #:dir-frame dir-frame
           #:parent this)]))
     (define/override (on-traverse-char evt)
       (case (send evt get-key-code)

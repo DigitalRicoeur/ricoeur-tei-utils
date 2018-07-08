@@ -5,6 +5,9 @@
 
 (provide lint-status/c
          lint-status<%>
+         directory-frame<%>
+         get-dir-frame/false<%>
+         dir-frame/false/c
          tei-document-frame<%>
          document-frame-component?
          (contract-out
@@ -48,8 +51,21 @@
 (define frame<%>
   (class->interface frame%))
 
+(define directory-frame<%>
+  (interface (frame<%>)
+    [open-additional (->m any)]
+    [call-in-directory-context (->m (-> any) any)]
+    [refresh-directory! (->m any)]))
+
+(define/final-prop dir-frame/false/c
+  (or/c #f (is-a?/c directory-frame<%>)))
+
+(define get-dir-frame/false<%>
+  (interface ()
+    [get-dir-frame/false (->m dir-frame/false/c)]))
+
 (define tei-document-frame<%>
-  (interface (frame<%> lint-status<%>)
+  (interface (frame<%> lint-status<%> get-dir-frame/false<%>)
     [get-old-modify-seconds (->m real?)]
     [get-path (->m path-string?)]))
 

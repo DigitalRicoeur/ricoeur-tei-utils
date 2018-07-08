@@ -38,6 +38,7 @@
            (new prompt-button%
                 [doc doc]
                 [frame this]
+                [dir-frame (send this get-dir-frame/false)]
                 [parent row])))]
        [(todo)
         (values
@@ -50,6 +51,7 @@
            (new prompt-button%
                 [doc doc]
                 [frame this]
+                [dir-frame (send this get-dir-frame/false)]
                 [parent row])))]))))
 
 
@@ -71,6 +73,7 @@
   (class button%
     (init doc
           frame
+          [dir-frame #f]
           [label "Do Now"])
     (define pr:prompt
       (with-method ([get-old-modify-seconds
@@ -82,6 +85,7 @@
                [doc doc]
                [pth (get-path)]
                [old-modify-seconds (get-old-modify-seconds)]
+               [dir-frame dir-frame]
                [parent frame]))))
     (super-new [label label]
                [callback

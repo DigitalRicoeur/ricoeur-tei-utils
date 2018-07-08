@@ -9,15 +9,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Condition currently needed for xmllint to avoid a warning:
-(and pages-ok?
-     (not (eq? 'todo (send val get-guess-paragraphs-status)))
-     (date<=? (send val get-original-publication-date)
-              (send val get-publication-date))
-     (force promise:ricoeur-xml:id-ok?))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 ;; things that should set prop:element->plain-text but don't:
   - list and item
   - sp

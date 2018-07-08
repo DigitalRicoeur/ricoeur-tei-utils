@@ -107,7 +107,15 @@
              )
     (let ([parent (get-top-level-window)])
       (when parent
-        (send parent reflow-container))
+        (TODO/void reflow-container bugs)
+        #|
+ed.rkt:110:8: sequence-contract-violation: negative:
+ method set-max-width cannot be called, except in states
+(unlocked write-lock), args 441|#
+        (with-handlers ([exn:fail? (λ (e)
+                                     (log-error
+                                      (exn-message e)))])
+          (send parent reflow-container)))
       (set-natural-height)
       (when parent
         (send parent reflow-container)))))

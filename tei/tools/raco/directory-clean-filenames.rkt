@@ -30,7 +30,7 @@
           #:when (xml-path? orig-pth)
           [(base orig-name-pth _) (in-value*/expression
                                    (split-path orig-pth))]
-          #:when (regexp-match? #px#"\\s|^\\P{Ll}"
+          #:when (regexp-match? #px#"\\s|\\[|\\]|^\\P{Ll}"
                                 orig-name-pth))
       (define new-pth
         (build-path
