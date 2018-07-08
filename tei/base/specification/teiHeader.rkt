@@ -14,6 +14,7 @@
    (require (submod ricoeur/tei/kernel private)
             (submod ricoeur/tei/kernel
                     private-plain-instance-info)
+            xml/path
             )
    (provide teiHeader?
             profileDesc? ;; TODO: make this semi-private
@@ -105,6 +106,19 @@
    #:children ([1+ title]
                [1+ author]
                [0+ editor])
+   #:extra-check
+   (λ (val maybe-blame neg-party)
+     (or (member "ricoeur"
+                 (se-path*/list `(author #:xml:id)
+                                val))
+         (and maybe-blame
+               (raise-blame-error
+                maybe-blame #:missing-party neg-party
+                val
+                '(expected: "~a"
+                  given: "~e")
+                "an author element with xml:id=\"ricoeur\""
+                val))))
    #:predicate tei-titleStmt?
    #:constructor [
  #:body/elements-only body/elements-only
@@ -183,7 +197,7 @@
                                   "translator"
                                   "compiler"
                                   "preface")]
-                      [xml:id any/c])
+                      [xml:id (not/c "ricoeur")])
     #:predicate tei-editor?
     #:prose ƒ[]{
 

@@ -10,26 +10,21 @@
          pict/snip
          "lib.rkt"
          "splash.rkt"
-         "check-diverge.rkt"
          "paragraphs.rkt"
          )
+
+(TODO/void Quit handler is broken)
 
 (module+ main
   (void (new splash-frame%)))
 
 (def
-  [(red-text-message str)
-   (pict->message% (red-text-pict str))]
   [no-ricoeur-xml:id-message%
    (red-text-message "No author element with xml:id=\"ricoeur\"")]
   [bad-date-order-message%
    (red-text-message "Original publication date after this publication date.")]
   [not-done-message%
    (red-text-message "Not Done")]
-  [serious-error-message%
-   (red-text-message "SERIOUS ERROR")]
-  [please-move-message%
-   (red-text-message "Please move this file out of harm's way!!!")]
   [none-message%
    (red-text-message "NONE")])
 
@@ -186,32 +181,13 @@
             (define dir-valid?
               (directory-validate-xml #:quiet? #t
                                       dir))
-            ;; Doing a lot of file->TEI seems to be slow.
-            ;; I think threads are helping with the IO bottleneck,
-            ;; but I haven't rigorously tested.
-            (define val-promises
+            (with-method ([progress++ {progress ++}])
               (for/list ([pth (in-list pths)])
-                (delay/thread
-                 (let ([xmllint-out (open-output-string)])
-                   (cond
-                     [(not (or dir-valid?
-                               (parameterize ([current-output-port xmllint-out]
-                                              [current-error-port xmllint-out])
-                                 (valid-xml-file? #:quiet? #f pth))))
-                      (xmllint-error (get-output-string xmllint-out))]
-                     [else
-                      (with-handlers ([exn:fail? values])
-                        (file->TEI pth))])))))
-            (for/list ([pth (in-list pths)]
-                       [pr:val (in-list val-promises)])
-              (begin0 (new file-snip%
-                           [pth pth]
-                           [dir dir]
-                           [dir-valid? dir-valid?]
-                           [val (force pr:val)]
-                           [progress-frame progress]
-                           [dir-frame this])
-                      (send progress ++)))))
+                (begin0 (new file-snip%
+                             [pth pth]
+                             [dir-valid? dir-valid?]
+                             [dir-frame this])
+                        (progress++))))))
         (for ([snip (in-list (sort file-snips
                                    file-snip-before?))])
           (send ed insert snip))
@@ -304,44 +280,21 @@
           (+ (* 2 padding) (pict-height base)))
    base))
 
-(define file-snip%
+(define file-snip*%
   (class pict-snip%
+    (init-field frame)
+    (define/public-final (revoke)
+      (send frame show #f))
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;; general snip stuff
+    (inherit-field pict)
+    (define/override-final (copy)
+      (new file-snip*%
+           [pict pict]
+           [frame frame]))
     (inherit get-flags
              set-flags)
-    (init progress-frame)
-    (init-field dir
-                pth
-                dir-frame
-                val
-                [dir-valid? #f]
-                #|[val
-                 (let ([xmllint-out (open-output-string)])
-                   (cond
-                     [(not (or dir-valid?
-                               (parameterize ([current-output-port xmllint-out]
-                                              [current-error-port xmllint-out])
-                                 (valid-xml-file? #:quiet? #f pth))))
-                      (xmllint-error (get-output-string xmllint-out))]
-                     [else
-                      (with-handlers ([exn:fail? values])
-                        (file->TEI pth))]))]|#
-                [frame
-                 (new (if (or (xmllint-error? val)
-                              (exn? val))
-                          error-proto-frame%
-                          file-proto-frame%)
-                      [dir dir]
-                      [pth pth]
-                      [val val]
-                      [diverge-seconds (and (infix: val is-a? TEI<%>)
-                                            (diverges? val progress-frame))]
-                      [dir-frame dir-frame]
-                      [widget this])]
-                [status (send frame get-status)]
-                [maybe-title (send frame get-title)])
-    (super-new [pict (file-snip-pict #:status status
-                                     #:path pth
-                                     #:title (from-just #f maybe-title))])
     (set-flags (list* 'handles-events
                       'handles-all-mouse-events
                       'hard-newline
@@ -365,28 +318,45 @@
         [else
          (set! mouse-state #f)
          (super on-event dc x y ed-x ed-y evt)]))
-    (define/override-final (copy)
-      (new this%
-           [dir dir]
-           [pth pth]
-           [dir-frame dir-frame]
-           [val val]
-           [frame frame]
-           [status status]
-           [maybe-title maybe-title]))
-    (define quasi-title
-      (if (or (xmllint-error? val)
-              (exn? val))
-          (path->string pth)
-          (send val get-title)))
-    (define/public-final (get-title)
-      quasi-title)
-    (define/public-final (get-status)
-      status)
-    (define/public-final (revoke)
-      (send frame show #f))))
+    #|END class file-snip*%|#))
 
-
+(define file-snip%
+  (class file-snip*%
+    (init pth
+          dir-frame
+          [dir-valid? #f]
+          [val
+           (let ([xmllint-out (open-output-string)])
+             (cond
+               [(not (or dir-valid?
+                         (parameterize ([current-output-port xmllint-out]
+                                        [current-error-port xmllint-out])
+                           (valid-xml-file? #:quiet? #f pth))))
+                (xmllint-error (get-output-string xmllint-out))]
+               [else
+                (with-handlers ([exn:fail? values])
+                  (file->TEI pth))]))]
+          [frame
+           (new (if (or (xmllint-error? val)
+                        (exn? val))
+                    error-proto-frame%
+                    file-proto-frame%)
+                [pth pth]
+                [val val]
+                [dir-frame dir-frame]
+                [widget this])]
+          [status
+           (send frame get-status)]
+          [maybe-title
+           (send frame get-title)])
+    (super-new
+     [frame frame]
+     [pict
+      (file-snip-pict #:status status
+                      #:path pth
+                      #:title (from-just #f maybe-title))])
+    #|END class file-snip%|#))
+  
 ;                                          
 ;                                          
 ;                                          
@@ -408,7 +378,7 @@
 (define abstract-proto-frame%
   (class object%
     (super-new)
-    (init-field dir pth widget dir-frame diverge-seconds)
+    (init-field pth widget dir-frame)
     (abstract get-status
               get-title
               do-make-frame)
@@ -429,10 +399,9 @@
   (class abstract-proto-frame%
     (super-new)
     (init-field val)
-    (inherit-field dir pth widget dir-frame)
+    (inherit-field pth widget dir-frame)
     (define/override-final (do-make-frame)
       (new error-frame%
-           [dir dir]
            [pth pth]
            [val val]
            [widget widget]
@@ -444,7 +413,7 @@
 
 (define error-frame%
   (class* frame% [TEI-frame<%>]
-    (init-field dir pth val widget dir-frame)
+    (init-field pth val widget dir-frame)
     (super-new [label (string-append (path->string pth)
                                      " - TEI Lint")]
                [alignment '(center top)]
@@ -506,7 +475,7 @@
   (class abstract-proto-frame%
     (super-new)
     (init-field val)
-    (inherit-field dir pth widget dir-frame diverge-seconds)
+    (inherit-field pth widget dir-frame)
     (define title
       (send val get-title))
     (define-values (pages-ok? page-descriptions)
@@ -517,8 +486,6 @@
                                     (send val to-xexpr)))))
     (define status
       (cond
-        [diverge-seconds
-         'error]
         [(and pages-ok?
               (not (eq? 'todo (send val get-guess-paragraphs-status)))
               (date<=? (send val get-original-publication-date)
@@ -534,11 +501,9 @@
       status)
     (define/override-final (do-make-frame)
       (new file-frame%
-           [dir dir]
            [pth pth]
            [val val]
            [status status]
-           [diverge-seconds diverge-seconds]
            [promise:ricoeur-xml:id-ok? promise:ricoeur-xml:id-ok?]
            [page-descriptions page-descriptions]
            [widget widget]
@@ -546,8 +511,7 @@
 
 (define file-frame%
   (class* frame% [TEI-frame<%>]
-    (init-field dir pth val widget dir-frame
-                diverge-seconds
+    (init-field pth val widget dir-frame
                 status promise:ricoeur-xml:id-ok?
                 page-descriptions)
     (super-new [label (string-append (path->string pth)
@@ -558,10 +522,10 @@
     ;; Status and Path
     (let* ([row (new horizontal-pane%
                      [parent this]
-                     [alignment '(left center)])]
-           [status-dot-canvas (new status-canvas%
-                                   [status status]
-                                   [parent row])])
+                     [alignment '(left center)])])
+      (new status-canvas%
+           [status status]
+           [parent row])
       (new path-message%
            [parent row]
            [font bold-system-font]
@@ -579,31 +543,6 @@
       (new message%
            [parent row]
            [label title]))
-    ;; Diverge notice (if any)
-    (when diverge-seconds
-      (let ([row (new group-box-panel% ;horizontal-panel%
-                      [parent this]
-                      [label ""]
-                      ;[style '(border)]
-                      [alignment '(left top)])])
-        (let ([col (new vertical-pane%
-                        [parent row]
-                        [alignment '(left top)])])
-          (new serious-error-message%
-               [parent col])
-          (new message%
-               [label "Trying to segment this document for search appears to run forever."]
-               [parent col])
-          (new message%
-               [label (string-append "You gave up after "
-                                     (real->decimal-string diverge-seconds)
-                                     " seconds.")]
-               [parent col])
-          (new message%
-               [label "Including this file in a corpus% object could break the server."]
-               [parent col])
-          (new please-move-message%
-               [parent col]))))
     ;; Citation
     (let ([row (new horizontal-pane%
                     [parent this]
@@ -641,7 +580,7 @@
                         [parent this]
                         [alignment '(left top)])]))
     ;; paragraphs
-    (let ([row (new horizontal-pane%
+    #|(let ([row (new horizontal-pane%
                     [parent this]
                     [alignment '(left center)])]
           [paragraph-status
@@ -675,7 +614,7 @@
         [(todo)
          (new not-done-message%
               [parent row])
-         (add-button "Do Now")]))
+         (add-button "Do Now")]))|#
     ;; pages
     (let ([row (new horizontal-pane%
                     [parent this]
@@ -718,7 +657,17 @@
     (new message%
          [parent row]
          [label (~t dt "y")])))
-  
+
+
+
+
+
+
+
+
+
+
+
 (define/contract (get-and-analyze-pages val)
   (-> (is-a?/c TEI<%>)
       (values any/c (listof string?)))
@@ -811,6 +760,7 @@
                     (if (= 1 count) "" "s")
                     from
                     to))))
+
 
 (define (group-sequential-page-breaks pages)
   (def

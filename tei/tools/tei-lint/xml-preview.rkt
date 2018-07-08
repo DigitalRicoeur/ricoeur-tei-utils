@@ -1,14 +1,17 @@
 #lang racket/gui
 
 (require framework
-         ricoeur/tei/oop
+         ricoeur/tei/base
          ricoeur/tei/tools/tei-lint/lib
          ricoeur/tei/tools/tei-lint/xml-color
          )
 
 (provide xml-preview-text%)
 
-;(icon:get-autowrap-bitmap)
+;; This seems to work elsewhere, but the overlap
+;; problem happens in main.
+
+;; (icon:get-autowrap-bitmap)
 
 (define markup-color
   (make-color 128 0 0))
@@ -38,20 +41,12 @@
           tag-style)
     "Standard"))
 
-(define show-overview?
-  #false)
 
 (define xml-preview-text%
   (class (color:text-mixin
-          ((if show-overview?
-               text:inline-overview-mixin
-               (mixin () ()
-                 (super-new)
-                 (define/public (set-inline-overview-enabled? _)
-                   (void))))
-           (text:line-numbers-mixin
-            (editor:standard-style-list-mixin
-             text:basic%))))
+          (text:line-numbers-mixin
+           (editor:standard-style-list-mixin
+            text:basic%)))
     (super-new [auto-wrap #t]
                [line-spacing 1.0])
     (inherit show-line-numbers!
@@ -59,9 +54,7 @@
              begin-edit-sequence
              end-edit-sequence
              insert
-             start-colorer
-             set-inline-overview-enabled?
-             )
+             start-colorer)
     ;; do a dance with show-line-numbers! to prevent them
     ;; from covering things
     (show-line-numbers! #f)
@@ -71,16 +64,12 @@
       (begin-edit-sequence)
       (insert
        (with-output-to-string
-        (λ () (send doc write-TEI))))
+         (λ () (write-tei-document doc))))
       (end-edit-sequence))
     (set! initializing? #f)
     (scroll-editor-to-top this)
     (start-colorer token-sym->style tokenize-xml null)
-    (define/public (after-show)
-      ;; Only works (though odly) after showing the frame
-      (show-line-numbers! #t)
-      (set-inline-overview-enabled? #t))
-    ;(send ed lock #t) ;blocks colorer
+    (show-line-numbers! #t)
     (define/augment (can-delete? start len)
       #f)
     (define/augment (can-insert? start len)
@@ -98,7 +87,7 @@
 
   (define ed
     (new xml-preview-text%
-         [doc (file->TEI "/Users/philip/code/ricoeur/texts/TEI/living_up_to_Death.xml" #;"function_of_fiction_in_shaping_reality.xml")]))
+         [doc (file->tei-document "/Users/philip/code/ricoeur/texts/TEI/living_up_to_Death.xml" #;"function_of_fiction_in_shaping_reality.xml")]))
 
   (void
    (new editor-canvas%
@@ -107,7 +96,7 @@
         [editor ed]))
 
   (send f show #t)
-  (send ed after-show))
+  #|END module+ main|#)
 
 
 

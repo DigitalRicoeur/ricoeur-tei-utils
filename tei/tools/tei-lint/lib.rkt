@@ -22,6 +22,8 @@
          STATUS_DOT_SIZE
          insert-message-row
          (contract-out
+          [path->string*
+           (-> path-string? string?)]
           [status-dot-pict
            (-> (or/c 'ok 'error 'warning) pict?)]
           [get-xml-directory
@@ -42,6 +44,8 @@
            (-> pict? (subclass?/c message%))]
           [red-text-pict
            (-> string? pict?)]
+          [red-text-message
+           (-> string? (subclass?/c message%))]
           [struct xmllint-error ([str string?])]
           [draw-status-dot
            (->* {(is-a?/c dc<%>)
@@ -49,6 +53,11 @@
                 {real? real?}
                 any)]
           ))
+
+(define (path->string* p)
+  (if (string? p)
+      p
+      (path->string p)))
 
 (define-runtime-path photo-path
   "photo.png")
@@ -113,6 +122,9 @@
 (define (red-text-pict txt)
   (colorize (text txt '(aligned bold . system)) "red"))
 
+
+(define (red-text-message str)
+  (pict->message% (red-text-pict str)))
 
 (def
   [STATUS_DOT_INNER_SIZE 20]

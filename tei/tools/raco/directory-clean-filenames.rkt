@@ -37,16 +37,21 @@
          base
          (bytes->path-element
           (regexp-replaces (path-element->bytes orig-name-pth)
-                           `([#px#"\\s" "_"]
+                           `([#px#"\\s" #"_"]
+                             [#rx#"\\[" #"("]
+                             [#rx#"\\]" #")"]
                              [#px#"^\\P{Ll}"
                               ,(λ (bs)
-                                 (if (regexp-match? #px#"\\p{Lu}" bs)
+                                 (if (regexp-match? #px#"^\\p{Lu}" bs)
                                      (string->bytes/utf-8
                                       (string-foldcase
                                        (bytes->string/utf-8 bs)))
                                      (bytes-append #"autocleaned_" bs)))])))))
       (cond
-        [(file-exists? new-pth)
+        [(and (file-exists? new-pth)
+              ;; needed for case-insensitive HFS
+              (not (= (file-or-directory-identity orig-pth)
+                      (file-or-directory-identity new-pth))))
          (set-box! box:ok? #f)
          (eprintf "WARNING: ~a\n  path: ~e\n  target: ~e\n"
                   "skipping path where target already exists"
