@@ -18,8 +18,8 @@
             (contract-out
              [write-tei-document
               (->* {tei-document?} {output-port?} any)]
-             [tei-document-md5
-              (-> tei-document? string?)]
+             [tei-document-checksum
+              (-> tei-document? symbol?)]
              ))
    (require "teiHeader.rkt"
             "text.rkt"
@@ -66,11 +66,11 @@ the same source file that defines the Racket enforcement code.
          (make-pipe))
        (write-xexpr (tei-element->xexpr (get-this)) out-to-pipe)
        (close-output-port out-to-pipe)
-       (md5 in-from-pipe)))]
+       (string->symbol (md5 in-from-pipe))))]
    #:property prop:instance-info (λ (this)
                                    (get-plain-instance-info
                                     (get-field teiHeader this)))
-   #:begin [(define (tei-document-md5 doc)
+   #:begin [(define (tei-document-checksum doc)
               (force (get-field pr:md5 doc)))]
    #:property prop:element->plain-text
    (λ (this)

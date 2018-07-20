@@ -103,7 +103,7 @@
 
 ƒsection{The Title Statement}
 ƒ(define-element titleStmt
-   #:children ([1+ title]
+   #:children ([1 title]
                [1+ author]
                [0+ editor])
    #:extra-check
@@ -112,13 +112,13 @@
                  (se-path*/list `(author #:xml:id)
                                 val))
          (and maybe-blame
-               (raise-blame-error
-                maybe-blame #:missing-party neg-party
-                val
-                '(expected: "~a"
-                  given: "~e")
-                "an author element with xml:id=\"ricoeur\""
-                val))))
+              (raise-blame-error
+               maybe-blame #:missing-party neg-party
+               val
+               '(expected: "~a"
+                           given: "~e")
+               "an author element with xml:id=\"ricoeur\""
+               val))))
    #:predicate tei-titleStmt?
    #:constructor [
  #:body/elements-only body/elements-only
@@ -127,14 +127,12 @@
     (string-trim
      (non-element-body->plain-text
       (tei-element-get-body child)))))
- (define/field #:infer [title
-                        #:check string?]
-   (string-join (for/list ([t (in-list body/elements-only)]
-                           #:when (tei-title? t))
-                  (child->plain-text t))
-                ": "))
+ (define/field #:infer title
+   (string->immutable-string
+    (child->plain-text
+     (findf tei-title? body/elements-only))))
  (define/field [resp-table
-                #:check (hash/c	symbol? string?
+                #:check (hash/c	symbol? (and/c string? immutable?)
                                 #:immutable #t)
                 #:accessor titleStmt-resp-table]
    (for*/hasheq ([child (in-list body/elements-only)]
@@ -146,7 +144,8 @@
                              'xml:id))]
                  #:when maybe-id-str)
      (values (string->symbol maybe-id-str)
-             (child->plain-text child))))
+             (string->immutable-string
+              (child->plain-text child)))))
  #|END constructor|#]
    #:prose ƒ[]{
 
@@ -279,8 +278,9 @@
     (match-define (list bibl)
       body/elements-only)
     (define/field [citation #:accessor sourceDesc-citation]
-      (string-normalize-spaces
-       (element-or-xexpr->plain-text bibl)))
+      (string->immutable-string
+       (string-normalize-spaces
+        (element-or-xexpr->plain-text bibl))))
     (define-values/fields #:infer (orig-publ-date
                                    this-publ-date
                                    this-is-orig?)

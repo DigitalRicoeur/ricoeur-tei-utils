@@ -21,10 +21,12 @@
                 {(or/c 'ricoeur #f)}
                 (or/c symbol? #f))]
           [tei-element-resp/fragment-string
+           ;; is this still needed?
            (->* {tei-element-can-have-resp?}
                 {(or/c 'ricoeur #f)}
                 (or/c resp-fragment-string/c #f))]
           [resp-fragment-string->symbol
+           ;; is this still needed?
            (-> resp-fragment-string/c symbol?)]
           [tei-document-paragraphs-status
            (-> has-tei-document-paragraphs-status?

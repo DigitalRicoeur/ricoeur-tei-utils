@@ -13,7 +13,8 @@
   (require rackunit
            (submod "..")))
 
-(provide (contract-out
+(provide string-immutable/c
+         (contract-out
           [title<?
            (-> string? string? any/c)]
           [attributes-ref
@@ -21,6 +22,9 @@
                symbol?
                (or/c #f string?))]
           ))
+
+(define/final-prop string-immutable/c
+  (and/c string? immutable?))
 
 (define (attributes-ref attrs k)
   (define rslt

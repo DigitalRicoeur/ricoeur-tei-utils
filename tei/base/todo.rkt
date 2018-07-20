@@ -2,6 +2,14 @@
 
 #|
 
+normalize-xexpr should coerce strings to immutable
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+check invariants about note transl
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ;; Should there be an abstraction for pb<%>-like sophistication of
 ;; n attributes to be shared by note<%> and div<%>?
 ;; Or do we ever really care about handling those numerically?

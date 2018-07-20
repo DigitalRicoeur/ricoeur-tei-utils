@@ -69,6 +69,6 @@
   (provide example)
   (define example
     (file->tei-document "/Users/philip/code/ricoeur/texts/TEI/ways_of_Worldmaking.xml"))
-  (tei-document-md5 example)
+  (tei-document-checksum example)
   example)
 

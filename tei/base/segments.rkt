@@ -8,52 +8,51 @@
          json
          "def-from-spec.rkt"
          "get-page-breaks.rkt"
-         (submod "pre-segments/location-stack.rkt"
+         (submod "segments/location-stack.rkt"
+                 private)
+         (submod "segments/meta.rkt"
                  private)
          (for-syntax racket/base
                      syntax/parse
                      ))
 
-(require-provide "pre-segments/location-stack.rkt"
+(require-provide "segments/location-stack.rkt"
+                 "segments/meta.rkt"
                  )
 
-(provide pre-segment-meta/c
-         (contract-out
-          [prepare-pre-segments
-           (-> tei-document? (listof pre-segment?))]
-          [struct pre-segment ([title string?]
-                               [counter natural-number/c]
-                               [body string?]
-                               [meta pre-segment-meta/c]
-                               [resp resp-fragment-string/c])
+(provide (contract-out
+          [tei-document-segments
+           (-> tei-document? (listof base-segment?))]
+          [struct base-segment
+            ([meta segment-meta?]
+             [body (and/c string-immutable/c
+                          (not/c #px"^\\s*$"))])
             #:omit-constructor]
           ))
 
-(TODO/void pre-segment-meta/c
-           #: Store resolved resp.
-           Make a struct that can be converted to a jsexpr.)
-
-(struct pre-segment (title counter body meta resp))
-
-(define the-default-pb
-  (xexpr->element '(pb)))
+(struct base-segment (meta body)
+  #:transparent
+  #:property prop:segment
+  (λ (this)
+    (base-segment-meta this)))
 
 (define cache
   (make-weak-hasheq))
 
-(define (prepare-pre-segments doc)
+(define (tei-document-segments doc)
   (hash-ref cache
             doc
             (λ ()
               (define rslt
-                (prepare-pre-segments* doc))
+                (prepare-segments doc))
               (hash-set! cache doc rslt)
               rslt)))
 
-;; prepare-pre-segments*
+;; prepare-segments
 ;; The outer function which sets everything up for a TEI<%> document
-(define (prepare-pre-segments* doc)
-  (parameterize ([current-title (instance-title doc)])
+(define (prepare-segments doc)
+  (parameterize ([current-make-segment-meta
+                  (tei-document->make-segment-meta doc)])
     (for/fold/define ([segs null]
                       [i 0]
                       [pb the-default-pb])
@@ -65,11 +64,6 @@
       (do-prepare-segments child #:segs segs #:i i #:pb pb))
     segs))
 
-(define current-title
-  (make-parameter #f))
-
-(define current-resp-fragment-string
-  (make-parameter "#ricoeur"))
 
 (define-syntax (eprintf* stx)
   #'(void))
@@ -85,9 +79,18 @@
   (or (not (tei-element? v))
       (tei-pb? v)))
 
-(define/final-prop page-spec/c
-  (or/c (maybe/c string?)
-        (list/c (maybe/c string?) (maybe/c string?))))
+
+(define the-default-pb
+  (xexpr->element '(pb)))
+
+(define current-location-stack
+  (make-parameter #f))
+
+(define current-make-segment-meta
+  (make-parameter '|current-make-segment-meta: not initialized|))
+
+(define current-resp
+  (make-parameter 'ricoeur))
 
 ;                                  
 ;                                  
@@ -129,14 +132,14 @@
                                        #:i [i 0]
                                        #:pb [pb the-default-pb])
   (->* {tei-element?}
-       {#:segs (listof pre-segment?)
+       {#:segs (listof base-segment?)
         #:i natural-number/c
         #:pb tei-pb?}
-       (values (listof pre-segment?)
+       (values (listof base-segment?)
                natural-number/c
                tei-pb?))
   (eprintf* "do-prepare-segments\n")
-  (parameterize ([current-resp-fragment-string (get-updated-resp child)]
+  (parameterize ([current-resp (get-updated-resp child)]
                  [current-location-stack (get-updated-location-stack child)])
     (match child 
       ;; content-containing elements
@@ -179,10 +182,10 @@
                                                #:i [i 0]
                                                #:pb [init-pb the-default-pb])
   (->* {content-containing-element?}
-       {#:segs (listof pre-segment?)
+       {#:segs (listof base-segment?)
         #:i natural-number/c
         #:pb tei-pb?}
-       (values (listof pre-segment?)
+       (values (listof base-segment?)
                natural-number/c
                tei-pb?))
   (eprintf* "do-prepare-segments/content\n")
@@ -306,10 +309,10 @@
                                            #:i i
                                            #:pb pb)
   (-> (listof pb-or-non-element?)
-      #:segs (listof pre-segment?)
+      #:segs (listof base-segment?)
       #:i natural-number/c
       #:pb tei-pb?
-      (values (listof pre-segment?)
+      (values (listof base-segment?)
               natural-number/c
               tei-pb?))
   (eprintf* "prepare-content/ugly-ab\n")
@@ -375,8 +378,8 @@
 
 (define (get-updated-resp child)
   (or (and (tei-element-can-have-resp? child)
-           (tei-element-resp/fragment-string child))
-      (current-resp-fragment-string)))
+           (tei-element-resp child))
+      (current-resp)))
 
 (define (get-updated-location-stack child)
   (match child
@@ -384,7 +387,7 @@
      (when (current-location-stack)
        (error 'get-updated-location-stack
               "can't add root element to non-empty location stack"))
-     sym]
+     (location-stack-entry:root sym)]
     [(? div?)
      (location-stack-entry:div (div-get-type child)
                                (div-get-n child)
@@ -397,33 +400,27 @@
     [_
      (current-location-stack)]))
 
+
 (define/?contract (cons-pre-segment body
                                     #:segs segs 
                                     #:i counter
                                     #:page page)
   (-> string?
-      #:segs (listof pre-segment?)
+      #:segs (listof base-segment?)
       #:i natural-number/c
       #:page page-spec/c
-      (listof pre-segment?))
+      (listof base-segment?))
   (cond
     [(regexp-match? #px"^\\s*$"  body)
      segs]
     [else
-     (cons (let ([resp (current-resp-fragment-string)])
-             (pre-segment (current-title)
-                          counter
-                          body
-                          (hasheq 'resp resp
-                                  'location-stack (location-stack->jsexpr
-                                                   (current-location-stack))
-                                  'page (match page
-                                          [(list a b)
-                                           (list (from-just #f a)
-                                                 (from-just #f b))]
-                                          [it
-                                           (from-just #f it)]))
-                          resp))
+     (cons (base-segment
+            ((current-make-segment-meta)
+             #:i counter
+             #:page page
+             #:resp (current-resp)
+             #:location (current-location-stack))
+            (string->immutable-string body))
            segs)]))
 
 
@@ -445,27 +442,6 @@
       (pb-get-page-string init-pb)
       (list (pb-get-page-string init-pb)
             (pb-get-page-string latest-pb))))
-
-(define pre-segment-meta/c
-  (opt/c
-   (and/c jsexpr?
-          (let ([page/c (or/c #f
-                              string?
-                              (list/c (or/c #f string?)
-                                      (or/c #f string?)))])
-            (hash/dc [k (or/c 'resp 'location-stack 'page)]
-                     [v (k) (case k
-                              [(resp) #rx"#.+"]
-                              [(location-stack) location-stack-jsexpr/c]
-                              [(page) page/c]
-                              [else none/c])]
-                     #:immutable #t
-                     #:kind 'flat))
-          (λ (hsh)
-            (hash-keys-subset? #hasheq([resp . #t]
-                                       [location-stack . #t]
-                                       [page . #t])
-                               hsh)))))
 
 
 

@@ -24,7 +24,7 @@
             tei-ab?
             (contract-out
              [pb-get-page-string
-              (-> tei-pb? (maybe/c string?))]
+              (-> tei-pb? (maybe/c (and/c string? immutable?)))]
              [pb-get-kind
               (-> tei-pb? (or/c 'none 'number 'roman 'other))]
              [pb-get-numeric
@@ -32,13 +32,13 @@
              [tei-note-get-place
               (-> tei-note? (or/c 'foot 'end))]
              [tei-note-get-n
-              (-> tei-note? string?)]
+              (-> tei-note? (and/c string? immutable?))]
              [tei-note-get-transl?
               (-> tei-note? (or/c #f 'transl))]
              [div-get-type
               (-> div? div-type/c)]
              [div-get-n
-              (-> div? (maybe/c string?))]
+              (-> div? (maybe/c (and/c string? immutable?)))]
              )))
 
 ƒ(define-element text
@@ -120,7 +120,8 @@
  (define-fields
    #:infer
    [get-type (string->symbol (attributes-ref attrs 'type))]
-   [get-n (false->maybe (attributes-ref attrs 'n))])
+   [get-n (fmap string->immutable-string
+                (false->maybe (attributes-ref attrs 'n)))])
  #|END #:constructor|#]
    #:prose ƒ{
       The ƒtag{div} element may contain
@@ -158,7 +159,7 @@
  (define n
    (attributes-ref attrs 'n))
  (define/field #:infer get-page-string
-   (false->maybe n))
+   (fmap string->immutable-string (false->maybe n)))
  (define-values/fields #:infer (get-kind get-numeric)
    (match n
      [#f (values 'none nothing)]
@@ -286,7 +287,7 @@
     (declare-resp-field attrs)
     (define-fields
       ([n #:accessor tei-note-get-n]
-       (attributes-ref attrs 'n))
+       (string->immutable-string (attributes-ref attrs 'n)))
       ([place #:accessor tei-note-get-place]
        (string->symbol (attributes-ref attrs 'place)))
       ([transl? #:accessor tei-note-get-transl?]

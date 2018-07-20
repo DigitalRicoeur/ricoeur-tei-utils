@@ -11,7 +11,8 @@
 (provide instance-info?
          plain-instance-info?
          instance-info<%>
-         instance-title 
+         instance-title
+         instance-title/symbol
          instance-citation 
          instance-orig-publication-date 
          instance-publication-date 
@@ -36,10 +37,11 @@
 (module+ private
   (provide (contract-out
             [make-plain-instance-info
-             (-> #:title string?
-                 #:resp-table (hash/c symbol? string?
+             (-> #:title (and/c string? immutable?)
+                 #:resp-table (hash/c symbol?
+                                      (and/c string? immutable?)
                                       #:immutable #t)
-                 #:citation string?
+                 #:citation (and/c string? immutable?)
                  #:orig-publication-date date?
                  #:publication-date date?
                  #:publication-original? any/c
@@ -52,6 +54,7 @@
         
 
 (struct plain-instance-info (title
+                             title/symbol
                              resp-table
                              citation
                              orig-publ-date
@@ -70,11 +73,12 @@
                                   #:publication-original? publication-original?
                                   #:book/article book/article)
   (plain-instance-info title
+                       (string->symbol title)
                        resp-table
                        citation
                        orig-publ-date
                        this-publ-date
-                       publication-original?
+                       (any->boolean publication-original?)
                        book/article)) 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -90,6 +94,7 @@
 
 (define-simple/plain
   [instance-title plain-instance-info-title]
+  [instance-title/symbol plain-instance-info-title/symbol]
   [instance-citation plain-instance-info-citation]
   [instance-orig-publication-date plain-instance-info-orig-publ-date]
   [instance-publication-date plain-instance-info-this-publ-date]
@@ -139,7 +144,8 @@
          ([prop:instance-info 
            (λ (this) 
              (send-generic this gen:get-plain))])
-         get-title 
+         get-title
+         get-title/symbol
          get-citation 
          get-orig-publication-date 
          get-publication-date 
@@ -164,6 +170,7 @@
                 ...))
        (define-simple-methods/plain
          [get-title plain-instance-info-title]
+         [get-title/symbol plain-instance-info-title/symbol]
          [get-citation plain-instance-info-citation]
          [get-orig-publication-date plain-instance-info-orig-publ-date]
          [get-publication-date plain-instance-info-this-publ-date]
