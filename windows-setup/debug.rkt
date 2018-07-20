@@ -74,7 +74,7 @@
    (put-file "Please save the debugging information file."
              #f
              #f
-             "windows-paragraphs-debug-info.rktd"
+             "windows-paragraphs-debug-info-revised.rktd"
              "rktd"
              null
              '(["Racket Data" "*.rktd"]))

@@ -4,6 +4,7 @@
          racket/port
          racket/system
          racket/contract
+         racket/file
          setup/matching-platform
          racket/runtime-path
          "pre-kernel-lib.rkt"
@@ -84,16 +85,38 @@
        (parameterize ([current-output-port out-to-pipe])
          (thunk)))
      (close-output-port out-to-pipe)
-     (if (parameterize ([current-input-port in-from-pipe]
-                        [current-error-port xmllint-stderr])
-           (system* xmllint "--pretty" "1" "-"))
-         rslt
-         (error 'call/prettyprint-xml-out
+     (TODO/void call/prettyprint-xml-out #:
+                replace w/ pipe that does newline
+                transformation right on Windows.)
+     (define tmp
+       (make-temporary-file))
+     (dynamic-wind
+      void
+      (λ ()
+        (cond
+          [(call-with-output-file* tmp
+             #:mode 'binary
+             #:exists 'truncate/replace
+             (λ (tmp-file-out) 
+               (parameterize ([current-input-port in-from-pipe]
+                              [current-output-port tmp-file-out]
+                              [current-error-port xmllint-stderr])
+                 (system* xmllint "--pretty" "1" "-"))))
+           (call-with-input-file* tmp
+             #:mode 'text
+             (λ (tmp-file-in)
+               (copy-port tmp-file-in (current-output-port))))
+           rslt]
+          [else
+           (error 'call/prettyprint-xml-out
                 "~a\n  given: ~e\n  result: ~e\n  message...:\n   ~e"
                 "xmllint encountered an error"
                 thunk
                 rslt
-                (get-output-string xmllint-stderr)))]
+                (get-output-string xmllint-stderr))]))
+      (λ ()
+        (when (file-exists? tmp)
+          (delete-file tmp))))]
     [else
      (thunk)]))
 
