@@ -2,6 +2,7 @@
 
 (require racket/serialize
          racket/contract
+         data/order
          syntax/parse/define
          ricoeur/tei/kernel
          ricoeur/tei/base/def-from-spec
@@ -11,6 +12,7 @@
 (provide segment?
          segment-meta?
          page-spec/c
+         segment-order
          (contract-out
           [prop:segment
            (struct-type-property/c
@@ -109,3 +111,33 @@
   (equal? (segment-get-meta a)
           (segment-get-meta b)))
 
+
+(define segment-order
+  (order 'segment-order
+         segment?
+         (λ (a b)
+           (match* {(segment-get-meta a)
+                    (segment-get-meta b)}
+             [{(segment-meta a-title/symbol
+                             a-checksum
+                             a-counter
+                             _ _ _ _)
+               (segment-meta b-title/symbol
+                             b-checksum
+                             b-counter
+                             _ _ _ _)}
+              (unless (and (eq? a-title/symbol b-title/symbol)
+                           (eq? a-checksum b-checksum))
+                (raise-arguments-error
+                 'segment-order
+                 "segments are not from the same document"
+                 "1st segment" a
+                 "2nd segment" b))
+              (real-order a-counter b-counter)]))))
+
+
+
+
+
+              
+             
