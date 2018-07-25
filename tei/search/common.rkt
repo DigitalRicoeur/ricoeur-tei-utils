@@ -243,71 +243,19 @@
 ;             ;                                    
 ;            ;                                     
 ;          ;;                                      
-;                       
-#|
-(define-signature-form (define-contract-for-export stx)
-  (syntax-parse stx
-    [(_ (~alt (~once (~seq #:contract contract-name:id))
-              (~once (~seq #:name name:id)))
-        ...
-        contract-expr:expr)
-     (list #`(contracted
-              [name contract-expr])
-           #`(define-values-for-export {contract-name}
-               contract-expr))]))
-
-(define-signature-form (contracted+export stx)
-  (syntax-parse stx
-    [(_ (~alt (~once (~seq [name*:id
-                            #:contract contract-name:id
-                            contract-expr*:expr]))
-              (~seq [name:id contract-expr:expr]))
-        ...)
-     (list #'(contracted
-              [name contract-expr] ...
-              [name* contract-expr*])
-           #'(define-values-for-export {contract-name}
-               contract-expr*))]))
-|#
-
-
-
-
-
-
-
-
-
+;    
 
 (define-signature search^
-  {(contracted
+  {initialize-search-backend/c
+   (contracted
     [search-backend/c contract?]
     [initialize-search-backend
+     initialize-search-backend/c])
+   (define-values-for-export
+     {initialize-search-backend/c}
      (-> search-backend/c
          (listof tei-document?)
-         searchable-document-set?)])})
-
-
-
-  #|
-(define-signature search^
-  {(contracted+export
-    [search-backend/c contract?]
-    [initialize-search-backend
-     #:contract initialize-search-backend/c
-     (-> search-backend/c
-         (listof tei-document?)
-         searchable-document-set?)])})
-
-(define-signature search^
-  {(contracted
-    [search-backend/c contract?])
-   (define-contract-for-export
-     #:name initialize-search-backend
-     #:contract initialize-search-backend/c
-     (-> search-backend/c
-         (listof tei-document?)
-         searchable-document-set?))})|#
+         searchable-document-set?))})
 
 (define (contract->predicate c)
   (if (flat-contract? c)

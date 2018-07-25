@@ -4,6 +4,10 @@
          (submod "common.rkt" private)
          )
 
+(provide noop@
+         noop-searchable-document-set
+         )
+
 (define noop-searchable-document-set
   (new (class* object% {searchable-document-set<%>}
          (super-new)
@@ -13,20 +17,11 @@
                                               #:exact? e)
            '()))))
 
-#|[
-   (define search-backend/c
-     'noop)
+(define search-backend/c
+  'noop)
 
-   (define (initialize-search-backend docs)
-     noop-searchable-document-set)
+(define (initialize-search-backend docs)
+  noop-searchable-document-set)
 
-   (define-unit-from-context noop@
-     search^)]|#
-
-(define-unit noop@
-  (import)
-  (export search^)
-  (define search-backend/c
-    'noop)
-  (define (initialize-search-backend docs)
-    noop-searchable-document-set))
+(define-unit-from-context noop@
+  search^)
