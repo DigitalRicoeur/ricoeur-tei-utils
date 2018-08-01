@@ -9,8 +9,8 @@
 ;; Documentation to build is listed in "tei/info.rkt".
 
 ;; Dependencies:
-(define deps '(("base" #:version "6.12")
-               ("adjutor" #:version "0.2.4")
+(define deps '(("base" #:version "7.0")
+               ("adjutor" #:version "0.2.5")
                "functional-lib"
                "roman-numeral"
                "gregor-lib"

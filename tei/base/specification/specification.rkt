@@ -73,30 +73,35 @@ the same source file that defines the Racket enforcement code.
    #:begin [(define (tei-document-checksum doc)
               (force (get-field pr:md5 doc)))]
    #:property prop:element->plain-text
-   (λ (this)
-     (string-append (instance-title this)
-                    "\n\n"
-                    (instance-citation this)
-                    "\n\nDigital Ricoeur: Not for distribution.\f"
-                    (element-or-xexpr->plain-text
-                     (get-field text this))))
+   (λ (this include-header?)
+     (define body
+       (element-or-xexpr->plain-text
+        (get-field text this)
+        #:include-header? include-header?))
+     (if include-header?
+         (string-append (instance-title this)
+                        "\n\n"
+                        (instance-citation this)
+                        "\n\nDigital Ricoeur: Not for distribution.\f"
+                        body)
+         body))
    #:prose ƒ{
 
-     The document should begin with an XML declaration and DOCTYPE
-     declaration, which must be exactly as follows:
-     ƒ(nested #:style 'inset
-              (verbatim
-               ƒtt{<?xml version="1.0" encoding="utf-8"?>}"\n"
-               ƒtt{<!DOCTYPE TEI SYSTEM "DR-TEI.dtd">}))
+ The document should begin with an XML declaration and DOCTYPE
+ declaration, which must be exactly as follows:
+ ƒ(nested #:style 'inset
+          (verbatim
+           ƒtt{<?xml version="1.0" encoding="utf-8"?>}"\n"
+           ƒtt{<!DOCTYPE TEI SYSTEM "DR-TEI.dtd">}))
 
-     The root element is a ƒtag{TEI} element,
-     which contains exactly (in order)
-     ƒtag{teiHeader} and ƒtag{text} elements.
-     It must have the attributes
-     ƒtt{version="5.0"} and
-     ƒtt{xmlns="http://www.tei-c.org/ns/1.0"}.
+ The root element is a ƒtag{TEI} element,
+ which contains exactly (in order)
+ ƒtag{teiHeader} and ƒtag{text} elements.
+ It must have the attributes
+ ƒtt{version="5.0"} and
+ ƒtt{xmlns="http://www.tei-c.org/ns/1.0"}.
 
-     })
+ })
 
 ƒ(begin-for-runtime
    (define (write-tei-document doc [out (current-output-port)])

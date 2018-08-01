@@ -199,11 +199,11 @@
                             #:latest-pb [latest-pb init-pb])
     (eprintf* "prepare-content\n")
     (define (this-so-far->segs)
-      (cons-pre-segment (string-normalize-spaces
-                         (string-join (reverse this-so-far) " "))
-                        #:segs segs 
-                        #:i i
-                        #:page (init-pb+latest-pb->page init-pb latest-pb)))
+      (cons-base-segment (string-normalize-spaces
+                          (string-join (reverse this-so-far) " "))
+                         #:segs segs 
+                         #:i i
+                         #:page (init-pb+latest-pb->page init-pb latest-pb)))
     (match to-go
       ;; base case: finish up, accumulating the last round from this-so-far
       ['()
@@ -269,7 +269,7 @@
            ;; so we treat plain-children as a segment.
            [(infix: 2 > num-pbs)
             (eprintf* "\t\tgood case\n")
-            (values (cons-pre-segment
+            (values (cons-base-segment
                      (string-normalize-spaces
                       (string-join
                        (for/list ([child (in-list plain-children)]
@@ -325,7 +325,7 @@
                  #:i [i i])
     (eprintf* "loop: (length to-go) = ~v\n" (length to-go))
     (define (this-so-far->segs)
-      (cons-pre-segment
+      (cons-base-segment
        (string-normalize-spaces
         (string-join (reverse this-so-far) " "))
        #:segs segs 
@@ -401,15 +401,17 @@
      (current-location-stack)]))
 
 
-(define/?contract (cons-pre-segment body
-                                    #:segs segs 
-                                    #:i counter
-                                    #:page page)
+(define/?contract (cons-base-segment body*
+                                     #:segs segs 
+                                     #:i counter
+                                     #:page page)
   (-> string?
       #:segs (listof base-segment?)
       #:i natural-number/c
       #:page page-spec/c
       (listof base-segment?))
+  (define body
+    (string->immutable-string body))
   (cond
     [(regexp-match? #px"^\\s*$"  body)
      segs]
@@ -420,7 +422,7 @@
              #:page page
              #:resp (current-resp)
              #:location (current-location-stack))
-            (string->immutable-string body))
+            body)
            segs)]))
 
 

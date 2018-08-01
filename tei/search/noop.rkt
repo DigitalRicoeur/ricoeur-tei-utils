@@ -1,7 +1,10 @@
-#lang racket
+#lang racket/base
 
 (require "common.rkt"
          (submod "common.rkt" private)
+         ricoeur/tei/base
+         racket/class
+         racket/unit
          )
 
 (provide noop@
@@ -15,13 +18,13 @@
                                               #:ricoeur-only? r
                                               #:book/article b
                                               #:exact? e)
-           '()))))
+           (instance-set)))))
 
-(define search-backend/c
-  'noop)
+(define-unit/search^ noop@
+  (import)
+  (export search^)
+  (define search-backend/c
+    'noop)
+  (define (initialize-search-backend _ docs)
+    noop-searchable-document-set))
 
-(define (initialize-search-backend docs)
-  noop-searchable-document-set)
-
-(define-unit-from-context noop@
-  search^)

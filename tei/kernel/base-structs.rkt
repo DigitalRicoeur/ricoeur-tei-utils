@@ -1,13 +1,10 @@
 #lang racket/base
 
-;; Note blame issue:
-;; https://github.com/racket/racket/issues/2093
-;; Will be fixed in Racket 7
-
 (require racket/contract
          racket/match
          racket/string
          racket/struct
+         "pre-kernel-lib.rkt"
          "xexpr/plain-contracts.rkt"
          "xexpr/normalize.rkt"
          (for-syntax racket/base
@@ -39,10 +36,13 @@
            (-> (or/c tei-element? normalized-xexpr-atom/c)
                normalized-xexpr/c)]
           [element-or-xexpr->plain-text
-           (-> (or/c tei-element? raw-xexpr-atom/c) string?)]
+           (->* {(or/c tei-element? raw-xexpr-atom/c)}
+                {#:include-header? any/c}
+                string-immutable/c)]
           [prop:element->plain-text ;; should this be semi-private?
            (struct-type-property/c
-            (-> any/c string?))]
+            (or/c (-> any/c string?)
+                  (-> any/c any/c string?)))]
           ))
 
 
@@ -85,15 +85,23 @@
 (define-values {prop:element->plain-text
                 has-prop:element->plain-text?
                 get:element->plain-text}
-  (make-struct-type-property 'prop:element->plain-text))
+  (make-struct-type-property
+   'prop:element->plain-text
+   (λ (proc info)
+     (if (procedure-arity-includes? proc 2)
+         proc
+         (λ (e _)
+           (proc e))))))
 
-(define (element->plain-text e)
-  ((get:element->plain-text e) e))
+(define (element->plain-text e include-header?)
+  ((get:element->plain-text e) e include-header?))
 
-(define (element-or-xexpr->plain-text e/xs)
-  (if (has-prop:element->plain-text? e/xs)
-      (element->plain-text e/xs)
-      (non-element-xexpr->plain-text e/xs)))
+(define (element-or-xexpr->plain-text e/xs
+                                      #:include-header? [include-header? #t])
+  (string->immutable-string
+   (if (has-prop:element->plain-text? e/xs)
+       (element->plain-text e/xs include-header?)
+       (non-element-xexpr->plain-text e/xs))))
 
 
 

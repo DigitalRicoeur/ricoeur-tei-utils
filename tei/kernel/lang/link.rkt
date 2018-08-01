@@ -92,9 +92,9 @@
        ...]
       (~alt (~once (~seq #:tei-xexpr/c tei-xexpr/c:id)
                    #:name "#:tei-xexpr/c clause")
-            (~once (~seq #:static-tei-xexpr/c
-                         static-tei-xexpr/c:id)
-                   #:name "#:static-tei-xexpr/c clause")
+            (~once (~seq #:dynamic-tei-xexpr/c
+                         dynamic-tei-xexpr/c:id)
+                   #:name "#:dynamic-tei-xexpr/c clause")
             (~once (~seq #:any-tei-xexpr/c any-tei-xexpr/c:id)
                    #:name "#:any-tei-xexpr/c clause")
             (~once (~seq #:xexpr->element xexpr->element:id
@@ -131,23 +131,23 @@
           (or/c 'element-name ...))
         
         (define-make-element-contract make-element-contract
-          #:tei-xexpr/c tei-xexpr/c
+          #:tei-xexpr/c dynamic-tei-xexpr/c
           #:any-tei-xexpr/c any-tei-xexpr/c)
 
         (define contract-name contract-expr) ...
         
-        (define-tei-xexpr/c tei-xexpr/c 
+        (define-dynamic-tei-xexpr/c dynamic-tei-xexpr/c 
           [element-name ...]
           [contract-name ...])
 
-        (define-static-tei-xexpr/c static-tei-xexpr/c 
+        (define-static-tei-xexpr/c tei-xexpr/c 
           [element-name ...]
           [contract-name ...])
           
         (define/final-prop any-tei-xexpr/c
           (make-any-tei-xexpr/c
            #:tei-element-name/c tei-element-name/c
-           #:tei-xexpr/c tei-xexpr/c))
+           #:tei-xexpr/c dynamic-tei-xexpr/c))
 
         (define-xexpr->element xexpr->element
           #:contract #,(if (attribute use-contract?)
@@ -167,7 +167,7 @@
         #'contract-name]
        ...)])
   
-(define-syntax-parser define-tei-xexpr/c
+(define-syntax-parser define-dynamic-tei-xexpr/c
   [(_ tei-xexpr/c:id
       [element-name:id ...]
       [contract-name:id ...])

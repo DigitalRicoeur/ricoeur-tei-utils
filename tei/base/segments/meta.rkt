@@ -32,7 +32,7 @@
            (-> segment? location-stack?)]
           ;;;;
           [segment-by-ricoeur?
-           (-> segment? any/c)]
+           (-> segment? boolean?)]
           [segment-meta=?
            (-> segment? segment? any/c)]
           ))

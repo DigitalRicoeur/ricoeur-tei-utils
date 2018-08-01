@@ -4,6 +4,7 @@
          racket/match
          adjutor
          "base-structs.rkt"
+         "pre-kernel-lib.rkt"
          )
 
 (module+ test
@@ -20,14 +21,6 @@
            (->* {tei-element-can-have-resp?}
                 {(or/c 'ricoeur #f)}
                 (or/c symbol? #f))]
-          [tei-element-resp/fragment-string
-           ;; is this still needed?
-           (->* {tei-element-can-have-resp?}
-                {(or/c 'ricoeur #f)}
-                (or/c resp-fragment-string/c #f))]
-          [resp-fragment-string->symbol
-           ;; is this still needed?
-           (-> resp-fragment-string/c symbol?)]
           [tei-document-paragraphs-status
            (-> has-tei-document-paragraphs-status?
                guess-paragraphs-status/c)]
@@ -37,15 +30,16 @@
   (provide (contract-out
             [prop:resp
              (struct-type-property/c
-              (cons/c (-> any/c (or/c symbol? #f))
-                      (-> any/c (or/c resp-fragment-string/c #f))))]
+              (-> any/c (or/c symbol? #f)))]
+            [resp-fragment-string->symbol
+             (-> resp-fragment-string/c symbol?)]
             [prop:guess-paragraphs-status
              (struct-type-property/c
               (-> any/c guess-paragraphs-status/c))]
             )))
 
 (define/final-prop resp-fragment-string/c
-  (and/c string? #rx"^#.+$"))
+  (and/c string-immutable/c #rx"^#.+$"))
 
 (define (resp-fragment-string->symbol str)
   (string->symbol (substring str 1)))
@@ -54,32 +48,14 @@
   (check-eq? (resp-fragment-string->symbol "#ricoeur")
              'ricoeur))
 
-(match-define-values {prop:resp/symbol
-                      _
-                      get-get-resp}
-  (make-struct-type-property 'prop:resp/symbol))
-
-(match-define-values {prop:resp/string
-                      _
-                      get-get-resp/string}
-  (make-struct-type-property 'prop:resp/string))
-                      
 (match-define-values {prop:resp
                       tei-element-can-have-resp?
-                      _}
-  (make-struct-type-property 'prop:resp
-                             #f
-                             (list (cons prop:resp/symbol car)
-                                   (cons prop:resp/string cdr))))
+                      get-get-resp}
+  (make-struct-type-property 'prop:resp))
 
 (define (tei-element-resp e [default 'ricoeur])
   (or ((get-get-resp e) e)
       default))
-
-(define (tei-element-resp/fragment-string e [default 'ricoeur])
-  (or ((get-get-resp/string e) e)
-      (and default
-           "#ricoeur")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

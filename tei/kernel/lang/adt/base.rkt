@@ -740,10 +740,10 @@
                          ([field-name struct-name-field-name] ...)
                          #,@body)])))
          #|END define-struct/derived|#)
-       
-       #,@(if (attribute predicate-external-name)
-              (list #`(define-immutable predicate-external-name predicate-name))
-              null)
+
+       (~? (define-immutable predicate-external-name
+             (procedure-rename predicate-name
+                               'predicate-external-name)))
        
        (define-accessors
          #,@(for/list ([accessor (in-list (map field-record-maybe-accessor fields))]

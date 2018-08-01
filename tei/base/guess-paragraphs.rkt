@@ -47,8 +47,8 @@
                   update-teiHeader
                   [update-text
                    tei-element->xexpr])
-  (->* {(-> teiHeader? (static-tei-xexpr/c teiHeader))}
-       {(-> tei-text-element? (static-tei-xexpr/c text))}
+  (->* {(-> teiHeader? (tei-xexpr/c teiHeader))}
+       {(-> tei-text-element? (tei-xexpr/c text))}
        (-> tei-document? tei-document?))
   (λ (e)
     (xexpr->element
@@ -61,7 +61,7 @@
 (define update-proc/c
   (->i #:chaperone
        {[elem tei-element?]}
-       [_ (elem) (tei-xexpr/c
+       [_ (elem) (dynamic-tei-xexpr/c
                   (tei-element-get-name elem))]))
 
 
@@ -107,7 +107,7 @@
        {[elem tei-element?]
         [pred predicate/c]
         [update update-proc/c ]}
-       [_ (elem) (tei-xexpr/c
+       [_ (elem) (dynamic-tei-xexpr/c
                   (tei-element-get-name elem))])
   (tei-element-update/xexpr*
    e
@@ -135,7 +135,7 @@
   (-> guess-paragraphs-status/c
       (-> (and/c teiHeader? (has-tei-document-paragraphs-status/c
                              (or/c 'todo 'skip)))
-          (static-tei-xexpr/c teiHeader)))
+          (tei-xexpr/c teiHeader)))
   (tei-element-update-1-child/xexpr
    e
    profileDesc?

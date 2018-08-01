@@ -15,7 +15,7 @@
          )
 
 (provide tei-xexpr/c
-         static-tei-xexpr/c
+         dynamic-tei-xexpr/c
          any-tei-xexpr/c
          tei-element-name/c
          (all-from-out "specification/text.rkt")
@@ -35,7 +35,7 @@
 (define-values/elements-specifications [main-spec
                                         ]
   #:tei-xexpr/c tei-xexpr/c
-  #:static-tei-xexpr/c static-tei-xexpr/c
+  #:dynamic-tei-xexpr/c dynamic-tei-xexpr/c
   #:any-tei-xexpr/c any-tei-xexpr/c
   #:xexpr->element xexpr->element #:define/contract
   #:tei-element-name/c tei-element-name/c)
@@ -49,7 +49,7 @@
   (discard-bom in)
   ;TODO: improve error message
   (xexpr->element
-   (contract (static-tei-xexpr/c TEI)
+   (contract (tei-xexpr/c TEI)
              (xml->xexpr
               (document-element
                (read-xml in)))
