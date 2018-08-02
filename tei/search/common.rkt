@@ -26,10 +26,17 @@
          trimmed-string-px
          searchable-document-set?
          document-search-results?
-         ;document-search-results ;; match expander
          search-result?
-         ;search-result ;; match expander
+         (rename-out
+          [match:document-search-results document-search-results]
+          [match:search-result search-result])
          (contract-out
+          [document-search-results-count
+           (-> document-search-results?
+               exact-positive-integer?)]
+          [document-search-results-results
+           (-> document-search-results?
+               (non-empty-listof search-result?))]
           [search-result-<?
            (-> search-result? search-result? boolean?)]
           [search-result->?
@@ -167,6 +174,11 @@
   #:property prop:segment
   (λ (it) (search-result-meta it)))
 
+(define-match-expander match:search-result
+  (syntax-parser
+    [(_ excerpt-pat:expr)
+     #'(search-result _ _ excerpt-pat)]))
+
 (define (segment-make-search-results seg l-excerpts/raw)
   (define meta
     (segment-get-meta seg))
@@ -214,7 +226,16 @@
   (document-search-results (get-plain-instance-info info)
                            (length results)
                            results))
-                                                                        
+
+(define-match-expander match:document-search-results
+  (syntax-parser
+    [(_ (~alt (~optional (~seq #:count count-pat:expr)
+                         #:defaults ([count-pat #'_]))
+              (~optional (~seq #:results results-pat:expr)
+                         #:defaults ([results-pat #'_])))
+        ...)
+     #'(document-search-results _ count-pat results-pat)]))
+
 ;                                                                          
 ;      ;             ;;                         ;;;                        
 ;      ;;            ;;                       ;;                           

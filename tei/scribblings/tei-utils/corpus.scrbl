@@ -116,7 +116,19 @@ by @racketmodname[ricoeur/tei/base].
 
 
 @section{Search Results}
-@defpredicate[document-search-results?]
+@deftogether[
+ (@defpredicate[document-search-results?]
+   @defproc[(document-search-results-count [doc-results document-search-results?])
+            exact-positive-integer?]
+   @defproc[(document-search-results-results [doc-results document-search-results?])
+            (non-empty-listof search-result?)]
+   @defform[#:kind "match expander"
+            (document-search-results kw-pat ...)
+            #:grammar [(kw-pat (code:line #:count count-pat)
+                               (code:line #:results results-pat))]])]{
+
+}
+
 @defpredicate[search-result?]
 @deftogether[
  (@defproc[(search-result-<? [a search-result?] [b search-result?])
@@ -129,6 +141,8 @@ by @racketmodname[ricoeur/tei/base].
                            trimmed-string-px))]
    @defthing[trimmed-string-px pregexp?
              #:value #px"^\\S$|^\\S.*\\S$"])]
+@defform[#:kind "match expander"
+         (search-result excerpt-pat)]
 
 
 @section{Searching Without a Corpus Object}

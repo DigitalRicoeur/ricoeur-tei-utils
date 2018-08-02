@@ -210,7 +210,7 @@ That transition will likely result in changes to this interface.
 
  @defmethod[#:mode public-final
             (get-title/symbol)
-            string?]{
+            symbol?]{
   Like @racket[(instance-title/symbol #,(this-obj))].
  }
 
