@@ -12,39 +12,53 @@
           (for-label ricoeur/tei/kernel/sans-lang
                      ))
 
-@margin-note{
- In the medium- to long-term, we plan to transition to
- managing the corpus-level bibliographic data in a database,
- rather than the TEI documents.
- That transition will likely result in changes to this interface.
-}
+This section documents an API for accessing bibliographic
+information about @deftech{instances}.
+
+In the medium- to long-term, we plan to transition to
+managing the corpus-level bibliographic data in a database,
+rather than the TEI documents.
+That transition will likely result in changes to this interface.
 
 @TODO/void[Explain instance in prose.]
 
+
 @defpredicate[instance-info?]{
  An @deftech{instance info} value encapsulates bibliographic
- information about an @deftech{instance}.
+ information about an @tech{instance}.
  The predicate @racket[instance-info?] recognizes @tech{instance info} values.
 
  All @tech{instance info} values support the same high-level API,
  and new kinds of values (including class-based objects)
  can implement the @tech{instance info} interface.
- 
 }
 
 @defproc[(get-plain-instance-info [info instance-info?])
          plain-instance-info?]{
  Converts any @tech{instance info} value to a @deftech{plain instance info} value,
  which serves as a cannonical form of the encapsulated information.
+ 
+ In addition to being needed with @racket[prop:instance-info]
+ to implement the @tech{instance info} interface for new kinds of values,
+ @racket[get-plain-instance-info] can be useful to keep only a minimal
+ representation of the @tech{instance info} reachable,
+ rather than, say, an entire @tech{TEI document}.
 }
 
 @defproc[(instance-title [info instance-info?])
-         string?]{
+         string-immutable/c]{
  Returns the title of the document, including subtitles.
+
+ See also @racket[title<?].
+}
+
+@defproc[(instance-title/symbol [info instance-info?])
+         symbol?]{
+ Equivalent to @racket[(string->symbol (instance-title info))].
 }
 
 @defproc[(instance-citation [info instance-info?])
-         string?]{
+         string-immutable/c]{
  Returns the human-readable citation for the work.
 }
  
@@ -62,7 +76,7 @@
 }
 
 @defproc[(instance-publication-original? [info instance-info?])
-         any/c]{
+         boolean?]{
  Indicates whether the version represented by @racket[info]
  was the first version of the work as a whole to be published.
  If @racket[instance-publication-original?] returns a non-false value,
@@ -79,10 +93,54 @@
 }
 
 @defproc[(instance-get-resp-string [info instance-info?] [resp symbol?])
-         string?]{
+         string-immutable/c]{
  Returns a string naming the author or editor whose
  @attr{xml:id} attribute value is the string form of @racket[resp],
  raising an exception if none exists.
+}
+
+
+@section{Instance Sets}
+@defproc[(instance-set? [v any/c]) any/c]{
+ Recognizes @deftech{instance set} values.
+
+ An @tech{instance set} is an immutable set,
+ in the sense of @racketmodname[racket/set],
+ of values which support the @tech{instance info} interface
+ (i.e. values for which @racket[instance-info?] returns @racket[#true]).
+ All members of an instance set will be distinct in terms
+ of @racket[instance-title/symbol].
+}
+
+@defproc[(instance-set [init (stream/c instance-info?) '()])
+         (instance-set/c)]{
+ Constructs an @tech{instance set} containing the
+ @tech{instance info} values from @racket[init].
+}
+
+@defproc*[([(instance-set/c [elem/c chaperone-contract?])
+            chaperone-contract?]
+           [(instance-set/c)
+            flat-contract?])]{
+ Constructs contracts recognizing @tech{instance sets}
+ where the elements of the set must satisfy @racket[elem/c].
+ If @racket[elem/c] is a flat contract, the result will be a flat
+ contract; otherwise, the result will be a chaperone contract.
+
+ The contract produced by @racket[(instance-set/c)] accepts all
+ @tech{instance sets}.
+ Using @racket[(instance-set/c)] may provide better error reporting
+ than using @racket[instance-set?] as a contract and may
+ be checked more efficiently than @racket[(instance-set/c any/c)]
+ or @racket[(instance-set/c instance-info?)],
+ but any of those variants would accept the same values.
+}
+
+@defproc[(in-instance-set [st (instance-set/c)]) sequence?]{
+ Explicitly converts an @tech{instance set} to a sequence for use
+ with @racket[for]-like forms.
+ An @racket[in-instance-set] application may provide better
+ performance when it appears directly in a @racket[for] clause.
 }
 
 
@@ -146,13 +204,19 @@
  
  @defmethod[#:mode public-final
             (get-title)
-            string?]{
+            string-immutable/c]{
   Like @racket[(instance-title #,(this-obj))].
  }
 
  @defmethod[#:mode public-final
-            (get-citation)
+            (get-title/symbol)
             string?]{
+  Like @racket[(instance-title/symbol #,(this-obj))].
+ }
+
+ @defmethod[#:mode public-final
+            (get-citation)
+            string-immutable/c]{
   Like @racket[(instance-citation #,(this-obj))].
  }
  
@@ -170,7 +234,7 @@
 
  @defmethod[#:mode public-final
             (get-publication-original?)
-            any/c]{
+            boolean?]{
   Like @racket[(instance-publication-original? #,(this-obj))].
  }
 
@@ -182,7 +246,7 @@
 
  @defmethod[#:mode public-final
             (get-resp-string [resp symbol?])
-            string?]{
+            string-immutable/c]{
   Like @racket[(instance-get-resp-string #,(this-obj) resp)].
  }
 }

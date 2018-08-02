@@ -2,11 +2,18 @@
 
 @title{General Utilities}
 @(declare-exporting ricoeur/tei/base
-                    ricoeur/tei)
+                    ricoeur/tei
+                    ;; ???
+                    ;; to support ricoeur/tei/kernel/lang/specification-lang
+                    #:use-sources (ricoeur/tei/kernel/sans-lang))
 
 @(require "for-manual.rkt")
 
-@defproc[(title<? [a string?] [b string?]) any/c]{
+@defthing[string-immutable/c flat-contract?]{
+Equivalent to @racket[(and/c string? immutable?)].
+}
+
+@defproc[(title<? [a string-immutable/c] [b string-immutable/c]) any/c]{
 
  Like @racket[string-ci<?], but performs additional
  normalization on @racket[a] and @racket[b] appropriate

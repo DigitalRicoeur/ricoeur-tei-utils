@@ -1,9 +1,9 @@
 #lang racket/base
 
-(require adjutor
+(require ricoeur/tei/kernel
          )
 
-(require-provide ricoeur/tei/kernel
+(require-provide (provide-only ricoeur/tei/kernel)
                  (multi ricoeur/tei/base
                         (def-from-spec
                          get-page-breaks

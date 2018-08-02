@@ -3,7 +3,7 @@
 @title[#:version ""]{Digital Ricœur TEI Library}
 @author[(author+email @elem{Philip M@superscript{c}Grath}
                       "philip@philipmcgrath.com")]
-@defmodule[#:multi (ricoeur/tei ricour/tei/base)]
+@defmodule[#:multi (ricoeur/tei ricoeur/tei/base)]
 
 
 @(require "for-manual.rkt"

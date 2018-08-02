@@ -4,8 +4,7 @@
          racket/class
          racket/set
          racket/stream
-         gregor
-         adjutor
+         "pre-kernel-lib.rkt"
          (for-syntax racket/base
                      syntax/parse
                      ))
@@ -48,11 +47,11 @@
 (module+ private
   (provide (contract-out
             [make-plain-instance-info
-             (-> #:title (and/c string? immutable?)
+             (-> #:title string-immutable/c
                  #:resp-table (hash/c symbol?
-                                      (and/c string? immutable?)
+                                      string-immutable/c
                                       #:immutable #t)
-                 #:citation (and/c string? immutable?)
+                 #:citation string-immutable/c
                  #:orig-publication-date date?
                  #:publication-date date?
                  #:publication-original? any/c
@@ -83,6 +82,10 @@
                                   #:publication-date this-publ-date
                                   #:publication-original? publication-original?
                                   #:book/article book/article)
+  (when publication-original?
+    (unless (equal? orig-publ-date this-publ-date)
+      (error 'make-plain-instance-info
+             "unequal publication dates for thisIsOriginal")))
   (plain-instance-info title
                        (string->symbol title)
                        resp-table
@@ -201,7 +204,7 @@
          get-publication-date 
          get-publication-original? 
          get-book/article 
-         [get-resp-string (->m symbol? string?)])))
+         [get-resp-string (->m symbol? string-immutable/c)])))
     (values
      instance-info<%>
      absent/c

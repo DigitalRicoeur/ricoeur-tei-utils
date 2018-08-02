@@ -5,3 +5,4 @@
 @(local-table-of-contents)
 
 @include-section["implementation/lang-kernel.scrbl"]
+@section{Search Implementation}
