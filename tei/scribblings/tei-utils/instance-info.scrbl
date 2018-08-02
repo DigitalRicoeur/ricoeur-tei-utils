@@ -33,6 +33,22 @@ That transition will likely result in changes to this interface.
  can implement the @tech{instance info} interface.
 }
 
+@defform[#:kind "match expander"
+         (instance-info kw-pat ...)
+         #:grammar [(kw-pat (code:line #:title title-pat)
+                            (code:line #:title/symbol title/symbol-pat)
+                            (code:line #:citation citation-pat)
+                            (code:line #:orig-publication-date orig-publication-date-pat)
+                            (code:line #:publication-date publication-date-pat)
+                            (code:line #:publication-original? publication-original?-pat)
+                            (code:line #:book/article book/article-pat))]]{
+ Matches any @tech{instance info} value, then matches any
+ sub-patterns against the values that would be returned by the
+ corresponding procedures documented below.
+
+ Each keyword may appear at most once.
+}
+
 @defproc[(get-plain-instance-info [info instance-info?])
          plain-instance-info?]{
  Converts any @tech{instance info} value to a @deftech{plain instance info} value,

@@ -7,9 +7,12 @@
          ricoeur/tei/kernel
          ricoeur/tei/base/def-from-spec
          "location-stack.rkt"
-         )
+         (for-syntax racket/base
+                     syntax/parse
+                     ))
 
 (provide segment?
+         segment
          segment-meta?
          page-spec/c
          segment-order
@@ -72,6 +75,31 @@
   #:transparent
   #:property prop:segment values)
 
+(define-match-expander segment
+  (syntax-parser
+    [(_ (~alt (~optional (~seq #:title/symbol title/symbol)
+                         #:defaults ([title/symbol #'_]))
+              (~optional (~seq #:counter counter)
+                         #:defaults ([counter #'_]))
+              (~optional (~seq #:resp-string resp-string)
+                         #:defaults ([resp-string #'_]))
+              (~optional (~seq #:page-spec page-spec)
+                         #:defaults ([page-spec #'_]))
+              (~optional (~seq #:location-stack location-stack)
+                         #:defaults ([location-stack #'_])))
+        ...)
+     #:with meta-pat
+     #'(segment-meta title/symbol
+                     _
+                     counter
+                     _
+                     resp-string
+                     page-spec
+                     location-stack)
+     #'(or meta-pat
+           (? segment?
+              (app segment-get-meta
+                   meta-pat)))]))
 
 (define (tei-document->make-segment-meta doc)
   (define checksum

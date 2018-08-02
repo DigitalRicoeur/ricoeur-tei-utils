@@ -110,6 +110,19 @@ and defines an extensible interface for working with @tech{segment metadata}.
  in this section.
 }
 
+@defform[#:kind "match expander"
+         (segment kw-pat ...)
+         #:grammar [(kw-pat (code:line #:title/symbol title/symbol-pat)
+                            (code:line #:counter counter-pat)
+                            (code:line #:resp-string resp-string-pat)
+                            (code:line #:page-spec page-spec-pat)
+                            (code:line #:location-stack location-stack-pat))]]{
+ Matches any @tech{segment} value, then matches any sub-patterns against
+ the values that would be returned by the corresponding functions documented below.
+
+ Each keyword may appear at most once.
+}
+
 @deftogether[
  (@defproc[(segment-resp-string [seg segment?])
            string-immutable/c]

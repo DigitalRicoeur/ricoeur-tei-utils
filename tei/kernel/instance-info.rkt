@@ -4,6 +4,7 @@
          racket/class
          racket/set
          racket/stream
+         racket/match
          "pre-kernel-lib.rkt"
          (for-syntax racket/base
                      syntax/parse
@@ -11,6 +12,7 @@
 
 (provide instance-info?
          plain-instance-info?
+         instance-info
          instance-info<%>
          instance-title
          instance-title/symbol
@@ -74,6 +76,38 @@
                              )
   #:transparent
   #:property prop:instance-info values)
+
+(define-match-expander instance-info
+  (syntax-parser
+    [(_ (~alt
+         (~optional (~seq #:title title-pat:expr)
+                    #:defaults ([title-pat #'_]))
+         (~optional (~seq #:title/symbol title/symbol-pat:expr)
+                    #:defaults ([title/symbol-pat #'_]))
+         (~optional (~seq #:citation citation-pat:expr)
+                    #:defaults ([citation-pat #'_]))
+         (~optional (~seq #:orig-publication-date orig-publication-date-pat:expr)
+                    #:defaults ([orig-publication-date-pat #'_]))
+         (~optional (~seq #:publication-date publication-date-pat:expr)
+                    #:defaults ([publication-date-pat #'_]))
+         (~optional (~seq #:publication-original? publication-original?-pat:expr)
+                    #:defaults ([publication-original?-pat #'_]))
+         (~optional (~seq #:book/article book/article-pat:expr)
+                    #:defaults ([book/article-pat #'_])))
+        ...)
+     #:with plain-pat
+     #'(plain-instance-info title-pat
+                            title/symbol-pat
+                            _
+                            citation-pat
+                            orig-publication-date-pat
+                            publication-date-pat
+                            publication-original?-pat
+                            book/article-pat)
+     #'(or plain-pat
+           (? instance-info?
+              (app get-plain-instance-info
+                   plain-pat)))]))
 
 (define (make-plain-instance-info #:title title
                                   #:resp-table resp-table
