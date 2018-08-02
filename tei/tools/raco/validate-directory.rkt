@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require ricoeur/tei/oop-base
+(require ricoeur/tei/base
          racket/cmdline)
 
 (provide validate-directory-command)
@@ -19,5 +19,5 @@
      (exit 1))
    (for ([pth (in-directory dir)]
          #:when (xml-path? pth))
-     (void (file->TEI pth)))))
+     (void (file->tei-document pth)))))
 

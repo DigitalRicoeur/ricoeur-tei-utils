@@ -4,4 +4,6 @@
          )
 
 (require-provide (provide-only ricoeur/tei/base)
+                 ricoeur/tei/search
+                 ricoeur/tei/corpus
                  )
