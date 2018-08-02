@@ -6,20 +6,37 @@
 
 @(require "for-manual.rkt")
 
+@(TODO/void Add prose: relationship btwn TEI documents and instances)
+
 @defpredicate[tei-document?]{
- Recognizes @tech{tei element structs} that represent
- the root @tag{TEI} element of a document.
+ Recognizes @deftech{TEI document} values.
+
+ A @tech{TEI document} is a @tech{tei element struct}
+ that represent the root @tag{TEI} element of a document.
+ TEI document values implement the @tech{instance info} interface
+ for bibliographic information.
 }
+
+@defproc[(tei-document-checksum [doc tei-document?])
+         symbol?]{
+ Returns a checksum calculated based on
+ a standardized XML representation of @racket[doc].
+ The checksum is returned as a symbol to facilitate inexpensive
+ comparisons.
+}
+
+
+@section{Reading & Writing TEI Documents}
 
 @defproc[(file->tei-document [file (and/c path-string? file-exists?)])
          tei-document?]{
- Produces a @tech{tei element struct} representing
+ Produces a @tech{TEI document} value representing
  the TEI XML document @racket[file].
 }
 
 @defproc[(read-tei-document [in input-port? (current-input-port)])
          tei-document?]{
- Produces a @tech{tei element struct} representing the TEI XML
+ Produces a @tech{TEI document} value representing the TEI XML
  document read from @racket[in].
 }
 
@@ -35,11 +52,9 @@
  an XML declaration and appropriate DOCTYPE declaration.
 }
 
-@defproc[(tei-document-md5 [doc tei-document?])
-         string?]{
- Returns the md5 checksum of @racket[doc],
- based on a standardized XML representation.
-}
+
+
+@section{Paragraph Inference}
 
 @deftogether[
  @(@defproc[(tei-document-paragraphs-status [doc tei-document?])
@@ -54,3 +69,6 @@
  has been performed for the document represented by
  @racket[doc].
 }
+
+
+
