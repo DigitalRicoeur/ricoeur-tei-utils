@@ -2,17 +2,7 @@
 
 @title{Defining TEI Elements}
 @(declare-exporting ricoeur/tei/kernel/lang/specification-lang)
-
-@(require (except-in "../for-manual.rkt"
-                     #%module-begin)
-          "for-lang-kernel.rkt"
-          (for-label ricoeur/tei/kernel/lang/specification-lang
-                     (submod ricoeur/tei/kernel private)
-                     (submod ricoeur/tei/kernel doc)
-                     scribble/base
-                     (except-in scribble/manual
-                                link)
-                     ))
+@(require "for-lang-kernel.rkt")
 
 
 @defform[
@@ -346,6 +336,25 @@ primative @racket[field] declaration.
  The @racket[attributes-expr] should be the element's attribute list,
  probably obtained via an @racket[#:attributes] @racket[_ctor-arg-binding]
  clause in @racket[define-element].
+}
+
+@defthing[prop:element->plain-text
+          (struct-type-property/c
+           (or/c (-> tei-element? string?)
+                 (-> tei-element? boolean? string?)))]{
+ The definition of a @tech{tei element struct type} can use
+ @racket[prop:element->plain-text] to override the default
+ behavior of @racket[element-or-xexpr->plain-text].
+ Note that attaching @racket[prop:element->plain-text] to
+ unrelated struct types has no effect: it is only used
+ for @tech{tei element structs}.
+
+ The first argument to the function given as the property value
+ is always the @tech{tei element struct} instance to be converted
+ to plain text.
+ If the function given as the property value accepts a second argument,
+ it will be a boolean corresponding to the @racket[#:include-header?]
+ argument to @racket[element-or-xexpr->plain-text].
 }
 
 @deftogether[

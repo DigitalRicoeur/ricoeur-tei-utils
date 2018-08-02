@@ -4,6 +4,7 @@
          "../interfaces.rkt"
          (submod "../interfaces.rkt" for-lang)
          "../pre-kernel-lib.rkt"
+         (submod "../base-structs.rkt" for-lang)
          racket/contract
          syntax/parse/define
          (for-syntax racket/base
@@ -12,6 +13,7 @@
 
 (provide declare-resp-field
          declare-paragraphs-status-field
+         (recontract-out prop:element->plain-text)
          )
 
 (define-syntax-parser declare-resp-field

@@ -39,13 +39,15 @@
            (->* {(or/c tei-element? raw-xexpr-atom/c)}
                 {#:include-header? any/c}
                 string-immutable/c)]
-          [prop:element->plain-text ;; this should be semi-private
-           (struct-type-property/c
-            (or/c (-> any/c string?)
-                  (-> any/c boolean? string?)))]
           ))
 
-
+(module+ for-lang
+  (provide (contract-out
+            [prop:element->plain-text 
+             (struct-type-property/c
+              (or/c (-> any/c string?)
+                    (-> any/c boolean? string?)))]
+            )))
 
 (module* private* #f
   (provide (contract-out

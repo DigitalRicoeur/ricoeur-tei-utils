@@ -4,7 +4,7 @@
 
 @(local-table-of-contents)
 
-@include-section["implementation/lang-kernel.scrbl"]
+@include-section["implementation/lang/lang-kernel.scrbl"]
 @section{Search Implementation}
 This section will contain details on the search implementation.
 @section{``TEI Lint'' Implementation}

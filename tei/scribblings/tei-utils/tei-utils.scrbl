@@ -50,25 +50,6 @@ and @racket[cdata?] from @racketmodname[xml].
 @include-section["general.scrbl"] @; General Utilities
 @include-section["implementation.scrbl"] @; Implementation Details
 
-@section{Temporary Staging Area}
-@defthing[prop:element->plain-text (struct-type-property/c
-                                    (or/c (-> tei-element? string?)
-                                          (-> tei-element? boolean? string?)))]{
- The definition of a @tech{tei element struct type} can use
- @racket[prop:element->plain-text] to override the default
- behavior of @racket[element-or-xexpr->plain-text].
- Note that attaching @racket[prop:element->plain-text] to
- unrelated struct types has no effect: it is only used
- for @tech{tei element structs}.
 
- The first argument to the function given as the property value
- is always the @tech{tei element struct} instance to be converted
- to plain text.
- If the function given as the property value accepts a second argument,
- it will be a boolean corresponding to the @racket[#:include-header?]
- argument to @racket[element-or-xexpr->plain-text].
-                                                         
- @TODO/scrbl[[prop:element->plain-text |shouldn't| be documented here.]]{
-  @bold{TODO:} Document this somewhere else.}
-}
+
 
