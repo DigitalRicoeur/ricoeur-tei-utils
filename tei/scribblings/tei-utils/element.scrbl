@@ -189,15 +189,27 @@ whenever possible.
 
 
 
-
-
-
 @section{Specialized Element Interfaces}
-@TODO/void[Prose saying to use segments and not these.]
+
+Functions for working with a few specific
+@tech{TEI element struct types} are provided by this
+library; however, such functions are especially brittle
+and may change in incompatable ways, or even be removed
+entirely, in future versions of this library.
+
+For most purposes, the @tech{segment} interface is
+a much better choice than the functions documented
+below (which are in fact used in the implementation of
+@racket[tei-document-segments]).
+However, they do serve some specific use-cases that have
+not yet been motivated a higher-level interface:
+most prominently, ``TEI Lint'' uses these functions to
+generate warnings about likely numbering errors.
+
 @subsection{Elements with Responsible Parties}
 @deftogether[
- (@defproc[(tei-element-can-have-resp? [e any/c]) any/c]
-   @defproc[(tei-element-resp [e tei-element-can-have-resp?]
+ (@defproc[(tei-element-can-have-resp? [v any/c]) any/c]
+   @defproc[(tei-element-resp [elem tei-element-can-have-resp?]
                               [default (or/c 'ricoeur #f) 'ricoeur])
             (if default
                 symbol?
@@ -206,6 +218,16 @@ whenever possible.
  @tag{div} and @tag{note} elements and the @attr{who} attribute of
  @tag{sp} elements.
 
+ Note that @racket[tei-element-resp] only accesses the @attr{resp}
+ attribute (if any) of the specific @tech{TEI element struct}
+ @racket[elem].
+ Actually determining the ``responsible party'' for an element
+ also requires consideration of its parent elements.
+ This resolution is performed for @tech{segments} and can be
+ accessed with @racket[segment-resp-string] and
+ @racket[segment-by-ricoeur?]: the primary purpose of
+ @racket[tei-element-resp] is to implement those higher-level functions.
+ 
  For implementation details, see @racket[declare-resp-field].
 }
 

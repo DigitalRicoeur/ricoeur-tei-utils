@@ -15,9 +15,13 @@
          guess-paragraphs-status/c
          (contract-out
           [tei-element-resp
-           (->* {tei-element-can-have-resp?}
-                {(or/c 'ricoeur #f)}
-                (or/c symbol? #f))]
+           (let ([symbol/false/c (or/c symbol? #f)])
+             (->i #:chaperone
+                  {[elem tei-element-can-have-resp?]}
+                  {[default (or/c 'ricoeur #f)]} ;; default: 'ricoeur
+                  [_ (default) (if default
+                                   symbol?
+                                   symbol/false/c)]))]
           [tei-document-paragraphs-status
            (-> has-tei-document-paragraphs-status?
                guess-paragraphs-status/c)]
