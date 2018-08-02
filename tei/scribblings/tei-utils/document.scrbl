@@ -52,6 +52,29 @@
  an XML declaration and appropriate DOCTYPE declaration.
 }
 
+@defproc[(element-or-xexpr->plain-text [v (or/c tei-element? raw-xexpr-atom/c)]
+                                       [#:include-header? include-header? any/c #t])
+         string-immutable/c]{
+ Converts @racket[v] to a plain-text string.
+ The resulting string is @bold{not} the XML representation of @racket[v]:
+ it is formated for uses that expect unstructured plain text.
+
+ When @racket[include-header?] is non-false (the default),
+ the resulting string may include more than just the content of @racket[v]:
+ for example, if @racket[v] is a @tech{TEI document}, the string may begin
+ with the title of the corresponding @tech{instance}.
+ When @racket[include-header?] is @racket[#false], only the content
+ will be included, which is sometimes preferable if the plain text form
+ is intended for further processing by computer.
+
+ While @racket[element-or-xexpr->plain-text] accepts any
+ @tech{TEI element struct} or non-element @tech{raw x-expression},
+ it is documented here because it is most useful
+ with @tech{TEI document} values.
+
+ For implementation details, see @racket[prop:element->plain-text].
+}
+
 
 
 @section{Paragraph Inference}

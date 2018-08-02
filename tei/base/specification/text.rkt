@@ -24,7 +24,7 @@
             tei-ab?
             (contract-out
              [pb-get-page-string
-              (-> tei-pb? (maybe/c (and/c string? immutable?)))]
+              (-> tei-pb? (maybe/c string-immutable/c))]
              [pb-get-kind
               (-> tei-pb? (or/c 'none 'number 'roman 'other))]
              [pb-get-numeric
@@ -32,13 +32,13 @@
              [tei-note-get-place
               (-> tei-note? (or/c 'foot 'end))]
              [tei-note-get-n
-              (-> tei-note? (and/c string? immutable?))]
+              (-> tei-note? string-immutable/c)]
              [tei-note-get-transl?
               (-> tei-note? (or/c #f 'transl))]
              [div-get-type
               (-> div? div-type/c)]
              [div-get-n
-              (-> div? (maybe/c (and/c string? immutable?)))]
+              (-> div? (maybe/c string-immutable/c))]
              )))
 
 ƒ(define-element text

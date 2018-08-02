@@ -39,10 +39,10 @@
            (->* {(or/c tei-element? raw-xexpr-atom/c)}
                 {#:include-header? any/c}
                 string-immutable/c)]
-          [prop:element->plain-text ;; should this be semi-private?
+          [prop:element->plain-text ;; this should be semi-private
            (struct-type-property/c
             (or/c (-> any/c string?)
-                  (-> any/c any/c string?)))]
+                  (-> any/c boolean? string?)))]
           ))
 
 
@@ -56,17 +56,17 @@
               ([name symbol?]
                [attributes
                 (listof (list/c symbol?
-                                string?))]
+                                string-immutable/c))]
                [body (listof (or/c tei-element?
-                                   comment?
-                                   p-i?))]
+                                   normalized-comment/c
+                                   normalized-p-i/c))]
                [body/elements-only (listof tei-element?)])
               #:omit-constructor]
             [struct (content-containing-element tei-element)
               ([name symbol?]
                [attributes
                 (listof (list/c symbol?
-                                string?))]
+                                string-immutable/c))]
                [body (listof (or/c tei-element?
                                    normalized-xexpr-atom/c))])
               #:omit-constructor])))
@@ -100,7 +100,7 @@
                                       #:include-header? [include-header? #t])
   (string->immutable-string
    (if (has-prop:element->plain-text? e/xs)
-       (element->plain-text e/xs include-header?)
+       (element->plain-text e/xs (any->boolean include-header?))
        (non-element-xexpr->plain-text e/xs))))
 
 
