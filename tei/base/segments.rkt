@@ -7,6 +7,7 @@
          racket/match
          json
          "def-from-spec.rkt"
+         (submod "def-from-spec.rkt" private)
          "get-page-breaks.rkt"
          (submod "segments/location-stack.rkt"
                  private)
@@ -26,7 +27,7 @@
           [struct base-segment
             ([meta segment-meta?]
              [body (and/c string-immutable/c
-                          (not/c #px"^\\s*$"))])
+                          #px"\\S")])
             #:omit-constructor]
           ))
 

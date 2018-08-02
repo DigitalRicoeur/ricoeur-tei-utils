@@ -14,7 +14,7 @@
                      ))
 ƒ(begin-for-runtime
    (provide tei-document?
-            tei-document-text-element
+            tei-document-text-element ;; private
             (contract-out
              [write-tei-document
               (->* {tei-document?} {output-port?} any)]

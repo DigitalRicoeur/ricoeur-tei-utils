@@ -19,9 +19,8 @@
             tei-note?
             div?
             div-type/c
-            div-type-string/c
-            tei-text-element?
-            tei-ab?
+            tei-ab? ;; private
+            tei-text-element? ;; private
             (contract-out
              [pb-get-page-string
               (-> tei-pb? (maybe/c string-immutable/c))]
@@ -40,6 +39,9 @@
              [div-get-n
               (-> div? (maybe/c string-immutable/c))]
              )))
+ƒ(TODO/void module+ #:
+            ambiguous binding error for |"begin"| with
+            "(begin-for-runtime (module+ private ...))")
 
 ƒ(define-element text
    #:children ([0-1 front]
@@ -106,14 +108,12 @@
     [resp #rx"^#.+$"])
    #:required-attrs (type)
    #:predicate div?
-   #:begin [(define/final-prop div-type/c
-              (or/c 'chapter 'part 'section 'dedication
-                    'contents 'intro 'bibl 'ack 'index))
-            ;; TODO: Extend DSL to integrate this w/
-            ;; #:attr-contracts contract
-            (define/final-prop div-type-string/c
-              (or/c "chapter" "part" "section" "dedication"
-                "contents" "intro" "bibl" "ack" "index"))]
+   #:begin [
+ ;; TODO: Extend DSL to integrate this w/
+ ;; #:attr-contracts contract
+ (define/final-prop div-type/c
+   (or/c 'chapter 'part 'section 'dedication
+         'contents 'intro 'bibl 'ack 'index))]
    #:constructor [
  #:attributes attrs
  (declare-resp-field attrs)

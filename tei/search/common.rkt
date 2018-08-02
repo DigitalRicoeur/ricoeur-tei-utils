@@ -31,9 +31,9 @@
          ;search-result ;; match expander
          (contract-out
           [search-result-<?
-           (-> search-result? search-result? any/c)]
+           (-> search-result? search-result? boolean?)]
           [search-result->?
-           (-> search-result? search-result? any/c)]
+           (-> search-result? search-result? boolean?)]
           [search-result-excerpt
            (-> search-result?
                (maybe/c (and/c string-immutable/c

@@ -34,7 +34,7 @@
           [segment-by-ricoeur?
            (-> segment? boolean?)]
           [segment-meta=?
-           (-> segment? segment? any/c)]
+           (-> segment? segment? boolean?)]
           ))
 
 (module+ private

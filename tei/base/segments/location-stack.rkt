@@ -4,6 +4,7 @@
          racket/contract
          racket/match
          racket/serialize
+         ricoeur/tei/kernel
          ricoeur/tei/base/def-from-spec
          )
 
@@ -11,7 +12,7 @@
          (contract-out
           [location-stack->strings
            (-> location-stack?
-               (listof string?))]
+               (listof string-immutable/c))]
           ))
 
 (module+ private
@@ -58,34 +59,36 @@
        [(location-stack-entry:root 'back)
         '("Back-matter")]
        [(location-stack-entry:div type n rest)
-        (cons (string-append (case type
-                               [(chapter) "Chapter"]
-                               [(part) "Part"]
-                               [(section) "Section"]
-                               [(dedication) "Dedication"]
-                               [(contents) "Table of Contents"]
-                               [(intro) "Introduction"]
-                               [(bibl) "Bibliography"]
-                               [(ack) "Acknowledgements"]
-                               [(index) "Index"]
-                               [else (error 'location-stack->string
-                                            (format "unknown div type ~e"
-                                                    type))])
-                             (maybe ""
-                                    (λ (n) (string-append " " n))
-                                    n))
+        (cons (string->immutable-string
+               (string-append (case type
+                                [(chapter) "Chapter"]
+                                [(part) "Part"]
+                                [(section) "Section"]
+                                [(dedication) "Dedication"]
+                                [(contents) "Table of Contents"]
+                                [(intro) "Introduction"]
+                                [(bibl) "Bibliography"]
+                                [(ack) "Acknowledgements"]
+                                [(index) "Index"]
+                                [else (error 'location-stack->string
+                                             (format "unknown div type ~e"
+                                                     type))])
+                              (maybe ""
+                                     (λ (n) (string-append " " n))
+                                     n)))
               (to-strings rest))]
        [(location-stack-entry:note place n transl? rest)
-        (cons (string-append (if transl?
-                                 "Translator's "
-                                 "")
-                             (case place
-                               [(foot) "Footnote "]
-                               [(end) "Endnote "]
-                               [else (error 'location-stack->string
-                                            (format "unknown note place ~e"
-                                                    place))])
-                             n)
+        (cons (string->immutable-string
+               (string-append (if transl?
+                                  "Translator's "
+                                  "")
+                              (case place
+                                [(foot) "Footnote "]
+                                [(end) "Endnote "]
+                                [else (error 'location-stack->string
+                                             (format "unknown note place ~e"
+                                                     place))])
+                              n))
               (to-strings rest))]))))
 
 

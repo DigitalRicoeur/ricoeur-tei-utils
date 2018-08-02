@@ -3,20 +3,25 @@
 (require ricoeur/tei/kernel
          ricoeur/tei/base/def-from-spec
          syntax/parse/define
+         (submod ricoeur/tei/base/def-from-spec private)
+         (only-in (submod ricoeur/tei/kernel private)
+                  has-tei-document-paragraphs-status?
+                  has-tei-document-paragraphs-status/c)
          )
 
-(provide (contract-out
+(provide tei-document/paragraphs-status/c
+         (contract-out
           [tei-document-skip-guess-paragraphs
            (update-guess-paragraphs-proc/c 'todo 'skip)]
           [tei-document-unskip-guess-paragraphs
            (update-guess-paragraphs-proc/c 'skip 'todo)]
           [tei-document-guess-paragraphs
            (->i #:chaperone
-                ([doc (document/paragraphs-status/c
+                ([doc (tei-document/paragraphs-status/c
                        (or/c 'todo 'skip))])
                 (#:mode [mode (or/c 'line-breaks 'blank-lines)])
                 [_ (mode)
-                   (document/paragraphs-status/c
+                   (tei-document/paragraphs-status/c
                     (case mode
                       [(line-breaks) 'line-breaks]
                       [else 'blank-lines]))])]
@@ -26,13 +31,18 @@
   (require rackunit
            (submod "..")))
 
-(define/final-prop (document/paragraphs-status/c status/c)
-  (and/c tei-document?
-         (has-tei-document-paragraphs-status/c status/c)))
+(define/final-prop (tei-document/paragraphs-status/c status/c)
+  (let ([status/c (coerce-flat-contract 'tei-document/paragraphs-status/c
+                                        status/c)])
+    (rename-contract
+     (and/c tei-document?
+            (has-tei-document-paragraphs-status/c status/c))
+     (build-compound-type-name 'tei-document/paragraphs-status/c
+                               status/c))))
 
 (define (update-guess-paragraphs-proc/c from/c to/c)
-  (-> (document/paragraphs-status/c from/c)
-      (document/paragraphs-status/c to/c)))
+  (-> (tei-document/paragraphs-status/c from/c)
+      (tei-document/paragraphs-status/c to/c)))
 
 (define (guess-paragraphs-status->term status)
   (case status

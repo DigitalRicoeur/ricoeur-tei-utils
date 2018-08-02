@@ -28,7 +28,9 @@
 
 @section{Reading & Writing TEI Documents}
 
-@defproc[(file->tei-document [file (and/c path-string? file-exists?)])
+@defproc[(file->tei-document [file (and/c path-string?
+                                          (if/c string? immutable? any/c)
+                                          file-exists?)])
          tei-document?]{
  Produces a @tech{TEI document} value representing
  the TEI XML document @racket[file].
@@ -93,5 +95,20 @@
  @racket[doc].
 }
 
+@defproc[(tei-document/paragraphs-status/c [status/c flat-contract?])
+         flat-contract?]
 
+@defproc[(tei-document-skip-guess-paragraphs
+          [doc (tei-document/paragraphs-status/c 'todo)])
+         (tei-document/paragraphs-status/c 'skip)]
+
+@defproc[(tei-document-unskip-guess-paragraphs
+          [doc (tei-document/paragraphs-status/c 'skip)])
+         [doc (tei-document/paragraphs-status/c 'todo)]]
+
+@defproc[(tei-document-guess-paragraphs
+          [doc (tei-document/paragraphs-status/c
+                (or/c 'todo 'skip))]
+          [#:mode mode (or/c 'line-breaks 'blank-lines) 'blank-lines])
+         (tei-document/paragraphs-status/c mode)]
 

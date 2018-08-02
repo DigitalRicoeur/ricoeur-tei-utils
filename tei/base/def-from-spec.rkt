@@ -18,19 +18,38 @@
          dynamic-tei-xexpr/c
          any-tei-xexpr/c
          tei-element-name/c
-         (all-from-out "specification/text.rkt")
-         (all-from-out "specification/teiHeader.rkt")
-         (except-out (all-from-out "specification/specification.rkt")
-                     main-spec)
+         (except-out (combine-out
+                      (all-from-out "specification/text.rkt")
+                      (all-from-out "specification/teiHeader.rkt")
+                      (except-out (all-from-out "specification/specification.rkt")
+                                  main-spec))
+                     profileDesc?
+                     tei-ab?
+                     tei-document-text-element
+                     tei-keywords?
+                     tei-text-element?
+                     teiHeader?
+                     textClass?)
          (contract-out
           [file->tei-document
-           (-> (and/c path-string? file-exists?)
+           (-> (and/c path-string?
+                      (if/c string? immutable? any/c)
+                      file-exists?)
                tei-document?)] 
           [read-tei-document
            (->* {} {input-port?} tei-document?)] 
           [xexpr->element
            (-> any-tei-xexpr/c tei-element?)]
           ))
+
+(module+ private
+  (provide profileDesc?
+           tei-ab?
+           tei-document-text-element
+           tei-keywords?
+           tei-text-element?
+           teiHeader?
+           textClass?))
 
 (define-values/elements-specifications [main-spec
                                         ]

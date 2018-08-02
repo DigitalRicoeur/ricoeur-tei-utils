@@ -16,10 +16,10 @@
                     private-plain-instance-info)
             xml/path
             )
-   (provide teiHeader?
-            profileDesc? ;; TODO: make this semi-private
-            textClass?
-            tei-keywords?
+   (provide teiHeader? ;; private
+            profileDesc? ;; private
+            textClass? ;; private
+            tei-keywords? ;; private
             ))
 
 

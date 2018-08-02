@@ -12,10 +12,7 @@
            (submod "..")))
 
 (provide tei-element-can-have-resp?
-         resp-fragment-string/c
-         has-tei-document-paragraphs-status?
          guess-paragraphs-status/c
-         has-tei-document-paragraphs-status/c
          (contract-out
           [tei-element-resp
            (->* {tei-element-can-have-resp?}
@@ -27,7 +24,8 @@
           ))
 
 (module+ for-lang
-  (provide (contract-out
+  (provide resp-fragment-string/c
+           (contract-out
             [prop:resp
              (struct-type-property/c
               (-> any/c (or/c symbol? #f)))]
@@ -37,6 +35,10 @@
              (struct-type-property/c
               (-> any/c guess-paragraphs-status/c))]
             )))
+
+(module+ private
+  (provide has-tei-document-paragraphs-status?
+           has-tei-document-paragraphs-status/c))
 
 (define/final-prop resp-fragment-string/c
   (and/c string-immutable/c #rx"^#.+$"))
