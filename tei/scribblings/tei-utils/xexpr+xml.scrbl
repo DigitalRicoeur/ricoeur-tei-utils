@@ -54,31 +54,6 @@
  @tech{raw x-expressions}.
 }
 
-@defproc[(normalize-xexpr [raw raw-xexpr/c]) normalized-xexpr/c]{
- Returns a @tech{normalized xexpr} equivalent to the given
- @tech{raw xexpr}.
-}
-
-@defproc[(non-element-xexpr->plain-text [xs raw-xexpr-atom/c])
-         string?]{
- Converts a @tech{raw x-expression} (including @tech{normalized xexprs})
- that @bold{does not} represent an XML element to a string.
-
- Because of the restriction that @racket[xs] must not
- represent an XML element, @racket[(non-element-xexpr->plain-text xs)]
- is very similar to @racket[(normalize-xexpr xs)], except that
- @racket[comment] and @racket[p-i] (processing instruction) structures
- are replaced by @racket[""].
-}
-
-@defproc[(non-element-body->plain-text [body (listof raw-xexpr-atom/c)])
-         string?]{
- Like @racket[non-element-xexpr->plain-text], but concatenates the
- string forms of a list of non-element @tech{raw xexprs},
- such as might form the body of a @tech{raw xexpr} representing an
- XML element that may not contain any child elements.
-}
-
 @defthing[entity-symbol/c flat-contract]{
  Similar to @racket[symbol?], but only recognizes those symbols
  which correspond to symbolic entities known to this library,
@@ -113,6 +88,29 @@
  as the missing party of the blame object.
 }
 
+@subsection{Plain-Text Conversion}
+@defproc[(non-element-xexpr->plain-text [xs raw-xexpr-atom/c])
+         string-immutable/c]{
+ Converts a @tech{raw x-expression} (including @tech{normalized xexprs})
+ that @bold{does not} represent an XML element to a string.
+
+ Because of the restriction that @racket[xs] must not
+ represent an XML element, @racket[(non-element-xexpr->plain-text xs)]
+ is very similar to @racket[(normalize-xexpr xs)], except that
+ @racket[comment] and @racket[p-i] (processing instruction) structures
+ are replaced by @racket[""].
+}
+
+@defproc[(non-element-body->plain-text [body (listof raw-xexpr-atom/c)])
+         string-immutable/c]{
+ Like @racket[non-element-xexpr->plain-text], but concatenates the
+ string forms of a list of non-element @tech{raw xexprs},
+ such as might form the body of a @tech{raw xexpr} representing an
+ XML element that may not contain any child elements.
+}
+
+
+
 
 
 @section{Normalized X-Expressions}
@@ -122,9 +120,9 @@
             #:value (or/c normalized-xexpr-atom/c
                           normalized-xexpr-element/c)]
    @defthing[normalized-xexpr-atom/c flat-contract?
-             #:value (or/c string?
-                           comment?
-                           p-i?)]
+             #:value (or/c string-immutable/c
+                           normalized-comment/c
+                           normalized-p-i/c)]
    @defthing[normalized-xexpr-element/c flat-contract?])]{
 
  Some higher-level operations in this library produce and/or
@@ -141,14 +139,28 @@
  }
    @item{All element @tech{normalized x-expressions}, which are recognized
   by the contract @racket[normalized-xexpr-element/c],
-  must have an attribute list, even if it is empty; and
+  must have an attribute list, even if it is empty; 
  }
    @item{The body of an element @tech{normalized x-expression} may
-  only contain @tech{normalized x-expressions}.
-  })
+  only contain @tech{normalized x-expressions}; and
+ }
+   @item{All strings anywhere in a @tech{normalized x-expression} must be immutable.
+  This includes:
+  @(itemlist
+    @item{Strings representing textual data in the body of
+   element @tech{normalized x-expressions}.}
+    @item{Attribute value strings of element @tech{normalized x-expressions}.}
+    @item{Strings contained in comment and processing-instruction data structures
+   (see @racket[normalized-comment/c] and @racket[normalized-p-i/c]).}
+    )})
 
  Note that all @tech{normalized x-expressions} are also
  @tech{raw x-expressions}.
+}
+
+@defproc[(normalize-xexpr [raw raw-xexpr/c]) normalized-xexpr/c]{
+ Returns a @tech{normalized xexpr} equivalent to the given
+ @tech{raw xexpr}.
 }
 
 @deftogether[(@defpredicate[normalized-xexpr?]
@@ -159,6 +171,18 @@
  as @racket[raw-xexpr?] and @racket[raw-xexpr-element?].
 }
 
+@deftogether[(@defthing[normalized-comment/c flat-contract?]
+               @defpredicate[normalized-comment?])]{
+ A contract and predicate recognizing XML comment data structures
+ (as in @racket[comment?]) that contain only immutable strings.
+}
+
+@deftogether[(@defthing[normalized-p-i/c flat-contract?]
+               @defpredicate[normalized-p-i?])]{
+ Like @racket[normalized-comment/c] and @racket[normalized-comment?],
+ respectively, but for XML processing-instruction data structures
+ (as in @racket[p-i?]) that contain only immutable strings.
+}
 
 @defproc[(check-normalized-xexpr-element [blame blame?]
                                          [val α]
@@ -234,10 +258,17 @@ typically a no-op.
  raises an exception rather than returning a value.
  See @racket[with-output-to-file/unless-exn] for an alternative 
  when this behavior is undesirable.
+ @TODO/void[call/prettyprint-xml-out
+            #: Is this caveat still true with piping?]
  
  If @racket[thunk] raises an exception and @exec{xmllint} is available,
  @exec{xmllint} is never invoked and nothing is written to the original
  @racket[current-output-port].
+                                     
+ @bold{Note:} While @exec{xmllint}'s prettyprint function natively uses
+ platform-specific line endings, @racket[call/prettyprint-xml-out]
+ arranges to replace these with @racket["\n"] (Racket's internal line ending)
+ on all platforms for the purposes of writing to the @racket[current-output-port].
 }
 
 
