@@ -10,7 +10,7 @@
          )
 
 (provide tei-xexpr/c
-         static-tei-xexpr/c
+         dynamic-tei-xexpr/c
          any-tei-xexpr/c
          tei-element-name/c
          )
@@ -25,7 +25,7 @@
                                         ;duplicate-spec
                                         ]
   #:tei-xexpr/c tei-xexpr/c
-  #:static-tei-xexpr/c static-tei-xexpr/c
+  #:dynamic-tei-xexpr/c dynamic-tei-xexpr/c
   #:any-tei-xexpr/c any-tei-xexpr/c
   #:xexpr->element xexpr->element #:define/contract
   #:tei-element-name/c tei-element-name/c)

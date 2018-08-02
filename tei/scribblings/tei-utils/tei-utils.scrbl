@@ -3,7 +3,7 @@
 @title[#:version ""]{Digital Ricœur TEI Library}
 @author[(author+email @elem{Philip M@superscript{c}Grath}
                       "philip@philipmcgrath.com")]
-@defmodule[#:multi (ricoeur/tei/oop ricoeur/tei ricour/tei/base)
+@defmodule[#:multi (ricoeur/tei ricour/tei/base)
            #:no-declare]
 
 
@@ -51,7 +51,6 @@ from Racket's @racketmodname[xml] library
 @include-section["contracts-tei-xexpr.scrbl"]
 @include-section["kernel-sans-lang.scrbl"]
 @include-section["new-api.scrbl"]
-@include-section["old-api.scrbl"]
 
 
 
