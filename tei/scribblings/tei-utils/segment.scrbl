@@ -8,6 +8,10 @@
           (for-label data/order
                      ))
 
+@deftech{segment}: define it
+
+@deftech{segment metadata} value: define that, too
+
 @; Base Segments
 @defproc[(tei-document-segments [doc tei-document?])
          (listof base-segment?)]

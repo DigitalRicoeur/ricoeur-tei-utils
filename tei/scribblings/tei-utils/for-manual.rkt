@@ -7,6 +7,7 @@
 
 (require-provide (provide-only (submod ricoeur/tei/kernel doc))
                  scribble/core
+                 scribble/example
                  syntax/parse/define
                  (for-syntax racket/base
                              syntax/parse
@@ -30,6 +31,7 @@
          Ricoeur
          defpredicate
          submodlink
+         make-tei-eval
          (contract-out
           [tag
            (-> (or/c symbol? string?) element?)]
@@ -62,5 +64,14 @@
 (define-syntax-parser submodlink
   [(_ m:expr)
    #'(racketmodlink m (racket m))])
+
+
+(define make-tei-eval
+  (make-eval-factory '(ricoeur/tei
+                       racket/contract
+                       racket/match
+                       racket/set
+                       racket/class
+                       racket/unit)))
 
 
