@@ -19,7 +19,6 @@
                                        date?)
                             ricoeur/tei
                             ricoeur/tei/base
-                            ricoeur/tei/kernel
                             xml
                             db
                             json

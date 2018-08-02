@@ -11,25 +11,24 @@
             
 To use this library, you must install the Racket programming
 language and runtime system for your platform from
-@url["https://racket-lang.org"]. Racket version 6.12 or later
-is currently required. If you use Mac OS, you are free to use the 
-``cask'' for the Homebrew packacge manager (but note that the
-``minimal-racket'' Homebrew formula is currently unmaintained and
-should be avoided), and, if you use Ubuntu, you may wish to
-consider the Racket
-@hyperlink["https://launchpad.net/~plt/+archive/ubuntu/racket"]{PPA}.
-Otherwise, you generally should @italic{not} use the version
+@url["https://racket-lang.org"].
+Racket version 7.0 or later is currently required.
+You should @italic{not} use the version
 of Racket from your OS's package manager,
 as it will generally not be up-to-date.
-
-You should also configure your @envvar{PATH} environment variable
-so that the @tt{racket} and @tt{raco} programs can be run
-from the command line. For example, on Mac OS, you should add a
-line like the following to @filepath{~/.bash_profile}:
-@verbatim[#:indent 2]{export PATH="/Applications/Racket v6.12/bin":$PATH}
+@margin-note{
+ If you use Mac OS, it is ok to use the 
+ ``cask'' for the Homebrew packacge manager, but note that the
+ ``minimal-racket'' Homebrew formula is currently unmaintained and
+ should be avoided.
+ If you use Ubuntu, it is ok to use the Racket
+ @hyperlink["https://launchpad.net/~plt/+archive/ubuntu/racket"]{PPA}.
+ However, neither of these approaches are recommended unless you
+ are an advanced user who is aware of the downsides.
+}
 
 While it is not strictly required, some features of this library
-are implemented using the utility @tt{xmllint} from @tt{libxml2}.
+are implemented using the utility @exec{xmllint} from @tt{libxml2}.
 This is included by default with Mac OS and is available via
 the system package manager on GNU/Linux.
 On Windows, the necessary binaries are provided as a platform-specific
@@ -63,6 +62,13 @@ Two methods are provided to streamline this process:
  These files are still somewhat experimental.
  Please report any problems.
  })
+
+To use the command-line utilities bundled with this library,
+you should also configure your @envvar{PATH} environment variable
+so that the @exec{racket} and @exec{raco} programs can be run.
+For example, on Mac OS, you could add a
+line like the following to @filepath{~/.bash_profile}:
+@verbatim[#:indent 2]{export PATH="/Applications/Racket v7.0/bin":$PATH}
 
 If you are developing (as oposed to merely using) this library,
 you may also wish to install the Racket package

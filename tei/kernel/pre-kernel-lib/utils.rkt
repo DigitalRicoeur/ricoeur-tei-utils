@@ -1,10 +1,5 @@
 #lang racket/base
 
-;; Are maybe-date<? and maybe-date>? still used?
-;; If so, add them here.
-;; If not, they should probably be dropped, since
-;; a future use might want different semantics for (nothing).
-
 (require racket/match
          racket/contract
          )
@@ -16,7 +11,7 @@
 (provide string-immutable/c
          (contract-out
           [title<?
-           (-> string? string? any/c)]
+           (-> string-immutable/c string-immutable/c any/c)]
           [attributes-ref
            (-> (listof (list/c symbol? string?))
                symbol?
@@ -37,6 +32,7 @@
 (define normalize-title
   (match-lambda
     [(pregexp #px"^(?i:an?|the)\\s+(\\S.*)$" (list _ trimmed))
+     ;; N.B.: If this were exported, should use string->immutable-string
      trimmed]
     [full full]))
 

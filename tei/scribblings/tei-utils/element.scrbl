@@ -1,22 +1,17 @@
 #lang scribble/manual
 
-@title[#:style '(toc)]{Work-In-Progress API}
-@;; ricoeur/tei/kernel/sans-lang
-@;;   to support ricoeur/tei/kernel/lang/specification-lang
-@(declare-exporting ricoeur/tei/kernel
-                    ricoeur/tei/base
-                    ricoeur/tei
-                    #:use-sources (ricoeur/tei/kernel/sans-lang)
-                    )
+@title{TEI Element Representation}
+@(declare-exporting ricoeur/tei/base
+                    ricoeur/tei)
 
+@(require "for-manual.rkt")
 
-@(require "for-manual.rkt"
-          (for-label ricoeur/tei/kernel/sans-lang
-                     ))
+@defproc[(xexpr->element [xs any-tei-xexpr/c])
+         tei-element?]{
+ The primitive function for converting a @tech{raw xexpr}
+ representation of a TEI XML element to a @tech{tei element struct}.
+}
 
-@(local-table-of-contents)
-
-@section{TEI Element Representation}
 @deftogether[
  (@defpredicate[tei-element?]
    @defpredicate[content-containing-element?]
@@ -138,72 +133,13 @@
  For implementation details, see @racket[declare-resp-field].
 }
 
-@include-section["instance-info.scrbl"]
 
 
 
-@section{Base}
-@;include-section["new-api/base-constructors.scrbl"]
-@(declare-exporting ricour/tei/base
-                    ricour/tei
-                    #:use-sources (ricoeur/tei/base) ;don't understand why
-                    )
 
-@defproc[(file->tei-document [file (and/c path-string? file-exists?)])
-         tei-document?]{
- Produces a @tech{tei element struct} representing
- the TEI XML document @racket[file].
-}
 
-@defproc[(read-tei-document [in input-port? (current-input-port)])
-         tei-document?]{
- Produces a @tech{tei element struct} representing the TEI XML
- document read from @racket[in].
-}
 
-@defproc[(xexpr->element [xs any-tei-xexpr/c])
-         tei-element?]{
- The primitive function for converting a @tech{raw xexpr}
- representation of a TEI XML element to a @tech{tei element struct}.
-}
-
-@defpredicate[tei-document?]{
- Recognizes @tech{tei element structs} that represent
- the root @tag{TEI} element of a document.
-}
-
-@defproc[(write-tei-document [doc tei-document?]
-                             [out output-port? (current-output-port)])
-         any]{
- Writes the XML representation of @racket[doc] to out,
- prettyprinted using @racket[call/prettyprint-xml-out].
-
- Use @racket[write-tei-document] rather than
- @racket[(write-xexpr (tei-element->xexpr doc) out)]
- because @racket[write-tei-document] also writes
- an XML declaration and appropriate DOCTYPE declaration.
-}
-
-@defproc[(tei-document-md5 [doc tei-document?])
-         string?]{
- Returns the md5 checksum of @racket[doc],
- based on a standardized XML representation.
-}
-
-@deftogether[
- @(@defproc[(tei-document-paragraphs-status [doc tei-document?])
-            guess-paragraphs-status/c]
-    @defthing[guess-paragraphs-status/c flat-contract?
-              #:value (or/c 'todo
-                            'line-breaks
-                            'blank-lines
-                            'done
-                            'skip)])]{
- Returns a symbol indicating whether paragraph-guessing
- has been performed for the document represented by
- @racket[doc].
-}
-
+@section{Element-specific Interfaces}
 @subsection{Page-break Elements}
 @defpredicate[tei-pb?]{
  Recognizes @tech{tei element structs} that represent
@@ -284,8 +220,34 @@
  @TODO/scrbl[[document div API]]{@bold{TODO:}} Document these.
 }
 
-@include-section["implementation.scrbl"]
 
 
 
 
+@section{TEI X-Expression Contracts}
+@defthing[any-tei-xexpr/c flat-contract?]{
+ Similar to @racket[raw-xexpr-element/c], but
+ rejects some (not all) @tech{raw x-expressions} that would break TEI
+ validity rules, including the additional requirements
+ imposed by Digital Ricœur.
+}
+
+@defproc[(tei-xexpr/c [name tei-element-name/c])
+         flat-contract?]{
+ Produces a contract similar to @racket[any-tei-xexpr/c], but
+ which recognizes only elements named @racket[name].
+ @(TODO/void tei-xexpr/c FIXME)
+}
+
+@defform[(static-tei-xexpr/c elem-name-id)]{
+ Like @racket[(tei-xexpr/c (#,(racket quote) elem-name-id))],
+ but resolved to the specific contract at compile-time,
+ and a compile-time error is raised if @racket[(#,(racket quote) elem-name-id)]
+ would not satisfy @racket[tei-element-name/c].
+ @(TODO/void static-tei-xexpr/c FIXME)
+}
+
+@defthing[tei-element-name/c flat-contract?]{
+ A contract recognizing the names of valid
+ Digital Ricœur TEI XML elements.
+}

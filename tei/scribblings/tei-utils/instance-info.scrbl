@@ -3,12 +3,10 @@
 @title{Bibliographic Information}
 @;; ricoeur/tei/kernel/sans-lang
 @;;   to support ricoeur/tei/kernel/lang/specification-lang
-@(declare-exporting ricoeur/tei/kernel
-                    ricoeur/tei/base
+@(declare-exporting ricoeur/tei/base
                     ricoeur/tei
                     #:use-sources (ricoeur/tei/kernel/sans-lang)
                     )
-
 
 @(require "for-manual.rkt"
           (for-label ricoeur/tei/kernel/sans-lang
