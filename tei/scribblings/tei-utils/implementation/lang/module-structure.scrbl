@@ -1,6 +1,7 @@
 #lang scribble/manual
 
 @title{Module Structure}
+@(declare-exporting ricoeur/tei/kernel/lang/doc-lang)
 @(require "for-lang-kernel.rkt")
 
 
@@ -34,6 +35,8 @@ The @racket[_spec-module-body] forms are the body of the
 module; they have meaning both at @tech{runtime} and at
 @tech{documentation-time}.
 
+
+@TODO/void[The next two paragraphs aren not true.]
 At @tech{documentation-time}, most forms are expanded/evaluated
 normally. Any @racket[begin-for-runtime] forms are replaced
 with @racket[(void)] at documentation-time,
@@ -42,20 +45,15 @@ generate typeseting at documentation-time; see their documentation
 below for more details.
 The other bindings which are provided by @(hash-lang-kernel) for
 documentation-time use are documented under
-@racketmodname[ricoeur/tei/kernel/lang/doc-lang].
+@secref["Documentation_Phase"].
 
 At @tech{runtime}, the @racket[_spec-module-body] forms
 are partially expanded to reveal uses of @racket[begin-for-runtime],
 @racket[define-element], or @racket[define-elements-together].
 Any @racket[_spec-module-body] form that does not expand 
 to one of these forms is ignored at runtime.
-@TODO/scrbl[[Expansion to define-element
-             #: From outside the "library," how would it actually
-             work to expand to define-element at both phases?
-             Would it be better not to give the doc module the
-             raw forms?]]{
- @margin-note*{The details of expansion to these forms remain
-  under development and are subject to change.}}
+@margin-note*{The details of expansion to these forms remain
+ under development and are subject to change.}
 The bodies of all @racket[begin-for-runtime] forms are
 spliced together at the beginning of the module (see below)
 and evaluated before any of the @racket[define-element]
@@ -67,11 +65,9 @@ use @(hash-lang-kernel) provides everything from
 @racketmodname[racket/match], @racketmodname[racket/list],
 @racketmodname[racket/string], and @racketmodname[racket/base]
 (except that it provides a replacement for
-@(defidform/inline #%module-begin)).
-@TODO/scrbl[[List things from ricoeur/tei/kernel.]]{
- @bold{TODO:} List things from @racketmodfont{ricoeur/tei/kernel}.
-}
-
+@racketidfont{#%module-begin}).
+@TODO/void[List things from ricoeur/tei/kernel.]
+@bold{TODO:} List things from @racketmodfont{ricoeur/tei/kernel}.
 
 @defform[(begin-for-runtime body ...)]{
  In the @tech{runtime} phase, similar to
@@ -87,6 +83,12 @@ use @(hash-lang-kernel) provides everything from
  @racketblock[(begin-for-runtime
                 (module+ test
                   body ...))]
+}
+
+@defform[(begin-for-runtime/derived orig-datum body ...)]{
+ @TODO/void[only allowed at module level or in element definition prose body]
+ Like @racket[begin-for-runtime], but reports errors in terms of
+ @racket[orig-datum].
 }
 
 @section{The @racket[_spec-name-declaration]}

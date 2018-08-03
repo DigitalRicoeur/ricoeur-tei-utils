@@ -29,6 +29,7 @@ specification are defined together in the language @(hash-lang-kernel).
 @include-section["objectives.scrbl"]
 @include-section["module-structure.scrbl"]
 @include-section["define-element.scrbl"]
+@include-section["linking.scrbl"]
 @include-section["doc-lang.scrbl"]
 
 

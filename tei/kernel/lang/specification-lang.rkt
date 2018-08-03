@@ -3,9 +3,7 @@
 (require ricoeur/tei/kernel/sans-lang
          syntax/parse/define
          racket/require
-         (multi-in ricoeur/tei/kernel/lang
-                   (elem-for-runtime 
-                    begin-for-runtime))
+         ricoeur/tei/kernel/lang/elem-for-runtime
          (only-in ricoeur/tei/kernel/lang/link
                   define-combined-elements-specification)
          (for-syntax racket/base

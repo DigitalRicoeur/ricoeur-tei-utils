@@ -1,15 +1,14 @@
 #lang scribble/manual
 
 @title{Documentation Phase}
-@defmodule[ricoeur/tei/kernel/lang/doc-lang]
 @(require "for-lang-kernel.rkt")
 
 
 The @tech{documentation-time} phase of @(hash-lang-kernel)
 provides a language based on @racketmodname[racket],
 though it provides alternate versions of
-@(defidform/inline #%top-interaction) and
-@(defidform/inline #%module-begin) based in part on the
+@racketidfont{#%top-interaction} and
+@racketidfont{#%module-begin} based in part on the
 versions from @(hash-lang) @racketmodname[scribble/manual].
 
 These bindings are supplemented by everything from

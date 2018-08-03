@@ -1,7 +1,7 @@
 #lang scribble/manual
 
 @title{Defining TEI Elements}
-@(declare-exporting ricoeur/tei/kernel/lang/specification-lang)
+@(declare-exporting ricoeur/tei/kernel/lang/doc-lang)
 @(require "for-lang-kernel.rkt")
 
 
@@ -165,6 +165,22 @@
  but it can immediately be used in background threads,
  such as to create fields that contain @racket[delay/thread] promises.
 
+ @defform[(define-elements-together
+            maybe-inset
+            ([name-id
+              contract-option ...
+              struct-type-def]
+             ...+)
+            prose-body ...)]{
+  Like @racket[define-element], but define several TEI XML
+  elements at once, somewhat like @racket[deftogether].
+ }
+
+ 
+ 
+ @section{Constructor Declaration Forms}
+ @(declare-exporting ricoeur/tei/kernel/lang/specification-lang)
+
  The @racket[ctor-body] forms are partially expanded
  (including flattening @racket[begin]) to distinguish
  @racket[plain-ctor-body] and @racket[special-ctor-declaration]
@@ -310,32 +326,44 @@
 }
 
 
-@defform[(define-elements-together
-           maybe-inset
-           ([name-id
-             contract-option ...
-             struct-type-def]
-            ...+)
-           prose-body ...)]{
- Like @racket[define-element], but define several TEI XML
- elements at once, somewhat like @racket[deftogether].
-}
-
-
 @section{Derived Field Definition Forms}
+@(declare-exporting ricoeur/tei/kernel/lang/specification-lang)
 
 Several derived forms are included as alternatives to the
 primative @racket[field] declaration.
 
 @defform[(declare-resp-field option ...)
          #:grammar [(option (code:line attributes-expr (code:comment "required"))
-                            (code:line #:key key-id))]]{
+                            (code:line #:key key-id))]
+         #:contracts ([attributes-expr (listof (list/c symbol? string-immutable/c))])]{
  Creates a field (protected by lexical scope) and attaches assosciated
  properties to make the element being defined work with
  @racket[tei-element-resp].
  The @racket[attributes-expr] should be the element's attribute list,
  probably obtained via an @racket[#:attributes] @racket[_ctor-arg-binding]
  clause in @racket[define-element].
+
+ If a @racket[key-id] is given, it is used (in quoted form)
+ instead of @racket['resp] for the attribute name.
+ If the specified attribute is present, its value must match
+ the regular expression @racket[#rx"^#.+$"].
+}
+
+@defform[(declare-paragraphs-status-field value-expr)
+         #:contracts ([value-expr guess-paragraphs-status/c])]{
+ Declares a field to contain the value that should ultimately
+ be returned by @racket[tei-document-paragraphs-status]
+ and attaches an assosciated structure type property.
+ The name of the field is protected by lexical scope.
+ The details of this protocol are subject to change.
+}
+
+@defproc[(local-element-name)
+         (or/c #f identifier?)]{
+ This function is provided @racket[for-syntax].
+                                
+ @TODO/void[local-element-name #: Where is this legal and/or useful?]
+ @bold{TODO!} Where is this legal and/or useful?
 }
 
 @defthing[prop:element->plain-text
@@ -417,76 +445,5 @@ primative @racket[field] declaration.
  When @racket[infer?] is non-false, the @racket[#:infer] option is
  implicitly added as with @racket[define/field].
 }
-
-
-
-@section{Linking & Invoking}
-@defmodule[(submod ricoeur/tei/kernel private)]
-
-The @submodlink[(submod ricoeur/tei/kernel private)] module
-provides functions for working with
-@tech{elements specification transformers}, plus some
-small utilities useful when writing contracts and constructors
-in @racket[define-element] forms.
-
-@defform[(define-values/elements-specifications [spec ...]
-           binding-clause ...)
-         #:grammar
-         [(binding-clause (code:line #:tei-xexpr/c tei-xexpr/c-id)
-                          (code:line #:static-tei-xexpr/c static-tei-xexpr/c-id)
-                          (code:line #:any-tei-xexpr/c any-tei-xexpr/c-id)
-                          (code:line #:xexpr->element xexpr->element-id maybe-contract-flag)
-                          (code:line #:tei-element-name/c tei-element-name/c-id))
-          (maybe-contract-flag code:blank #:define/contract)]]{
- Links and invokes all of the @racket[spec]s, which must be
- @tech{elements specification transformers}, binding the supplied
- identifiers to the resulting functions and syntactic forms.
-
- It is a syntax error if the @racket[spec]s encapsulate duplicate
- element definitions or if any of the encapsulated definitions
- refer to elements that are not been defined by one of the @racket[spec]s.
-
- Each @racket[binding-clause] must appear exactly once, but they may
- be in any order. If the @racket[#:define/contract] flag is present,
- the function bound to @racket[xexpr->element-id] is protected
- using @racket[define/contract].
-
- For more details on the generated bindings, see
- @racket[tei-xexpr/c], @racket[static-tei-xexpr/c], @racket[any-tei-xexpr/c],
- @racket[xexpr->element], and @racket[tei-element-name/c], which are
- implemented using @racket[define-values/elements-specifications].
-}
-          
-
-@defform[(define-combined-elements-specification new-spec-id
-           [spec ...+])]{
- Binds @racket[new-spec-id] as an @tech{elements specification transformer}
- by linking together all of the @racket[spec]s
- (which must be defined as @tech{elements specification transformers}.
-
- It is a syntax error if the @racket[spec]s encapsulate duplicate
- element definitions, but missing elements are allowed at the linking stage.
-}
-
-@defproc[(get-attributes [xs (and/c pair? xexpr/c)])
-         (listof (list/c symbol? string?))]{
- Extracts the attributes list from @racket[xs], an
- @tech{x-expression} representing an XML element, or
- @racket['()] if there are no attributes.
-
- Note that this function does not currently enforce
- its contract.
-}
-
-@defproc[(get-body [xs (and/c pair? xexpr/c)])
-         (listof xexpr/c)]{
- Extracts the children of @racket[xs], an
- @tech{x-expression} representing an XML element.
-
- Note that this function does not currently enforce
- its contract.
-}
-
-
 
 

@@ -14,7 +14,13 @@
                             scribble/base
                             (except-in scribble/manual
                                        link)
-                            ))
+                            (only-in ricoeur/tei/kernel/lang/doc-lang
+                                     define-element
+                                     define-elements-together
+                                     begin-for-runtime
+                                     begin-for-test
+                                     begin-for-runtime/derived
+                                     )))
                  
 
 (provide spec-lang-mod
