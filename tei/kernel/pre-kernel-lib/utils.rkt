@@ -9,6 +9,7 @@
            (submod "..")))
 
 (provide string-immutable/c
+         path-string-immutable/c
          (contract-out
           [title<?
            (-> string-immutable/c string-immutable/c any/c)]
@@ -19,7 +20,15 @@
           ))
 
 (define/final-prop string-immutable/c
-  (and/c string? immutable?))
+  (flat-named-contract
+   'string-immutable/c
+   (and/c string? immutable?)))
+
+(define/final-prop path-string-immutable/c
+  (flat-named-contract
+   'path-string-immutable/c
+   (or/c path? (and/c string-immutable/c
+                      path-string?))))
 
 (define (attributes-ref attrs k)
   (define rslt

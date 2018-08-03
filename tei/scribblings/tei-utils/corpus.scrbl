@@ -246,8 +246,7 @@ library can be used independently.
  Extends @racket[corpus%] for the common case of using 
  @tech{TEI documents} from some directory in the filesystem.
  
- @defconstructor[([path (and/c path-string?
-                               (if/c string? immutable? any/c)
+ @defconstructor[([path (and/c path-string-immutable/c
                                directory-exists?)]
                   [search-backend search-backend/c '(eager noop)])]{
   Constructs a @tech{corpus object} from every file in @racket[path],

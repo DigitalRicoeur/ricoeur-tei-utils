@@ -32,8 +32,7 @@
                      textClass?)
          (contract-out
           [file->tei-document
-           (-> (and/c path-string?
-                      (if/c string? immutable? any/c)
+           (-> (and/c path-string-immutable/c
                       file-exists?)
                tei-document?)] 
           [read-tei-document

@@ -9,9 +9,19 @@
 
 @(require "for-manual.rkt")
 
-@defthing[string-immutable/c flat-contract?]{
-Equivalent to @racket[(and/c string? immutable?)].
+@deftogether[
+ (@defthing[string-immutable/c flat-contract?
+            #:value (and/c string?
+                           immutable?)]
+   @defthing[path-string-immutable/c flat-contract?
+             #:value (or/c path? (and/c string-immutable/c
+                                        path-string?))])]{
+ Contracts recognizing immutable strings and
+ @tech[#:doc '(lib "scribblings/reference/reference.scrbl")]{
+  path or string} values, respectively.
 }
+
+
 
 @defproc[(title<? [a string-immutable/c] [b string-immutable/c]) any/c]{
 

@@ -22,8 +22,7 @@
                   [search-backend search-backend/c]))]
           [directory-corpus%
            (class/c
-            (init [path (and/c path-string?
-                               (if/c string? immutable? any/c)
+            (init [path (and/c path-string-immutable/c
                                directory-exists?)]
                   [search-backend search-backend/c]))]
           ;;;;

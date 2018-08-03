@@ -28,8 +28,7 @@
 
 @section{Reading & Writing TEI Documents}
 
-@defproc[(file->tei-document [file (and/c path-string?
-                                          (if/c string? immutable? any/c)
+@defproc[(file->tei-document [file (and/c path-string-immutable/c
                                           file-exists?)])
          tei-document?]{
  Produces a @tech{TEI document} value representing
