@@ -5,17 +5,17 @@ setup:
 
 .PHONY: fast
 fast:
-	raco setup --no-docs --no-pkg-deps ricoeur/lib ricoeur/tei
+	raco setup --no-docs --no-pkg-deps ricoeur/tei
 
 .PHONY: install
 install:
-	raco pkg install --name tei-utils -i
+	raco pkg install --name ricoeur-tei-utils -i
 
 .PHONY: reinstall
 reinstall:
 	git pull --ff-only
-	-raco pkg remove --force tei-utils
-	raco pkg install --name tei-utils -i
+	-raco pkg remove --force ricoeur-tei-utils
+	raco pkg install --name ricoeur-tei-utils -i
 
 
 .PHONY: gui-icons

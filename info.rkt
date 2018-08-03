@@ -39,6 +39,8 @@
                      "rackunit-lib"
                      ("_-exp" #:version "0.1")
                      "db-doc"
+                     "data-doc"
+                     "scribble-doc"
                      "todo-list" ;; TODO: eliminate this dependency
                      ))
 
