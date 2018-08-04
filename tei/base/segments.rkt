@@ -412,7 +412,7 @@
       #:page page-spec/c
       (listof base-segment?))
   (define body
-    (string->immutable-string body))
+    (string->immutable-string body*))
   (cond
     [(regexp-match? #px"^\\s*$"  body)
      segs]

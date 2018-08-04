@@ -84,6 +84,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(TODO/void Add macro to codify invariants
+           #: This module has lots of invariants
+           about subtypes of tei-element
+           that are enforced by the "DSL," but
+           their logic is spread across multiple files.
+           Add a macro in the style of define-struct/derived
+           to codify those invariants locally.)
+           
 (define-values {prop:element->plain-text
                 has-prop:element->plain-text?
                 get:element->plain-text}
@@ -101,11 +109,13 @@
 (define (element-or-xexpr->plain-text e/xs
                                       #:include-header? [include-header? #t])
   (string->immutable-string
-   (if (has-prop:element->plain-text? e/xs)
-       (element->plain-text e/xs (any->boolean include-header?))
-       (non-element-xexpr->plain-text e/xs))))
+   (element-or-xexpr->plain-text* e/xs
+                                  (any->boolean include-header?))))
 
-
+(define (element-or-xexpr->plain-text* e/xs include-header?)
+  (if (has-prop:element->plain-text? e/xs)
+      (element->plain-text e/xs include-header?)
+      (non-element-xexpr->plain-text e/xs)))
 
 (struct tei-element (name attributes)
   #:property prop:custom-print-quotable 'never
@@ -132,16 +142,24 @@
                       (unquoted-printing-string "#:body")
                       body))))))
 
+(define-syntax-rule
+  (make-default-to-plain-text-proc get-children
+                                   child->plain-text)
+  ;; macro to avoid use-before-definition of accessor
+  (λ (this include-header?)
+    (string-join
+     (for/list ([child (in-list (get-children this))])
+       (child->plain-text child include-header?))
+     "")))
+
 (struct elements-only-element tei-element (body body/elements-only)
   #:transparent
   #:methods gen:custom-write
   [(define write-proc
      (make-element-write-proc 'elements-only-element 4))]
   #:property prop:element->plain-text
-  (λ (this)
-    (string-join (map element->plain-text
-                      (elements-only-element-body/elements-only this))
-                 "")))
+  (make-default-to-plain-text-proc elements-only-element-body/elements-only
+                                   element->plain-text))
 
 (struct content-containing-element tei-element (body)
   #:transparent
@@ -149,10 +167,8 @@
   [(define write-proc
      (make-element-write-proc 'content-containing-element 3))]
   #:property prop:element->plain-text
-  (λ (this)
-    (string-join (map element-or-xexpr->plain-text
-                      (content-containing-element-body this))
-                 "")))
+  (make-default-to-plain-text-proc content-containing-element-body
+                                   element-or-xexpr->plain-text*))
 
 (define-match-expander match:content-containing-element
   (syntax-parser

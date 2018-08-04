@@ -114,7 +114,7 @@
        (element-or-xexpr->plain-text
         doc
         #:include-header? #f)))))
-  (max (* EXCERPT_RATIO doc-chars) 1))
+  (max (floor (* EXCERPT_RATIO doc-chars)) 1))
 
 ;; regexp-quote-normalized-term : normalized-term? #:exact? any/c
 ;;   -> string-immutable/c
