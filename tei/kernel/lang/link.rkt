@@ -97,9 +97,9 @@
                    #:name "#:dynamic-tei-xexpr/c clause")
             (~once (~seq #:any-tei-xexpr/c any-tei-xexpr/c:id)
                    #:name "#:any-tei-xexpr/c clause")
-            (~once (~seq #:xexpr->element xexpr->element:id
+            (~once (~seq #:xexpr->tei-element xexpr->tei-element:id
                          (~optional (~and use-contract? #:define/contract)))
-                   #:name "#:xexpr->element clause")
+                   #:name "#:xexpr->tei-element clause")
             (~once (~seq #:tei-element-name/c tei-element-name/c:id)
                    #:name "#:tei-element-name/c clause"))
       ...)
@@ -149,7 +149,7 @@
            #:tei-element-name/c tei-element-name/c
            #:tei-xexpr/c dynamic-tei-xexpr/c))
 
-        (define-xexpr->element xexpr->element
+        (define-xexpr->element xexpr->tei-element
           #:contract #,(if (attribute use-contract?)
                            #'any-tei-xexpr/c
                            #'#f)

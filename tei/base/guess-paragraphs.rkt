@@ -61,7 +61,7 @@
        {(-> tei-text-element? (tei-xexpr/c text))}
        (-> tei-document? tei-document?))
   (λ (e)
-    (xexpr->element
+    (xexpr->tei-element
      ((make-tei-element-updater/xexpr
        [teiHeader? update-teiHeader]
        [tei-text-element? update-text])

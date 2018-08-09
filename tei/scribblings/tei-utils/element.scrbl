@@ -163,7 +163,7 @@ whenever possible.
 
 
 @subsection{Struct–X-Expression Conversion}
-@defproc[(xexpr->element [xs any-tei-xexpr/c])
+@defproc[(xexpr->tei-element [xs any-tei-xexpr/c])
          tei-element?]{
  The primitive function for converting a @tech{raw xexpr}
  representation of a TEI XML element to a @tech{tei element struct}.
@@ -171,10 +171,10 @@ whenever possible.
 
 @defproc[(tei-element->xexpr [e tei-element?])
          (and/c any-tei-xexpr/c normalized-xexpr-element/c)]{
- Any @tech{tei element struct} may be converted to a
+ Any @tech{TEI element struct} may be converted to a
  @tech{normalized x-expression} using @racket[tei-element->xexpr].
- XML is the cannonical serialized form of a tei element struct:
- tei element structs are not serializable in the sense of
+ XML is the cannonical serialized form of a TEI element struct:
+ TEI element structs are not serializable in the sense of
  @racketmodname[racket/serialize].
 }
 

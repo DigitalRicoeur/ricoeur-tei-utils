@@ -27,6 +27,6 @@
   #:tei-xexpr/c tei-xexpr/c
   #:dynamic-tei-xexpr/c dynamic-tei-xexpr/c
   #:any-tei-xexpr/c any-tei-xexpr/c
-  #:xexpr->element xexpr->element #:define/contract
+  #:xexpr->tei-element xexpr->element #:define/contract
   #:tei-element-name/c tei-element-name/c)
   

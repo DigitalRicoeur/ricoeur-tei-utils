@@ -161,7 +161,7 @@ Page break warnings:
 
 (module+ test
   (define (xs->pb-group xs)
-    (match (group-page-breaks (map xexpr->element xs))
+    (match (group-page-breaks (map xexpr->tei-element xs))
       [(list it) it]))
   (check-equal? (pb-group->string
                  (xs->pb-group '{(pb)}))

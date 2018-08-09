@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require adjutor)
+(require "kernel/sans-lang.rkt")
 
 ;; This module (and its submodules) re-export
 ;; everything from ricoeur/tei/kernel that
@@ -10,8 +10,7 @@
 
 ;; The exports from this module are truly public.
 
-(require-provide "kernel/sans-lang.rkt"
-                 )
+(provide (all-from-out "kernel/sans-lang.rkt"))
 
 (module+ private
   ;; The private submodule is for use only in

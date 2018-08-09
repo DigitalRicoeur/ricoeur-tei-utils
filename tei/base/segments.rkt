@@ -82,7 +82,7 @@
 
 
 (define the-default-pb
-  (xexpr->element '(pb)))
+  (xexpr->tei-element '(pb)))
 
 (define current-location-stack
   (make-parameter #f))

@@ -37,7 +37,7 @@
                tei-document?)] 
           [read-tei-document
            (->* {} {input-port?} tei-document?)] 
-          [xexpr->element
+          [xexpr->tei-element
            (-> any-tei-xexpr/c tei-element?)]
           ))
 
@@ -55,7 +55,7 @@
   #:tei-xexpr/c tei-xexpr/c
   #:dynamic-tei-xexpr/c dynamic-tei-xexpr/c
   #:any-tei-xexpr/c any-tei-xexpr/c
-  #:xexpr->element xexpr->element #:define/contract
+  #:xexpr->tei-element xexpr->tei-element #:define/contract
   #:tei-element-name/c tei-element-name/c)
 
 
@@ -66,7 +66,7 @@
 (define (read-tei-document [in (current-input-port)])
   (discard-bom in)
   ;TODO: improve error message
-  (xexpr->element
+  (xexpr->tei-element
    (contract (tei-xexpr/c TEI)
              (xml->xexpr
               (document-element
