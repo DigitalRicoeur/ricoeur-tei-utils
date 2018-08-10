@@ -14,6 +14,7 @@
                             scribble/base
                             (except-in scribble/manual
                                        link)
+                            scribble/decode
                             (only-in ricoeur/tei/kernel/lang/doc-lang
                                      define-element
                                      define-elements-together

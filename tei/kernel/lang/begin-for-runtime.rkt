@@ -2,6 +2,9 @@
 
 (require (for-syntax "runtime-lift-state.rkt")
          syntax/parse/define
+         (only-in scribble/decode ;; I think this is ok
+                  pre-flow?)
+         adjutor
          )
 
 (provide begin-for-runtime
@@ -27,13 +30,25 @@
   (define currently-expanding-prose-body?
     (make-parameter #f)))
 
+(begin-for-syntax
+  (define-syntax-class pre-flow/c
+    #:attributes {c}
+    #:description #f
+    #:literals {void}
+    (pattern (void)
+             #:with c this-syntax)
+    (pattern other
+             #:declare other
+             (expr/c #'pre-flow?) ;; rationale: make-defelement-flow
+             #:with c #'other.c)))
+
 (define-syntax-parser begin-for-runtime/derived
   #:context (syntax-parse this-syntax
               [(_ orig-datum _ ...)
                #'orig-datum])
   [(_ orig-datum
-      (~optional (~seq #:expr doctime-expr:expr)
-                 #:defaults ([doctime-expr #'(void)]))
+      (~optional (~seq #:expr doctime-expr:pre-flow/c)
+                 #:defaults ([doctime-expr.c #'(void)]))
       body:expr ...)
    #:fail-unless (case (syntax-local-context)
                    [(module) #t]
@@ -43,7 +58,7 @@
            "only allowed at module level or in element definition prose body"
            (syntax-local-context))
    #'(begin-for-runtime/private
-       #:expr doctime-expr
+       #:expr doctime-expr.c
        body ...)])
 
 (define-syntax-parser begin-for-runtime

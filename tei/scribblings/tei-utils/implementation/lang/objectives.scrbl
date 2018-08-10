@@ -35,7 +35,7 @@ at least two, and possibly three, distinct kinds of services:
  This can be invoked using @racket[define-values/elements-specifications],
  possibly after being linked with other modules'
  @tech{elements specification transformers}, to generate definitions
- for @racket[tei-xexpr/c], @racket[xexpr->element],
+ for @racket[tei-xexpr/c], @racket[xexpr->tei-element],
  and other derived bindings.
  More details of @tech{elements specification transformers}
  will be discussed below, especially under @racket[define-element].
@@ -45,8 +45,8 @@ at least two, and possibly three, distinct kinds of services:
  In particular, a module may provide functions that operate
  on the @tech{tei element struct types} it defines.
  Some of these may become part of the public API of this
- library, while others may be used only in the implementation
- of cooperating @(hash-lang-kernel) modules:
- all of Racket's facilities are available for managing and
+ @racketmodname[ricoeur/tei/base], while others may be used only
+ in the implementation of cooperating @(hash-lang-kernel) modules.
+ All of Racket's facilities are available for managing and
  protecting such exports.
  })
