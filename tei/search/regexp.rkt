@@ -26,7 +26,7 @@
     (init [docs (instance-set)])
     (define s-docs:all
       (for/list ([doc (in-instance-set docs)])
-        (searchable-document% [doc docs])))
+        (new searchable-document% [doc doc])))
     (define-values {s-docs:book s-docs:article}
       (partition (λ (it) (eq? 'book (instance-book/article it)))
                  s-docs:all))
