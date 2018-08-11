@@ -188,102 +188,101 @@
   such as to create @tech{TEI element struct fields}
   that contain @racket[delay/thread] promises.
   
+  After the @racket[ctor-arg-binding] clauses, the @racket[ctor-body]	
+  forms are a mixture of definitions, expressions, and 
+  @racket[special-ctor-form] declarations, which are recognized after
+  partial expansion.
+  The @racket[ctor-body] need not end with an expression.
+  Definitions create local bindings as usual, but definitions of
+  identifiers declared as @tech{TEI element struct fields}
+  with @racket[field] or a related @racket[special-ctor-form] declaration 
+  also specify the value for that field on the resulting
+  @tech{TEI element struct} instance.
+  Expressions are evaluated for their side-effects:
+  there is no ``return value''.
+  Other @racket[special-ctor-form] declarations (such as @racket[lift-begin].
+  @racket[lift-property], and @racket[lift-methods]) provide hooks
+  for implementing higher-level macros to be used in the @racket[ctor-body].
 
-
-  
-
-
-  
-  @bold{OLD STUFF!}
-
-
-
-                            
- 
- 
-  The @racket[ctor-body] forms are partially expanded
-  (including flattening @racket[begin]) to distinguish
-  @racket[plain-ctor-body] and @racket[special-ctor-declaration]
-  forms, allowing extensions by macros that expand to
-  the primitive @racket[special-ctor-declaration].
-  The @racket[plain-ctor-body] forms are an arbitrary sequence of
-  definitions and expressions in an internal-definition context.
-  It is the @racket[special-ctor-declaration] forms which give them
-  special meaning.
- 
-  @deftogether/indent[              
- (@defform[(field field-name-id field-option ...)
-           #:grammar
-           [(field-option #,(racket-BNF-alt accessor-opt
-                                            print-opt
-                                            check-opt))
-            (accessor-opt code:blank
-                          infer-opt
-                          (code:line #:accessor maybe-accessor)
-                          [#:accessor maybe-accessor])
-            (infer-opt #,(racket-BNF-alt #:infer [#:infer]))
-            (maybe-accessor #,(racket-BNF-alt accessor-id #f))
-            (print-opt code:blank
-                       (code:line #:print? bool-literal)
-                       [#:print? bool-literal]
-                       #:hide
-                       [#:hide])
-            (check-opt code:blank
-                       (code:line #:check check-expr)
-                       [#:check check-expr]
-                       [#:check])]
-           #:contracts ([check-expr contract?])])]{
-   The most fundamental kind of @racket[special-ctor-declaration] is
-   the @racket[field] form, which declares a
-   @deftech{tei element struct field}.
+  @defsubform[(field field-name-id field-option ...)
+              #:grammar
+              [(field-option #,(racket-BNF-alt accessor-opt
+                                               print-opt
+                                               check-opt))
+               (accessor-opt code:blank
+                             infer-opt
+                             (code:line #:accessor maybe-accessor)
+                             [#:accessor maybe-accessor])
+               (infer-opt #,(racket-BNF-alt #:infer [#:infer]))
+               (maybe-accessor #,(racket-BNF-alt _accessor-id #f))
+               (print-opt code:blank
+                          (code:line #:print? bool-literal)
+                          [#:print? bool-literal]
+                          #:hide
+                          [#:hide])
+               (check-opt code:blank
+                          (code:line #:check check-expr)
+                          [#:check check-expr]
+                          [#:check])]
+              #:contracts ([check-expr contract?])]{
+   The primitive @racket[special-ctor-form] for declaring a
+   @deftech{TEI element struct field}.
+   Higher-level forms such as @racket[define/field] and
+   @racket[declare-resp-field] are built on top of @racket[field].
 
    @(TODO/void Simplify grammar for field)
   
-   A @tech{tei element struct type} has one (immutable) field
+   A @tech{TEI element struct type} has one immutable field
    for each @racket[field] declaration among its expanded
    @racket[ctor-body] forms (in addition to fields inherited from
    its abstract base type).
    The @racket[field] declaration requires that
-   @racket[field-name-id] must be defined by one of the
-   @racket[plain-ctor-body] forms: not only must it have a binding,
+   @racket[field-name-id] must be defined as a value (not syntax)
+   by one of the @racket[plain-ctor-body] forms:
+   not only must it have a binding,
    but a binding from the surrounding context is not sufficient.
    After all of the @racket[plain-ctor-body] forms have been evaluated,
-   the @tech{tei element struct} instance is created using the
+   the @tech{TEI element struct} instance is created using the
    values bound to the @racket[field-name-id]s for the
-   @tech{tei element struct fields}.
+   @tech{TEI element struct fields}.
 
    The @racket[field-name-id]s are recognized with consideration to
    lexical context, rather than symbolically, so macros may freely
    introduce @racket[field] declarations without fear of name collisions.
 
    The @racket[field-option] clauses, when given, provide some additional
-   convieniences. A @racket[check-expr] specifies a contract on the value
-   of the field. The expression is lifted to the module level and evaluated
-   only once, and the contract is applied just before the
-   @tech{tei element struct} instance is created.
+   convieniences:
+   @(itemlist
+     @item{A @racket[check-expr] specifies a contract on the value
+    of the field. The expression is lifted to the module level and evaluated
+    only once, and the contract is applied just before the
+    @tech{TEI element struct} instance is created.
+   }
+     @item{
+    If an @racket[_accessor-id] or @racket[infer-opt] is given,
+    a function that accesses the value of the field is bound 
+    in the context of the enclosing @racket[define-element] form.
+    If an @racket[_accessor-id] is given, it is used as the name of
+    the defined function (including its lexical context).
+    Otherwise, if @racket[infer-opt] is given, an identifier is
+    synthesized with the lexical context of @racket[field-name-id]
+    in the form @racket[name-id]@racketidfont{-}@racket[field-name-id],
+    where @racket[name-id] is the name of the element currently
+    being defined.
   
-   If an @racket[accessor-id] or @racket[infer-opt] is given,
-   a function that accesses the value of the field is bound 
-   in the context of the enclosing @racket[define-element] form.
-   If an @racket[accessor-id] is given, it is used as the name of
-   the defined function (including its lexical context).
-   Otherwise, if @racket[infer-opt] is given, an identifier is
-   synthesized with the lexical context of @racket[field-name-id]
-   in the form @racket[name-id]@racketidfont{-}@racket[field-name-id],
-   where @racket[name-id] is the name of the element currently
-   being defined.
-  
-   A field with no @racket[accessor-id] or @racket[infer-opt] specified 
-   can still be accessed via the @racket[get-field] form inside the text of a
-   @racket[begin-body], @racket[prop-val-expr], or @racket[methods-body]
-   subform of @racket[define-element]. Read on for details.
-
-   A @racket[print-opt] clause, when given, controls whether the field
-   is used for printing (as with @racket[print], @racket[write], and
-   @racket[display]).
-   The field is not printed if @racket[#:hide] appears or if
-   @racket[#:print?] is used with @racket[#f].
-  }                   
+    A field with no @racket[_accessor-id] or @racket[infer-opt] specified 
+    can still be accessed via the @racket[get-field] form inside the text of a
+    @racket[begin-body], @racket[prop-val-expr], or @racket[methods-body]
+    subform of @racket[define-element]. Read on for details.
+   }
+     @item{
+    A @racket[print-opt] clause, when given, controls whether the field
+    is used for printing (as with @racket[print], @racket[write], and
+    @racket[display]).
+    The field is not printed if @racket[#:hide] appears or if
+    @racket[#:print?] is used with @racket[#f].
+   }
+     )}
 
   @defsubform*[[(get-field field-name-id)
                 (get-field field-name-id target-expr)]]{
@@ -292,7 +291,7 @@
    of @racket[define-element], @racket[(get-field field-name-id)]
    expands to a procedure that accesses the field @racket[field-name-id]
    (which must have been declared with @racket[field])
-   from an instance @tech{tei element struct type} being defined.
+   from an instance @tech{TEI element struct type} being defined.
    The @racket[(get-field field-name-id target-expr)] variant
    is short for @racket[((get-field field-name-id) target-expr)].
 
@@ -306,9 +305,11 @@
                                                                           
   Macros can take advantage of @racket[field] and @racket[get-field]'s
   respect for scope to add fields
-  to a @tech{tei element struct type} ``hygenically''.
+  to a @tech{TEI element struct type} ``hygenically''.
+  @margin-note*{See @racket[declare-resp-field] for an example
+   of a macro that uses these features.}
   The @racket[lift-begin], @racket[lift-property], and @racket[lift-methods]
-  @racket[special-ctor-declaration] forms are designed to make it
+  @racket[special-ctor-form] declarations are designed to make it
   convienient for a macro to expand to both a @racket[field] declaration
   and the use of the defined field.
 
@@ -316,12 +317,12 @@
               #:contracts ([prop-expr struct-type-property?])]{
    A @racket[lift-property] declaration is lifted out of
    the constructor definition to attach a structure type property
-   to the @tech{tei element struct type} being defined, roughly
+   to the @tech{TEI element struct type} being defined, roughly
    as though it were @racket[#:property prop-expr prop-val-expr].
    Because it is lifted, bindings from the @racket[plain-ctor-body] forms
    are not in scope in the @racket[prop-expr] or @racket[prop-val-expr];
    however, in the @racket[prop-val-expr], @racket[get-field] may be used
-   to access @tech{tei element struct fields}.
+   to access @tech{TEI element struct fields}.
   }
 
   @defsubform[(lift-methods generic-id
@@ -338,53 +339,8 @@
 @section{Field Definition Forms}
 @(declare-exporting ricoeur/tei/kernel/lang/specification-lang)
 
-Several derived forms are included as alternatives to the
-primative @racket[field] declaration.
-
-@defform[(declare-resp-field option ...)
-         #:grammar [(option (code:line attributes-expr (code:comment "required"))
-                            (code:line #:key key-id))]
-         #:contracts ([attributes-expr (listof (list/c symbol? string-immutable/c))])]{
- Creates a field (protected by lexical scope) and attaches assosciated
- properties to make the element being defined work with
- @racket[tei-element-resp].
- The @racket[attributes-expr] should be the element's attribute list,
- probably obtained via an @racket[#:attributes] @racket[_ctor-arg-binding]
- clause in @racket[define-element].
-
- If a @racket[key-id] is given, it is used (in quoted form)
- instead of @racket['resp] for the attribute name.
- If the specified attribute is present, its value must match
- the regular expression @racket[#rx"^#.+$"].
-}
-
-@defform[(declare-paragraphs-status-field value-expr)
-         #:contracts ([value-expr guess-paragraphs-status/c])]{
- Declares a field to contain the value that should ultimately
- be returned by @racket[tei-document-paragraphs-status]
- and attaches an assosciated structure type property.
- The name of the field is protected by lexical scope.
- The details of this protocol are subject to change.
-}
-
-@defthing[prop:element->plain-text
-          (struct-type-property/c
-           (or/c (-> tei-element? string?)
-                 (-> tei-element? boolean? string?)))]{
- The definition of a @tech{tei element struct type} can use
- @racket[prop:element->plain-text] to override the default
- behavior of @racket[element-or-xexpr->plain-text].
- Note that attaching @racket[prop:element->plain-text] to
- unrelated struct types has no effect: it is only used
- for @tech{tei element structs}.
-
- The first argument to the function given as the property value
- is always the @tech{tei element struct} instance to be converted
- to plain text.
- If the function given as the property value accepts a second argument,
- it will be a boolean corresponding to the @racket[#:include-header?]
- argument to @racket[element-or-xexpr->plain-text].
-}
+Several higher-level forms are included as alternatives to the
+primitive @racket[field] declaration.
 
 @defform[(define/field maybe-infer field/opts
            rhs ...)
@@ -431,6 +387,61 @@ primative @racket[field] declaration.
 
 
 
+@section{Supporting Standard Interfaces}
+@(declare-exporting ricoeur/tei/kernel/lang/specification-lang)
+@defform[(declare-resp-field option ...)
+         #:grammar [(option (code:line attributes-expr (code:comment "required"))
+                            (code:line #:key key-id))]
+         #:contracts ([attributes-expr (listof (list/c symbol? string-immutable/c))])]{
+ Declares and defines a @tech{TEI element struct field}
+ (protected by lexical scope) and attaches assosciated
+ properties to make the element being defined work with
+ @racket[tei-element-resp].
+ The @racket[attributes-expr] should be the element's attribute list,
+ probably obtained via an @racket[#:attributes] @racket[_ctor-arg-binding]
+ clause in @racket[define-element].
+
+ If a @racket[key-id] is given, it is used (in quoted form)
+ instead of @racket['resp] for the attribute name.
+ If the specified attribute is present, its value must match
+ the regular expression @racket[#rx"^#.+$"].
+}
+
+@defthing[prop:element->plain-text
+          (struct-type-property/c
+           (or/c (-> tei-element? string?)
+                 (-> tei-element? boolean? string?)))]{
+ The definition of a @tech{TEI element struct type} can use
+ @racket[prop:element->plain-text] to override the default
+ behavior of @racket[element-or-xexpr->plain-text].
+ Note that attaching @racket[prop:element->plain-text] to
+ unrelated struct types has no effect: it is only used
+ for @tech{TEI element structs}.
+
+ The first argument to the function given as the property value
+ is always the @tech{TEI element struct} instance to be converted
+ to plain text.
+ If the function given as the property value accepts a second argument,
+ it will be a boolean corresponding to the @racket[#:include-header?]
+ argument to @racket[element-or-xexpr->plain-text].
+}
+
+@defform[(declare-paragraphs-status-field value-expr)
+         #:contracts ([value-expr guess-paragraphs-status/c])]{
+ Declares a field to contain the value that should ultimately
+ be returned by @racket[tei-document-paragraphs-status]
+ and attaches an assosciated structure type property.
+ The name of the field is protected by lexical scope.
+ The details of this protocol are subject to change.
+}
+
+
+
+
+
+
+
+
 
 @section{Implementing Additional Forms}
 @(declare-exporting ricoeur/tei/kernel/lang/specification-lang)
@@ -469,8 +480,13 @@ primative @racket[field] declaration.
 @defproc[(local-element-name)
          (or/c #f identifier?)]{
  This function is provided @racket[for-syntax].
-                                
- @TODO/void[local-element-name #: Where is this legal and/or useful?]
- @bold{TODO!} Where is this legal and/or useful?
+
+ During the expansion of any sub-form of the @racket[_struct-type-def]
+ non-terminal (see @secref["struct-type-def"]), returns the name
+ of the @tech{TEI element struct type} being defined.
+ In any other context, returns @racket[#false].
+
+ The @racket[#:infer] option for @racket[field] is implemented using
+ @racket[local-element-name].
 }
 

@@ -588,7 +588,7 @@
               raw-body:expr ...]
              #:fail-when (and contains-text?
                               (attribute body/elements-only-clause))
-             "not allowed for a text-containing element"
+             "not allowed for a content-containing element"
              #:do [(define-values {l-fields l-props l-methods l-begin-bodies l-value-ids l-bodies}
                      (expand-constructor-body
                       (syntax->list #`(raw-body ...))))]

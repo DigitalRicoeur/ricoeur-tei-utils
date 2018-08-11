@@ -3,28 +3,30 @@
 @title{Documentation Phase}
 @(require "for-lang-kernel.rkt")
 
+@TODO/void[Document what is actually provided!]
+@;{
+ @; This is not true.
+ The @tech{documentation-time} phase of @(hash-lang-kernel)
+ provides a language based on @racketmodname[racket],
+ though it provides alternate versions of
+ @racketidfont{#%top-interaction} and
+ @racketidfont{#%module-begin} based in part on the
+ versions from @(hash-lang) @racketmodname[scribble/manual].
 
-The @tech{documentation-time} phase of @(hash-lang-kernel)
-provides a language based on @racketmodname[racket],
-though it provides alternate versions of
-@racketidfont{#%top-interaction} and
-@racketidfont{#%module-begin} based in part on the
-versions from @(hash-lang) @racketmodname[scribble/manual].
+ These bindings are supplemented by everything from
+ @racketmodname[scribble/manual],
+ @(submodlink (submod ricoeur/tei/kernel doc)),
+ and @racketmodname[syntax/parse/define],
+ plus the same bindings for @racket[begin-for-runtime],
+ @racket[begin-for-test], @racket[define-element], and
+ @racket[define-elements-together] as at @tech{runtime},
+ though with different meanings.
 
-These bindings are supplemented by everything from
-@racketmodname[scribble/manual],
-@(submodlink (submod ricoeur/tei/kernel doc)),
-and @racketmodname[syntax/parse/define],
-plus the same bindings for @racket[begin-for-runtime],
-@racket[begin-for-test], @racket[define-element], and
-@racket[define-elements-together] as at @tech{runtime},
-though with different meanings.
-
-Finally, @racket[for-syntax], the @tech{documentation-time}
-phase of @(hash-lang-kernel) provides everything from
-@racketmodname[racket/base], @racketmodname[syntax/parse],
-and @racketmodname[racket/match].
-
+ Finally, @racket[for-syntax], the @tech{documentation-time}
+ phase of @(hash-lang-kernel) provides everything from
+ @racketmodname[racket/base], @racketmodname[syntax/parse],
+ and @racketmodname[racket/match].
+}
 
 @section{Using the Documentation}
 @defmodule[(submod ricoeur/tei/kernel doc)]
