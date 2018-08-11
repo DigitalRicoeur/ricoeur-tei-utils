@@ -104,10 +104,10 @@ the same source file that defines the Racket enforcement code.
  })
 
 ƒ(begin-for-runtime
-   (define (write-xexpr/normalized xs)
+   (define (write-xexpr/normalized xs [out (current-output-port)])
      (parameterize ([empty-tag-shorthand 'always]
                     [collapse-whitespace #f])
-       (write-xexpr xs)))
+       (write-xexpr xs out)))
    (define (write-tei-document doc [out (current-output-port)])
      (parameterize ([current-output-port out])
        (call/prettyprint-xml-out
