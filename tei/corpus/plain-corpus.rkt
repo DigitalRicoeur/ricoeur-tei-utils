@@ -52,7 +52,9 @@
     (init [docs (instance-set)])
     (define info
       (instance-set
-       (set-map (instance-set) get-plain-instance-info)))
+       (set-map docs get-plain-instance-info)))
+    ;;(printf "docs: ~v\n" (length (set->list docs)))
+    ;;(printf "info: ~v\n" (length (set->list info)))
     (define pr:checksum-table
       (delay/thread
        (for/hasheq ([doc (in-instance-set docs)])
@@ -84,12 +86,12 @@
 
 
 (define gen:get-instance-info-set
-  (generic plain-corpus% get-instance-info-set))
+  (generic (class->interface plain-corpus%) get-instance-info-set))
 (define (corpus-get-instance-info-set c)
   (send-generic c gen:get-instance-info-set))
 
 (define gen:get-checksum-table
-  (generic plain-corpus% get-checksum-table))
+  (generic (class->interface plain-corpus%) get-checksum-table))
 (define (corpus-get-checksum-table c)
   (send-generic c gen:get-checksum-table))
 

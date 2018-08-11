@@ -2,6 +2,7 @@
 
 (require racket/contract
          racket/class
+         racket/match
          racket/set
          racket/promise
          ricoeur/tei/base
@@ -67,14 +68,23 @@
         (TODO/void Should there be an abstraction for reading in directory?
                    #: Happens here & in TEI Lint.
                    Would be faster to try valid-xml-file? on subgroups.)
-        (instance-set
+        (instance-set 
          (for/list ([pth (in-directory path)]
+                    [i (in-naturals)] ;; for debugging
                     #:when (xml-path? pth)
                     #:when (or dir-valid?
                                (valid-xml-file? #:quiet? #t pth))
                     [maybe-doc (in-value
                                 (with-handlers
-                                    ([exn:fail? (λ (e) #f)])
+                                    ([exn:fail?
+                                      (λ (e)
+                                        #|(match-define-values {_ name _}
+                                           (split-path pth))
+                                         (eprintf "invalid: ~a: ~e\n  message: ~e\n"
+                                                  i
+                                                  name
+                                                  (exn-message e))|#
+                                        #f)])
                                   (file->tei-document pth)))]
                     #:when maybe-doc)
            maybe-doc)))])

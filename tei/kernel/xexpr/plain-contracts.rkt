@@ -1,6 +1,7 @@
 #lang racket/base
 
-(require racket/contract)
+(require racket/contract
+         adjutor)
 
 (provide raw-xexpr-element/c
          raw-xexpr-element?
@@ -37,6 +38,8 @@
   (provide normalize-comment
            normalize-p-i
            ))
+
+(TODO/void Fix & restore caches)
 
 (module validate typed/racket/base
   (provide incorrect-raw-xexpr-element?
@@ -211,18 +214,18 @@
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  (: hsh:normalized-comments (Weak-HashTable Comment #t))
+  #|(: hsh:normalized-comments (Weak-HashTable Comment #t))
   (define hsh:normalized-comments
-    (make-weak-hash))
+    (make-weak-hash))|#
 
   (: normalized-comment? (-> Comment Boolean))
   (define (normalized-comment? it)
-    (define (known? it)
-      (hash-has-key? hsh:normalized-comments it))
+    #|(define (known? it)
+      (hash-has-key? hsh:normalized-comments it))|#
     (match it
-      [(? known?) #t]
+      ;[(? known?) #t]
       [(comment (? immutable?))
-       (hash-set! hsh:normalized-comments it #t)
+       ;(hash-set! hsh:normalized-comments it #t)
        #t]
       [_ #f]))
 
@@ -237,22 +240,22 @@
           comment it
           [text (string->immutable-string
                  (comment-text it))]))
-       (hash-set! hsh:normalized-comments norm #t)
+       ;(hash-set! hsh:normalized-comments norm #t)
        norm]))
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  (: hsh:normalized-p-i (Weak-HashTable P-I #t))
+  #|(: hsh:normalized-p-i (Weak-HashTable P-I #t))
   (define hsh:normalized-p-i
-    (make-weak-hash))
+    (make-weak-hash))|#
 
   (: normalized-p-i? (-> P-I Boolean))
   (define (normalized-p-i? it)
     (cond
-      [(hash-has-key? hsh:normalized-p-i it)
-       #t]
+      #|[(hash-has-key? hsh:normalized-p-i it)
+       #t]|#
       [(immutable? (p-i-instruction it))
-       (hash-set! hsh:normalized-p-i it #t)
+       ;(hash-set! hsh:normalized-p-i it #t)
        #t]
       [else
        #f]))
@@ -266,14 +269,14 @@
                    [instruction
                     (string->immutable-string
                      (p-i-instruction it))])])
-          (hash-set! hsh:normalized-p-i it #t)
+          ;(hash-set! hsh:normalized-p-i it #t)
           it)))
   
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  (: hsh:normalized-element (Weak-HashTable (Listof Any) #t))
+  #|(: hsh:normalized-element (Weak-HashTable (Listof Any) #t))
   (define hsh:normalized-element
-    (make-weak-hash))
+    (make-weak-hash))|#
 
   
   (: incorrect-xexpr-element-list? (-> Any Boolean Incorrect-Body-Atom? Boolean
@@ -283,8 +286,8 @@
                                          incorrect-body-atom?
                                          accumulate-context?)
     (cond
-      [(hash-has-key? hsh:normalized-element maybe-lst)
-       #f]
+      #|[(hash-has-key? hsh:normalized-element maybe-lst)
+       #f]|#
       [(list? maybe-lst)
        (cond
          [(incorrect-xexpr-element-list?* maybe-lst
@@ -292,8 +295,8 @@
                                           incorrect-body-atom?
                                           accumulate-context?)]
          [else
-          (when must-be-normalized?
-            (hash-set! hsh:normalized-element maybe-lst #t))
+          #;(when must-be-normalized?
+              `(hash-set! hsh:normalized-element maybe-lst #t))
           #f])]
       [else
        (xexpr-error 'non-list maybe-lst #f)]))
@@ -367,10 +370,10 @@
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-  (: hsh:normalized-attribute-lists
+  #|(: hsh:normalized-attribute-lists
      (Weak-HashTable (Listof Any) #t))
   (define hsh:normalized-attribute-lists
-    (make-weak-hash))
+    (make-weak-hash))|#
 
   (: incorrect-attr-list? (-> (Listof Any)
                               ;; Really (Listof (Pairof Any Any)),
@@ -384,8 +387,8 @@
                                 elem
                                 maybe-context)
     (cond
-      [(hash-has-key? hsh:normalized-attribute-lists lst)
-       #f]
+      #|[(hash-has-key? hsh:normalized-attribute-lists lst)
+       #f]|#
       [(for/or : (U False xexpr-error)
          ([attr (in-list lst)]
           [i : Natural (in-naturals)])
@@ -416,8 +419,8 @@
                                            #f
                                            misshapen))]))]
       [else
-       (when must-be-normalized?
-         (hash-set! hsh:normalized-attribute-lists lst #t))
+       #;(when must-be-normalized?
+           (hash-set! hsh:normalized-attribute-lists lst #t))
        #f]))
   #|END module validate|#)
 
@@ -546,8 +549,9 @@
         normalized-p-i/c))
 
 (define/final-prop normalized-xexpr/c
-  (or/c normalized-xexpr-atom/c
-        normalized-xexpr-element/c))
+  (if/c list?
+        normalized-xexpr-element/c
+        normalized-xexpr-atom/c))
 
 (define/final-prop (raw-xexpr? v)
   (or (string? v)
@@ -567,8 +571,9 @@
         cdata?))
 
 (define/final-prop raw-xexpr/c
-  (or/c raw-xexpr-atom/c
-        raw-xexpr-element/c))
+  (if/c list?
+        raw-xexpr-element/c
+        raw-xexpr-atom/c))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

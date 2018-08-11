@@ -16,7 +16,7 @@
                              (class/c (init [search-backend
                                              search-backend/c])))))]
           [corpus-do-term-search
-           (->* {(is-a?/c plain-corpus%) ;; or just support corpus<%> ??
+           (->* {(is-a?/c corpus<%>) 
                  term/c}
                 {#:ricoeur-only? any/c
                  #:book/article (or/c 'any 'book 'article)
@@ -69,13 +69,12 @@
                                #:ricoeur-only? [ricoeur-only? #t]
                                #:book/article [book/article 'any]
                                #:exact? [exact? #f])
-  (if (infix: corpus is-a? corpus<%>)
-      (send-generic corpus gen:term-search
-                    term
-                    #:ricoeur-only? ricoeur-only?
-                    #:book/article book/article
-                    #:exact? exact?)
-      (instance-set)))
+  (send-generic corpus
+                gen:term-search
+                term
+                #:ricoeur-only? ricoeur-only?
+                #:book/article book/article
+                #:exact? exact?))
 
 
 
