@@ -23,6 +23,7 @@
                      syntax/contract
                      racket/match
                      racket/sequence
+                     adjutor
                      ))
 
 (provide field
@@ -90,11 +91,10 @@
     #:description #f
     #:attributes {bool}
     (pattern (~seq #:print? bool:boolean))
-    (pattern (~seq [#:print? bool:boolean]))
     (pattern (~seq #:hide)
-             #:with bool #'#f)
-    (pattern (~seq [#:hide])
              #:with bool #'#f)))
+
+(TODO/void field: add "#:infer/tei" & "#:infer/prefix")
 
 (define-syntax-parser field/derived
   #:context (syntax-parse this-syntax
@@ -103,24 +103,16 @@
   [(_ original-datum
       name:id
       (~alt (~optional (~or* (~seq (~and accessor-kw #:accessor)
-                                   (~or* raw-accessor:id #f))
-                             (~seq [(~and accessor-kw #:accessor)
-                                    (~or* raw-accessor:id #f)])
-                             (~seq (~and infer? #:infer))
-                             (~seq [(~and infer? #:infer)]))
+                                   raw-accessor:id)
+                             (~seq (~and infer? #:infer)))
                        #:name "#:accessor or #:infer  clause")
             (~optional show?:show?/hide-clause
                        #:name "#:hide or #:print? clause"
                        #:defaults ([show?.bool #'#t]))
-            (~optional (~or* (~seq #:check
-                                   (~var check
-                                         (expr/c #'contract?
-                                                 #:name (fmt-check-name #'name))))
-                             (~seq [#:check
-                                    (~var check
-                                          (expr/c #'contract?
-                                                  #:name (fmt-check-name #'name)))])
-                             (~seq [#:check]))
+            (~optional (~seq #:check
+                             (~var check
+                                   (expr/c #'contract?
+                                           #:name (fmt-check-name #'name))))
                        #:name "#:check clause"))
       ...)
    #:fail-when (and (not (local-element-name))
@@ -129,20 +121,20 @@
    #:fail-when (and (attribute infer?)
                     (attribute accessor-kw))
    "#:infer not compatible with explicit #:accessor option"
-   #:with accessor (if (attribute infer?)
-                       (infer-accessor-id #'name)
-                       (or (attribute raw-accessor)
-                           #'#f))
+   (define maybe-accessor-stx
+     (if (attribute infer?)
+         (infer-accessor-id #'name)
+         (attribute raw-accessor)))
    #`(parsed-field original-datum
                    name
-                   [#:check #,(if (attribute check.c)
-                                  (syntax-local-lift-expression
-                                   ;; would be nice to give better name to
-                                   ;; anonymous functions
-                                   #'check.c)
-                                  #'#f)]
-                   [#:show? show?.bool]
-                   [#:accessor accessor])])
+                   #:show? show?.bool
+                   #,@(list-when maybe-accessor-stx
+                        `(,#'#:accessor ,maybe-accessor-stx))
+                   #,@(list-when (attribute check.c)
+                        `(,#'#:check ,(syntax-local-lift-expression
+                                       ;; would be nice to give better name to
+                                       ;; anonymous functions
+                                       #'check.c))))])
      
 (begin-for-syntax
   (define (fmt-check-name name-stx)
@@ -154,9 +146,9 @@
     #:attributes {name record orig-datum show?}
     (pattern (parsed-field orig-datum
                            name:id
-                           (~alt (~once (~seq [#:accessor (~or* accessor:id #f)]))
-                                 (~once (~seq [#:show? show?:boolean]))
-                                 (~once (~seq [#:check (~or* check:id #f)])))
+                           (~alt (~once (~seq #:show? show?:boolean))
+                                 (~optional (~seq #:accessor accessor:id))
+                                 (~optional (~seq #:check check:id)))
                            ...)
              #:attr record (field-record #'name
                                          (attribute accessor)

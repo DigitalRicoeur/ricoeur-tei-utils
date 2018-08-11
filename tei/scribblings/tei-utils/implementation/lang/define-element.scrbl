@@ -211,27 +211,19 @@
                                                check-opt))
                (accessor-opt code:blank
                              infer-opt
-                             (code:line #:accessor maybe-accessor)
-                             [#:accessor maybe-accessor])
-               (infer-opt #,(racket-BNF-alt #:infer [#:infer]))
-               (maybe-accessor #,(racket-BNF-alt _accessor-id #f))
+                             (code:line #:accessor accessor-id))
+               (infer-opt #:infer)
                (print-opt code:blank
                           (code:line #:print? bool-literal)
-                          [#:print? bool-literal]
-                          #:hide
-                          [#:hide])
+                          #:hide)
                (check-opt code:blank
-                          (code:line #:check check-expr)
-                          [#:check check-expr]
-                          [#:check])]
+                          (code:line #:check check-expr))]
               #:contracts ([check-expr contract?])]{
    The primitive @racket[special-ctor-form] for declaring a
    @deftech{TEI element struct field}.
    Higher-level forms such as @racket[define/field] and
    @racket[declare-resp-field] are built on top of @racket[field].
 
-   @(TODO/void Simplify grammar for field)
-  
    A @tech{TEI element struct type} has one immutable field
    for each @racket[field] declaration among its expanded
    @racket[ctor-body] forms (in addition to fields inherited from
@@ -259,10 +251,10 @@
     @tech{TEI element struct} instance is created.
    }
      @item{
-    If an @racket[_accessor-id] or @racket[infer-opt] is given,
+    If an @racket[accessor-id] or @racket[infer-opt] is given,
     a function that accesses the value of the field is bound 
     in the context of the enclosing @racket[define-element] form.
-    If an @racket[_accessor-id] is given, it is used as the name of
+    If an @racket[accessor-id] is given, it is used as the name of
     the defined function (including its lexical context).
     Otherwise, if @racket[infer-opt] is given, an identifier is
     synthesized with the lexical context of @racket[field-name-id]
@@ -270,7 +262,7 @@
     where @racket[name-id] is the name of the element currently
     being defined.
   
-    A field with no @racket[_accessor-id] or @racket[infer-opt] specified 
+    A field with no @racket[accessor-id] or @racket[infer-opt] specified 
     can still be accessed via the @racket[get-field] form inside the text of a
     @racket[begin-body], @racket[prop-val-expr], or @racket[methods-body]
     subform of @racket[define-element]. Read on for details.
