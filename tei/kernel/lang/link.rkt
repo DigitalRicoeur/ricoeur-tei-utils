@@ -227,6 +227,11 @@
       [element-name:id ...]
       [wrapped-constructor-name:id ...])
    #`(λ (xs)
+       #|(define/contract norm
+         normalized-xexpr-element/c
+         (normalize-xexpr xs))
+       (check-immutable-strings norm)
+       (let xexpr->element ([xs norm])|#
        (let xexpr->element ([xs (normalize-xexpr xs)])
          (match-define (list-rest name attrs body)
            xs)
@@ -246,7 +251,14 @@
                      (xexpr->element child)
                      child)))))])
 
-
+#|(require racket/list)
+(define (check-immutable-strings xs)
+  (for/first ([v (in-list (flatten xs))]
+              #:when (string? v)
+              #:unless (immutable? v))
+    (error 'check-immutable-strings
+           "mutable string: ~e\n  in...:\n   ~e"
+           v xs)))|#
 
 
 (define-syntax-parser define-combined-elements-specification

@@ -138,8 +138,11 @@
     (eq? (instance-title/symbol a)
          (instance-title/symbol b)))
   (λ (this)
-    (eq-hash-code
-     (instance-title/symbol this))))
+    (eq-hash-code ;equal-hash-code
+     (instance-title/symbol this)))
+  #|(λ (this)
+    (equal-secondary-hash-code
+     (instance-title/symbol this)))|#)
 
 (define/subexpression-pos-prop instance-set/c
   (let ([immutable-instance-set?
