@@ -64,7 +64,7 @@ the same source file that defines the Racket enforcement code.
       (delay/thread
        (define-values (in-from-pipe out-to-pipe)
          (make-pipe))
-       (write-xexpr (tei-element->xexpr (get-this)) out-to-pipe)
+       (write-xexpr/normalized (tei-element->xexpr (get-this)) out-to-pipe)
        (close-output-port out-to-pipe)
        (string->symbol (md5 in-from-pipe))))]
    #:property prop:instance-info (λ (this)
@@ -104,6 +104,10 @@ the same source file that defines the Racket enforcement code.
  })
 
 ƒ(begin-for-runtime
+   (define (write-xexpr/normalized xs)
+     (parameterize ([empty-tag-shorthand 'always]
+                    [collapse-whitespace #f])
+       (write-xexpr xs)))
    (define (write-tei-document doc [out (current-output-port)])
      (parameterize ([current-output-port out])
        (call/prettyprint-xml-out
@@ -111,7 +115,7 @@ the same source file that defines the Racket enforcement code.
           (displayln ƒstring-append{
  <?xml version="1.0" encoding="utf-8"?>
  <!DOCTYPE TEI SYSTEM "DR-TEI.dtd">})
-          (write-xexpr (tei-element->xexpr doc)))))))
+          (write-xexpr/normalized (tei-element->xexpr doc))))))))
 
 
 ƒ(local-table-of-contents)

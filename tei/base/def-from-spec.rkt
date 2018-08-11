@@ -4,6 +4,10 @@
          (submod ricoeur/tei/kernel private)
          racket/contract
          (only-in xml
+                  collapse-whitespace
+                  read-comments
+                  xml-count-bytes
+                  xexpr-drop-empty-attributes
                   xml->xexpr
                   document-element
                   read-xml)
@@ -68,9 +72,13 @@
   ;TODO: improve error message
   (xexpr->tei-element
    (contract (tei-xexpr/c TEI)
-             (xml->xexpr
-              (document-element
-               (read-xml in)))
+             (parameterize ([collapse-whitespace #f]
+                            [read-comments #t]
+                            [xml-count-bytes #f]
+                            [xexpr-drop-empty-attributes #f])
+               (xml->xexpr
+                (document-element
+                 (read-xml in))))
              in
              '(definition read-tei-document)
              (or (object-name in) in)
