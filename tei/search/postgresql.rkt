@@ -168,7 +168,7 @@
     (for/list ([raw-excerpt
                 (in-list (regexp-split rx:FragmentDelimiter
                                        ts_headline))]
-               #:when (regexp-match? valid-px))
+               #:when (regexp-match? valid-px raw-excerpt))
       (just (string->immutable-string raw-excerpt))))
   (define-syntax-parser run-query-with-args
     ;; This is syntax to get the performance benefits of in-query
