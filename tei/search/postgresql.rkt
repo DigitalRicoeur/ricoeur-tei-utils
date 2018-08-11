@@ -104,6 +104,7 @@
                            #:ricoeur-only? ricoeur-only?
                            #:book/article book/article
                            #:maybe-exact-px [maybe-exact-px #f])
+  ;;(printf "term-string: ~v\n" term-string)
   (group-search-results
    hsh:title/symbol->info+excerpt-max-allow-chars
    (select-search-results db term-string
@@ -282,10 +283,11 @@
   ;; table schema, increment this constant to force the table to be rebuilt.
   ;; History:
   ;;  - Version 1: after re-write of prepare-pre-segments
-  ;;  - Version 2: after major re-write for DSL/ADT
+  ;;  - Version 2: during major re-write for DSL/ADT
+  ;;  - Version 3: force rebuild after bug fix from DSL/ADT port
   (define/contract TABLE-FORMAT-VERSION
     natural-number/c
-    2)
+    3)
 
   ;; create-table : connection? -> any
   ;; Effect: Creates the search table in the database
@@ -400,15 +402,15 @@
 ;;  from the database, via must-add-doc?.
 ;; Returns a row-to-insert structure for each row that must be inserted.
 (define (build-l-to-insert db docs #:empty-table? [empty-table? #f])
-  (for/list ([doc (in-instance-set docs)]
-             #:when (or empty-table?
-                        (must-add-doc? db doc))
-             [title/string (in-value (instance-title doc))]
-             [is-book? (in-value (eq? 'book (instance-book/article doc)))]
-             [checksum/string (in-value (string->immutable-string
-                                         (symbol->string
-                                          (tei-document-checksum doc))))]
-             [base-seg (in-list (tei-document-segments doc))])
+  (for*/list ([doc (in-instance-set docs)]
+              #:when (or empty-table?
+                         (must-add-doc? db doc))
+              [title/string (in-value (instance-title doc))]
+              [is-book? (in-value (eq? 'book (instance-book/article doc)))]
+              [checksum/string (in-value (string->immutable-string
+                                          (symbol->string
+                                           (tei-document-checksum doc))))]
+              [base-seg (in-list (tei-document-segments doc))])
     (match-define (base-segment meta body)
       base-seg)
     (row-to-insert title/string
