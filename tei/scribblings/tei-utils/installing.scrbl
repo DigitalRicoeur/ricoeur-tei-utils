@@ -17,14 +17,14 @@ You should @italic{not} use the version
 of Racket from your OS's package manager,
 as it will generally not be up-to-date.
 @margin-note{
+ @italic{For advanced users:}
  If you use Mac OS, it is ok to use the 
- ``cask'' for the Homebrew packacge manager, but note that the
+ ``cask'' for the Homebrew package manager, but note that the
  ``minimal-racket'' Homebrew formula is currently unmaintained and
  should be avoided.
  If you use Ubuntu, it is ok to use the Racket
  @hyperlink["https://launchpad.net/~plt/+archive/ubuntu/racket"]{PPA}.
- However, neither of these approaches are recommended unless you
- are an advanced user who is aware of the downsides.
+ However, neither of these approaches are recommended.
 }
 
 While it is not strictly required, some features of this library

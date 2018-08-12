@@ -16,9 +16,10 @@ for many applications: search (as in @racket[term-search]) has been our
 initial motivating use-case, but the same process is needed to, for example,
 plot trends in the use of a particular term over the course of a book.
 
-This library implements the common functionality needed to divide a 
-@tech{TEI document} into @tech{segments} with @racket[tei-document-segments]
-and defines an extensible interface for working with @tech{segment metadata}.
+This library provides @racket[tei-document-segments], which
+implements the common functionality needed to divide a 
+@tech{TEI document} into @tech{segments}.
+It also defines an extensible interface for working with @tech{segment metadata}.
 
 @;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 @section{Segment Basics}
@@ -50,8 +51,9 @@ and defines an extensible interface for working with @tech{segment metadata}.
  
  @tech{Segments} are a general, extensible way of managing this contextual
  information: concrete applications are likely to implement specialized
- representations, but these can support the @tech{segment} interface
+ representations, and these can support the @tech{segment} interface
  using @racket[prop:segment].
+ 
  This library defines two built-in kinds of @tech{segments}—@racket[base-segment]
  structs and @tech{segment metadata} values—along with a core function
  for dividing a @tech{TEI document} into @tech{segments}, @racket[tei-document-segments].
@@ -70,7 +72,7 @@ and defines an extensible interface for working with @tech{segment metadata}.
                #:omit-constructor])]{
  The function @racket[tei-document-segments] splits a @tech{TEI document}
  @racket[doc] into a list of @tech{segments}:
- more specifically, instances of the @racket[base-segment] structure type.
+ specifically, instances of the @racket[base-segment] structure type.
 
  The result of @racket[tei-document-segments] is weakly cached to reduce
  the cost of repeated calls.
@@ -92,7 +94,7 @@ and defines an extensible interface for working with @tech{segment metadata}.
  that encapsulates its location, authorship, and other information.
  A @tech{segment metadata} value can be recognized by the predicate
  @racket[segment-meta?] and is itself a @tech{segment}
- (and thus satisfies @racket[segment?]): the @tech{segment metadata} value
+ (and thus satisfies @racket[segment?]). The @tech{segment metadata} value
  contains all of the information needed by the @tech{segment} interface.
  Any @tech{segment} @racket[seg] can be converted to a plain
  @tech{segment metadata} value using @racket[segment-get-meta].
@@ -181,7 +183,7 @@ and defines an extensible interface for working with @tech{segment metadata}.
  display to end-users via @racket[location-stack->strings].
  The strings in the resulting list describe the location from the broadest
  level of organization to the narrowist
- (e.g. @racket['("chapter 1" "footnote 3")], though the precise textual
+ (e.g. @racket['("Chapter 1" "Footnote 3")], though the precise textual
  content of the returned strings is unspecified).
 }
 

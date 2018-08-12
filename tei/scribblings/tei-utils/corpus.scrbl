@@ -54,7 +54,7 @@ library can be used independently.
          (hash/c symbol?
                  symbol?
                  #:immutable #t)]{
- Returns an immutable hash table summarizing identity of the
+ Returns an immutable hash table summarizing the identity of the
  @tech{TEI documents} encapsulated by @racket[(current-corpus)].
 
  For each TEI document @racket[doc], the returned hash table
@@ -73,19 +73,19 @@ library can be used independently.
            (instance-set/c document-search-results?)]
    @defthing[term/c flat-contract?
              #:value (and/c string-immutable/c #px"\\S")])]{
- Searches for @racket[term], which must contain at least one non-whitespace
+ Searches for @racket[term], an immutable string containing at least one non-whitespace
  character, in the @tech{TEI documents} encapsulated by @racket[(current-corpus)].
 
  If @racket[book/article] is @racket['book] or @racket['article],
- only matches in TEI documents that would have returned the
- same symbol from @racket[instance-book/article] will be considered.
+ only results from TEI documents that would have returned the
+ same symbol from @racket[instance-book/article] will be returned.
  If @racket[book/article] is @racket['any] (the default),
  all TEI documents will be searched.
 
  If @racket[ricoeur-only?] is non-false (the default),
- matches will only be returned from passages by Paul @|Ricoeur|.
+ results will only be returned from passages by Paul @|Ricoeur|.
  Otherwise, results from passages by editors @etc will also
- be considered.
+ be included.
  See @racket[segment-by-ricoeur?] for more details.
 
  If @racket[exact?] is @racket[#false] (the default),
@@ -121,7 +121,7 @@ library can be used independently.
 @section{Creating Corpus Objects}
 @defclass[corpus% object% ()]{
  A @tech{corpus object} is an instance of @racket[corpus%]
- or a subclass of @racket[corpus%].
+ or of a subclass of @racket[corpus%].
 
  For many purposes, @racket[directory-corpus%] offers more
  convienient initialization than @racket[corpus%].
@@ -202,7 +202,11 @@ library can be used independently.
    that never returns any search results.
   }
  @item{@racket['regexp] specifies a simplistic regular-expression-based
-   search implemented in pure Racket.
+   search implemented in pure Racket, with no system-level dependencies.
+   The performance of @racket['regexp]-based @tech{search backends}
+   is extremely slow for large corpora.
+   Even for development, using @racket['regexp] with Digital @Ricoeur's
+   full set of digitized documents is not viable.
   }
  @item{A value satisfying @racket[(postgresql-data-source/c)]
    indicates a production-quality implementation using PostgreSQL’s
@@ -235,11 +239,13 @@ library can be used independently.
  is to prevent mutation.
  Mutators like @racket[set-data-source-args!] raise exceptions
  when applied to values protected by @racket[(postgresql-data-source/c)].
- In addition, the first time it encounters a given
- @racket[data-source] value, the contract copies it to
- prevent it from being mutated through another reference,
- and it additionally coerces any strings in the
+ In addition, the first time @racket[(postgresql-data-source/c)]
+ encounters a given @racket[data-source] value, the contract
+ copies it (to prevent it from being mutated through another reference)
+ and coerces any strings in the
  @racket[data-source-args] field to immutable strings.
+ Therefore, values protected by @racket[(postgresql-data-source/c)]
+ may not be @racket[eq?] or even @racket[equal?] to their originals.
 }
 
 @defclass[directory-corpus% corpus% ()]{
@@ -362,11 +368,17 @@ library can be used independently.
  a given @tech{document search result} may contain multiple
  @tech{search results} that are the same according to
  @racket[segment-meta=?] if there was more than one match for
- the search term within a single segment.
+ the search term within a single @tech{segment}.
 
  A search result's excerpt may be @racket[(nothing)] if
  there were too many results for the search term from that
  @tech{TEI document} to return excerpts for all of them.
+
+ The @racket[trimmed-string-px] part of the contract on the result
+ of @racket[search-result-excerpt] guaranties that, 
+ if the returned excerpt is not @racket[(nothing)],
+ the contained string will be non-empty and
+ will neither start nor end with whitespace.
 
  See also @racket[search-result-<?] and @racket[search-result->?].
 }
@@ -411,7 +423,7 @@ library can be used independently.
  @tech{search backend}, just like @racket[corpus%], and an
  @tech{instance set} of @tech{TEI documents} to be searched.
  (In fact, @racket[corpus%] implements @method[corpus% term-search]
- by using @racket[initialize-search-backend] internally.)
+ by creating a @tech{searchable document set} internally.)
 
  As with creating an instance of @racket[corpus%],
  creating a new @tech{searchable document set} with

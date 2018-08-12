@@ -4,7 +4,11 @@
 @(declare-exporting ricoeur/tei/base
                     ricoeur/tei)
 
-@(require "for-manual.rkt")
+@(require "for-manual.rkt"
+          (for-label (only-in ricoeur/tei/kernel/lang/specification-lang
+                              declare-resp-field
+                              prop:element->plain-text)
+                     ))
 
 This section documents the representations used by this library
 for individual TEI elements.
@@ -30,10 +34,24 @@ whenever possible.
 
 @section{TEI X-Expression Contracts}
 @defthing[any-tei-xexpr/c flat-contract?]{
- Similar to @racket[raw-xexpr-element/c], but
- rejects some (not all) @tech{raw x-expressions} that would break TEI
- validity rules, including the additional requirements
- imposed by Digital Ricœur.
+ Similar to @racket[raw-xexpr-element/c], but specifically
+ for valid TEI elements that satisfy the additional requirements
+ documented in @(guidelines-doc).
+
+ Currently, @racket[any-tei-xexpr/c] and related contracts check
+ all of Digital Ricœur's project-specific requirements
+ and most other requirements inherited from the TEI standard.
+ However, @racketmodname[ricoeur/tei] does not currently implement
+ a full XML validator.
+ Nonetheless, values that are not valid according to all XML and
+ @tt{DR-TEI.dtd} rules should never be constructed:
+ they may cause subtle errors with, at best, obscure error messages.
+
+ Full XML validation may be added to @racket[any-tei-xexpr/c] in
+ the future. Currently, high-level clients (like @racket[directory-corpus%])
+ should use @racket[valid-xml-file?] or @racket[directory-validate-xml]
+ for validation and ensure that @racket[(xmllint-available?)]
+ returns @racket[#true].
 }
 
 @defform[(tei-xexpr/c elem-name-id)]{
@@ -74,27 +92,76 @@ whenever possible.
    @defpredicate[content-containing-element?]
    @defpredicate[elements-only-element?]
    )]{
- This library uses @deftech{tei element structs}, a layer of
+ This library uses @deftech{TEI element structs}, a layer of
  abstraction over @tech{normalized x-expressions},
  to build higher-level interfaces to TEI XML documents.
- All @tech{tei element structs} are recognized by the predicate
+ All @tech{TEI element structs} are recognized by the predicate
  @racket[tei-element?].
 
- Internally, there is a distinct @deftech{tei element struct type}
- for each type of element in Digital @|Ricoeur|'s customized TEI schema
- (see @guidelines-secref["Formal_Specification"]
- in @(guidelines-doc) for a complete listing).
+ Internally, there is a distinct @deftech{TEI element struct type}
+ for each type of element in Digital @|Ricoeur|'s customized TEI schema.
+ See @guidelines-secref["Formal_Specification"]
+ in @(guidelines-doc) for a complete listing.
  However, the specific representations of most
- @tech{tei element struct types} are kept private to this library:
+ @tech{TEI element struct types} are kept private to this library:
  for robustness against future changes to Digital @|Ricoeur|'s TEI schema,
  clients are urged to use high-level interfaces that abstract
  over the details of the document structure.
 
- Every @tech{tei element struct} satisfies either
+ Every @tech{TEI element struct} satisfies either
  @racket[content-containing-element?] or @racket[elements-only-element?]
  (but not both) depending on whether the element type of which
  it is an instance may ever contain textual data directly.
 }
+
+@defproc[(element-or-xexpr->plain-text [v (or/c tei-element? raw-xexpr-atom/c)])
+         string-immutable/c]{
+ Like @racket[tei-document->plain-text], but for any
+ @tech{TEI element struct} or non-element @tech{raw x-expression},
+ and without support for an @racket[#:include-header?] argument.
+                             
+ For implementation details, see @racket[prop:element->plain-text].
+}
+
+
+
+
+
+
+@subsection{Struct–X-Expression Conversion}
+@defproc[(xexpr->tei-element [xs any-tei-xexpr/c])
+         tei-element?]{
+ The primitive function for converting a @tech{raw xexpr}
+ representation of a TEI XML element to a @tech{TEI element struct}.
+ The @tech{raw xexpr} is effectively converted
+ to a @tech{normalized xexpr} as part of this process.
+}
+
+@defproc[(tei-element->xexpr [e tei-element?])
+         (and/c any-tei-xexpr/c normalized-xexpr-element/c)]{
+ Any @tech{TEI element struct} may be converted to a
+ @tech{normalized x-expression} using @racket[tei-element->xexpr].
+ XML is the cannonical serialized form of a TEI element struct:
+ TEI element structs are not serializable in the sense of
+ @racketmodname[racket/serialize].
+
+ Do not attempt to use this function as a substitute
+ for @racket[write-tei-document].
+}
+
+@defproc[(tei-element->xexpr* [e (or/c tei-element? normalized-xexpr-atom/c)])
+         normalized-xexpr/c]{
+ Like @racket[tei-element->xexpr], but also accepts @tech{normalized xexprs}
+ satisfying @racket[normalized-xexpr-atom/c], which are returned directly.
+
+ Do not attempt to use this function as a substitute
+ for @racket[write-tei-document].
+}
+
+
+
+
+
 
 @subsection{Traversing TEI Element Structs}
 @margin-note{
@@ -113,17 +180,17 @@ whenever possible.
    @defproc[(tei-get-body/elements-only [e elements-only-element?])
             (listof tei-element?)]
    )]{
- All @tech{tei element struct types} support the common set of
+ All @tech{TEI element struct types} support the common set of
  operations listed above for traversing an instance's attributes and
- contents; however, these functions are fairly low-level and
+ contents; however, these functions are quite low-level and
  should primarily be used to implement higher-level abstractions,
  ordinarily as part of this library.
 
- For a @tech{tei element struct} that satisfies
+ For a @tech{TEI element struct} that satisfies
  @racket[elements-only-element?], the list returned by
  @racket[tei-element-get-body] will never contain any strings:
  any insignificant whitespace inside such elements is 
- dropped when the @tech{tei element struct} is constructed.
+ dropped when the @tech{TEI element struct} is constructed.
  However, the result of @racket[tei-element-get-body] may
  still be different from @racket[tei-get-body/elements-only],
  as the list returned by @racket[tei-element-get-body]
@@ -151,7 +218,7 @@ whenever possible.
  @racket[body-pat] are matched against the results of
  @racket[tei-element-get-name], @racket[tei-element-get-attributes], and
  @racket[tei-element-get-body], respectively.
- A @racket[tei-element] pattern can match any @tech{tei element struct},
+ A @racket[tei-element] pattern can match any @tech{TEI element struct},
  whereas @racket[content-containing-element] and
  @racket[elements-only-element] patterns only match values that satisfy
  the corresponding predicate.
@@ -159,30 +226,6 @@ whenever possible.
  against the result of @racket[tei-get-body/elements-only].
 }
 
-
-
-
-@subsection{Struct–X-Expression Conversion}
-@defproc[(xexpr->tei-element [xs any-tei-xexpr/c])
-         tei-element?]{
- The primitive function for converting a @tech{raw xexpr}
- representation of a TEI XML element to a @tech{tei element struct}.
-}
-
-@defproc[(tei-element->xexpr [e tei-element?])
-         (and/c any-tei-xexpr/c normalized-xexpr-element/c)]{
- Any @tech{TEI element struct} may be converted to a
- @tech{normalized x-expression} using @racket[tei-element->xexpr].
- XML is the cannonical serialized form of a TEI element struct:
- TEI element structs are not serializable in the sense of
- @racketmodname[racket/serialize].
-}
-
-@defproc[(tei-element->xexpr* [e (or/c tei-element? normalized-xexpr-atom/c)])
-         normalized-xexpr/c]{
- Like @racket[tei-element->xexpr], but also accepts @tech{normalized xexprs}
- satisfying @racket[normalized-xexpr-atom/c], which are returned directly.
-}
 
 
 
@@ -202,7 +245,7 @@ a much better choice than the functions documented
 below (which are in fact used in the implementation of
 @racket[tei-document-segments]).
 However, they do serve some specific use-cases that have
-not yet been motivated a higher-level interface:
+not yet motivated a higher-level interface:
 most prominently, ``TEI Lint'' uses these functions to
 generate warnings about likely numbering errors.
 
@@ -234,7 +277,7 @@ generate warnings about likely numbering errors.
 
 @subsection{Page-break Elements}
 @defpredicate[tei-pb?]{
- Recognizes @tech{tei element structs} that represent
+ Recognizes @tech{TEI element structs} that represent
  @tag{pb} (page-break) elements.
 }
 
@@ -270,7 +313,7 @@ generate warnings about likely numbering errors.
 
 @defproc[(tei-get-page-breaks [elem tei-element?])
          (listof tei-pb?)]{
- Returns a list, in order, of all of the @tech{tei element structs}
+ Returns a list, in order, of all of the @tech{TEI element structs}
  recursively contained by @racket[elem] that represent
  @tag{pb} (page-break) elements.
  If @racket[elem] itself represents a page-break element,
@@ -281,7 +324,7 @@ generate warnings about likely numbering errors.
 
 @subsection{Footnote & Endnote Elements}
 @defpredicate[tei-note?]{
- Recognizes @tech{tei element structs} that represent
+ Recognizes @tech{TEI element structs} that represent
  @tag{note} elements, which are used for footnotes and endnotes.
 }
 
@@ -293,7 +336,9 @@ generate warnings about likely numbering errors.
 @defproc[(tei-note-get-n [note tei-note?])
          string-immutable/c]{
  Returns a string representing how @racket[note]
- was identified in the original, e.g. @racket["1"] or @racket["*"]. 
+ was identified in the original, e.g. @racket["1"] or @racket["*"].
+ This corresponds to the value of the @attr{n} attribute
+ of the @tag{note} element.
 }
 
 @defproc[(tei-note-get-transl? [note tei-note?])
@@ -303,7 +348,7 @@ generate warnings about likely numbering errors.
 
 @subsection{Chapter & Section Elements}
 @defpredicate[div?]{
-Recognizes @tech{tei element structs} that represent
+ Recognizes @tech{TEI element structs} that represent
  @tag{div} elements, which are used for chapters, sections, and
  other structural divisions.
 }

@@ -63,25 +63,14 @@
   #:tei-element-name/c tei-element-name/c)
 
 
-(define (discard-bom p)
-  (void (regexp-try-match #rx"^\uFEFF" p)))
-
-
 (define (read-tei-document [in (current-input-port)])
-  (discard-bom in)
-  ;TODO: improve error message
+  (TODO/void read-tei-document: improve error message)
   (xexpr->tei-element
    (contract (tei-xexpr/c TEI)
-             (parameterize ([collapse-whitespace #f]
-                            [read-comments #t]
-                            [xml-count-bytes #f]
-                            [xexpr-drop-empty-attributes #f])
-               (xml->xexpr
-                (document-element
-                 (read-xml in))))
-             in
-             '(definition read-tei-document)
-             (or (object-name in) in)
+             (read-xexpr/standardized in)
+             in ;; positive party
+             '(definition read-tei-document) ;; negative party
+             (or (object-name in) in) ;; value name
              #f)))
 
 

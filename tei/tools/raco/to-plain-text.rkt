@@ -16,6 +16,6 @@
    #:usage-help "Writes the given TEI XML file to STDOUT as plain text"
    #:args (TEI-XML-path)
    (void (write-string
-          (element-or-xexpr->plain-text
+          (tei-document->plain-text
            (file->tei-document TEI-XML-path))))))
 

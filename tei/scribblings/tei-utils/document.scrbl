@@ -6,12 +6,10 @@
 
 @(require "for-manual.rkt")
 
-@(TODO/void Add prose: relationship btwn TEI documents and instances)
-
 @defpredicate[tei-document?]{
  Recognizes @deftech{TEI document} values.
 
- A @tech{TEI document} is a @tech{tei element struct}
+ A @tech{TEI document} is a @tech{TEI element struct}
  that represents the root @tag{TEI} element of a document.
  TEI document values implement the @tech{instance info} interface
  for bibliographic information.
@@ -31,14 +29,33 @@
 @defproc[(file->tei-document [file (and/c path-string-immutable/c
                                           file-exists?)])
          tei-document?]{
- Produces a @tech{TEI document} value representing
+ Produces a @tech{TEI document} value from 
  the TEI XML document @racket[file].
+
+ High-level clients should use @racket[valid-xml-file?]
+ or @racket[directory-validate-xml] to validate @racket[file]
+ before calling @racket[file->tei-document] due to the
+ current limitations on the validation performed
+ by @racket[any-tei-xexpr/c].
+
+ This function uses @racket[read-xexpr/standardized]
+ to parse the raw XML into @tech{x-expressions} consistently
+ and without information loss.
 }
 
 @defproc[(read-tei-document [in input-port? (current-input-port)])
          tei-document?]{
  Produces a @tech{TEI document} value representing the TEI XML
  document read from @racket[in].
+
+ Currently, @racket[file->tei-document] should usually be
+ used instead of @racket[read-tei-document], as it
+ cooperates more easily with the validation needs
+ documented under @racket[file->tei-document] and @racket[any-tei-xexpr/c].
+
+ This function uses @racket[read-xexpr/standardized]
+ to parse the raw XML into @tech{x-expressions} consistently
+ and without information loss.
 }
 
 @defproc[(write-tei-document [doc tei-document?]
@@ -47,36 +64,30 @@
  Writes the XML representation of @racket[doc] to out,
  prettyprinted using @racket[call/prettyprint-xml-out].
 
- Use @racket[write-tei-document] rather than
- @racket[(write-xexpr (tei-element->xexpr doc) out)]
- because @racket[write-tei-document] also writes
- an XML declaration and appropriate DOCTYPE declaration.
+ Use @racket[write-tei-document] rather than other methods
+ for writing XML: @racket[write-tei-document]
+ uses @racket[write-xexpr/standardized] to generate consistent
+ output and includes an XML declaration and
+ appropriate @tt{DOCTYPE} declaration.
 }
 
-@defproc[(element-or-xexpr->plain-text [v (or/c tei-element? raw-xexpr-atom/c)]
-                                       [#:include-header? include-header? any/c #t])
+@defproc[(tei-document->plain-text [doc tei-document?]
+                                   [#:include-header? include-header? any/c #t])
          string-immutable/c]{
- Converts @racket[v] to a plain-text string.
- The resulting string is @bold{not} the XML representation of @racket[v]:
+ Converts the @tech{TEI document} @racket[doc] to a plain-text string.
+             
+ The resulting string is @bold{not} the XML representation of @racket[doc]:
  it is formated for uses that expect unstructured plain text.
 
  When @racket[include-header?] is non-false (the default),
- the resulting string may include more than just the content of @racket[v]:
- for example, if @racket[v] is a @tech{TEI document}, the string may begin
- with the title of the corresponding @tech{instance}.
+ the resulting string will begin with a header
+ which includes, for example, the title and other information
+ about the corresponding @tech{instance}.
  When @racket[include-header?] is @racket[#false], only the content
  will be included, which is sometimes preferable if the plain text form
  is intended for further processing by computer.
-
- While @racket[element-or-xexpr->plain-text] accepts any
- @tech{TEI element struct} or non-element @tech{raw x-expression},
- it is documented here because it is most useful
- with @tech{TEI document} values.
-
- For implementation details, see @racket[prop:element->plain-text].
 }
-
-
+     
 
 @section{Paragraph Inference}
 

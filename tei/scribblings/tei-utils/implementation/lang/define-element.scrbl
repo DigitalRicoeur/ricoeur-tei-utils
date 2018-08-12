@@ -401,8 +401,7 @@ primitive @racket[field] declaration.
 
 @defthing[prop:element->plain-text
           (struct-type-property/c
-           (or/c (-> tei-element? string?)
-                 (-> tei-element? boolean? string?)))]{
+           (-> tei-element? string?))]{
  The definition of a @tech{TEI element struct type} can use
  @racket[prop:element->plain-text] to override the default
  behavior of @racket[element-or-xexpr->plain-text].
@@ -410,12 +409,9 @@ primitive @racket[field] declaration.
  unrelated struct types has no effect: it is only used
  for @tech{TEI element structs}.
 
- The first argument to the function given as the property value
+ The argument to the function given as the property value
  is always the @tech{TEI element struct} instance to be converted
  to plain text.
- If the function given as the property value accepts a second argument,
- it will be a boolean corresponding to the @racket[#:include-header?]
- argument to @racket[element-or-xexpr->plain-text].
 }
 
 @defform[(declare-paragraphs-status-field value-expr)

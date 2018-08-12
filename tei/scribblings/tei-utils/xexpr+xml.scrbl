@@ -25,6 +25,32 @@
  or @racket[#f] if none exists.
 }
 
+@defproc[(read-xexpr/standardized [in input-port? (current-input-port)])
+         xexpr/c]{
+ Somewhat like @racket[syntax:read-xml] or @racket[string->xexpr],
+ but handles various details to ensure that the input from @racket[in]
+ is converted to an @tech{x-expression} consistently and
+ without data loss.
+
+ Some specific guarantees:
+ @(itemlist
+   @item{A redundant UTF-8 byte-order mark at the beginning of the
+  input will be ignored, which is not true with the functions from
+  @racketmodname[xml].
+ }
+   @item{XML comments will be preserved in the resulting @tech{x-expression}
+  as @racket[comment] data structures.
+  })
+}
+
+@defproc[(write-xexpr/standardized [xs xexpr/c]
+                                   [out output-port? (current-output-port)])
+         any]{
+ Like @racket[read-xexpr/standardized], but for writing @tech{x-expressions}.
+ Use @racket[write-xexpr/standardized] as a drop-in replacement
+ for @racket[write-xexpr].
+}
+
 @section{Raw X-Expressions}
 
 @deftogether[
@@ -42,13 +68,13 @@
  require that they conform to the additional requirement
  that all symbols representing symbolic entities be known to this
  library, which is determined by the contract @racket[entity-symbol/c].
- X-expressions meeting these requirements qualify as
+ X-expressions meeting this requirement qualify as
  @deftech{raw x-expressions} (or @deftech{raw xexprs}) and are recognized
  by the contract @racket[raw-xexpr/c].
  
  The contract @racket[raw-xexpr-element/c] recognizes specifically those
  @tech{raw x-expressions} which represent XML elements (all of which 
- would also satisfy @racket[(and/c pair? list?)]).
+ would also satisfy @racket[list?]).
 
  Note that @tech{normalized x-expressions} are a subset of
  @tech{raw x-expressions}.
@@ -62,7 +88,7 @@
  Most commonly-used symbolic entities are supported.
 
  A value satisfying @racket[entity-symbol/c] is allways a
- @tech{raw x-expression}, but never a @tech{normalized x-expression}
+ @tech{raw x-expression}, but never a @tech{normalized x-expression}.
 }
 
 @deftogether[(@defpredicate[raw-xexpr?]
@@ -104,9 +130,10 @@
 @defproc[(non-element-body->plain-text [body (listof raw-xexpr-atom/c)])
          string-immutable/c]{
  Like @racket[non-element-xexpr->plain-text], but concatenates the
- string forms of a list of non-element @tech{raw xexprs},
- such as might form the body of a @tech{raw xexpr} representing an
- XML element that may not contain any child elements.
+ string forms of a list of non-element @tech{raw xexprs}.
+ As the name of @racket[non-element-xexpr->plain-text] suggests,
+ @racket[body] is usually the body of a @tech{raw xexpr} element
+ that may not contain any child elements.
 }
 
 
@@ -128,7 +155,7 @@
  Some higher-level operations in this library produce and/or
  consume @deftech{normalized x-expressions}
  (or @deftech{normalized xexprs}), which are a restricted
- subset of @tech{x-expressions}.
+ subset of @tech{raw x-expressions}.
 
  These are non-destructively normalized in a few ways,
  which simplifies case analysis when working with
@@ -153,9 +180,6 @@
     @item{Strings contained in comment and processing-instruction data structures
    (see @racket[normalized-comment/c] and @racket[normalized-p-i/c]).}
     )})
-
- Note that all @tech{normalized x-expressions} are also
- @tech{raw x-expressions}.
 }
 
 @defproc[(normalize-xexpr [raw raw-xexpr/c]) normalized-xexpr/c]{
@@ -205,13 +229,13 @@
 The functions documented in this section depend on the 
 external command-line utility @exec{xmllint} (which is part
 of @tt{libxml2}) to work as their names indicate.
-If @exec{xmllint} can not be found,
+If @exec{xmllint} can not be found (see @racket[xmllint-available?]),
 a warning is logged to @racket[(current-logger)] at startup
 and these functions fall back to the alternate behavior
 specified in each function's documentation, which is
-typically a no-op.
+typically a noop.
 
-@defproc[(xmllint-available?) any/c]{
+@defproc[(xmllint-available?) boolean?]{
  Reports whether @exec{xmllint} is available at runtime.
 }
 
@@ -220,11 +244,11 @@ typically a no-op.
          boolean?]{
  Checks that every @racket[pth] is a valid XML file.
 
- When @racket[quiet?] is @racket[#f], writes any
+ When @racket[quiet?] is @racket[#false], writes any
  validation error messages (from @tt{xmllint}) to
  @racket[current-error-port].
 
- If @exec{xmllint} is not available, always returns @racket[#t].
+ If @exec{xmllint} is not available, always returns @racket[#true].
 }
 
 @defproc[(directory-validate-xml [dir (and/c path-string? directory-exists?)]
@@ -234,11 +258,11 @@ typically a no-op.
  in @racket[dir] and its recursive subdirectories
  is a valid XML file.
 
- When @racket[quiet?] is @racket[#f], writes any
+ When @racket[quiet?] is @racket[#false], writes any
  validation error messages (from @exec{xmllint}) to
  @racket[current-error-port].
 
- If @exec{xmllint} is not available, always returns @racket[#t].
+ If @exec{xmllint} is not available, always returns @racket[#true].
 }
 
 @defproc[(call/prettyprint-xml-out [thunk (-> any/c)])

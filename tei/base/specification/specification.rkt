@@ -20,6 +20,10 @@
               (->* {tei-document?} {output-port?} any)]
              [tei-document-checksum
               (-> tei-document? symbol?)]
+             [tei-document->plain-text
+              (->* {tei-document?}
+                   {#:include-header? any/c}
+                   string-immutable/c)]
              ))
    (require "teiHeader.rkt"
             "text.rkt"
@@ -64,8 +68,12 @@ the same source file that defines the Racket enforcement code.
       (delay/thread
        (define-values (in-from-pipe out-to-pipe)
          (make-pipe))
-       (write-xexpr/normalized (tei-element->xexpr (get-this)) out-to-pipe)
-       (close-output-port out-to-pipe)
+       (thread (λ ()
+                 ;; Theoretically avoids storing the intermediate
+                 ;; bytes in memory.
+                 (write-xexpr/standardized (tei-element->xexpr (get-this))
+                                           out-to-pipe)
+                 (close-output-port out-to-pipe)))
        (string->symbol (md5 in-from-pipe))))]
    #:property prop:instance-info (λ (this)
                                    (get-plain-instance-info
@@ -73,18 +81,9 @@ the same source file that defines the Racket enforcement code.
    #:begin [(define (tei-document-checksum doc)
               (force (get-field pr:md5 doc)))]
    #:property prop:element->plain-text
-   (λ (this include-header?)
-     (define body
-       (element-or-xexpr->plain-text
-        (get-field text this)
-        #:include-header? include-header?))
-     (if include-header?
-         (string-append (instance-title this)
-                        "\n\n"
-                        (instance-citation this)
-                        "\n\nDigital Ricoeur: Not for distribution.\f"
-                        body)
-         body))
+   (λ (this)
+     (element-or-xexpr->plain-text
+      (get-field text this)))
    #:prose ƒ{
 
  The document should begin with an XML declaration and DOCTYPE
@@ -104,10 +103,23 @@ the same source file that defines the Racket enforcement code.
  })
 
 ƒ(begin-for-runtime
-   (define (write-xexpr/normalized xs [out (current-output-port)])
-     (parameterize ([empty-tag-shorthand 'always]
-                    [collapse-whitespace #f])
-       (write-xexpr xs out)))
+   (define (tei-document->plain-text doc
+                                     #:include-header? [include-header? #t])
+     (define body
+       (element-or-xexpr->plain-text doc))
+     (cond
+       [include-header?
+        (match-define (instance-info #:title title
+                                     #:citation citation)
+          doc)
+        (string->immutable-string
+         (string-append title
+                        "\n\n"
+                        citation
+                        "\n\nDigital Ricœur: Not for distribution.\f"
+                        body))]
+       [else
+        body])) 
    (define (write-tei-document doc [out (current-output-port)])
      (parameterize ([current-output-port out])
        (call/prettyprint-xml-out
@@ -115,8 +127,8 @@ the same source file that defines the Racket enforcement code.
           (displayln ƒstring-append{
  <?xml version="1.0" encoding="utf-8"?>
  <!DOCTYPE TEI SYSTEM "DR-TEI.dtd">})
-          (write-xexpr/normalized (tei-element->xexpr doc))))))))
-
+          (write-xexpr/standardized (tei-element->xexpr doc))))))
+   #|END begin-for-runtime|#)
 
 ƒ(local-table-of-contents)
          

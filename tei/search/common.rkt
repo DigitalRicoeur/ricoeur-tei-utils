@@ -111,7 +111,7 @@
     (string-length
      (string-normalize-spaces
       (string-trim
-       (element-or-xexpr->plain-text
+       (tei-document->plain-text
         doc
         #:include-header? #f)))))
   (max (floor (* EXCERPT_RATIO doc-chars)) 1))

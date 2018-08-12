@@ -14,13 +14,36 @@
 
 This section documents an API for accessing bibliographic
 information about @deftech{instances}.
+An @tech{instance} is an abstraction for the most specific level 
+of bibliographic information with which Digital @Ricoeur is concerned.
+The term ``instance'' is drawn from the 
+@link["https://www.loc.gov/bibframe/docs/bibframe2-model.html"]{BibFrame}
+model for bibliographic data.
 
-In the medium- to long-term, we plan to transition to
-managing the corpus-level bibliographic data in a database,
-rather than the TEI documents.
+Concretely, @Ricoeur's publications exist as particular physical
+objects, such as a specific copy of a book,
+housed on a particular shelf in a particular library.
+The ``@tech{instance}'' abstraction refers to all concrete copies
+that are ``the same'' for Digital @Ricoeur's purposes:
+that is, they are bibliographically identical, even to the extent
+of having exactly the same pagination.
+Digital @Ricoeur aims to prepare one TEI XML file
+for each @tech{instance}.
+
+An @tech{instance} is an abstraction, not a kind of Racket value,
+but many kinds of Racket values (particularly @tech{TEI document}
+values) are assosciated with an @tech{instance}.
+Racket values that encapsulate bibliographic information about a
+particular @tech{instance} are refered to as @tech{instance info}
+values. This library defines a common interface for working with
+@tech{instance info} values, and clients can implement additional
+types of @tech{instance info} values that will support the same
+interface.
+
+In the medium to long term, Digital @Ricoeur plans to transition to
+managing the corpus-level bibliographic data about @tech{instances}
+in a database, rather than the TEI XML files.
 That transition will likely result in changes to this interface.
-
-@TODO/void[Explain instance in prose.]
 
 
 @defpredicate[instance-info?]{
@@ -31,6 +54,7 @@ That transition will likely result in changes to this interface.
  All @tech{instance info} values support the same high-level API,
  and new kinds of values (including class-based objects)
  can implement the @tech{instance info} interface.
+ (See @racket[prop:instance-info] and @racket[instance-info-mixin].)
 }
 
 @defform[#:kind "match expander"
@@ -52,18 +76,18 @@ That transition will likely result in changes to this interface.
 @defproc[(get-plain-instance-info [info instance-info?])
          plain-instance-info?]{
  Converts any @tech{instance info} value to a @deftech{plain instance info} value,
- which serves as a cannonical form of the encapsulated information.
+ which serves as a cannonical representation of the encapsulated information.
  
  In addition to being needed with @racket[prop:instance-info]
  to implement the @tech{instance info} interface for new kinds of values,
  @racket[get-plain-instance-info] can be useful to keep only a minimal
  representation of the @tech{instance info} reachable,
- rather than, say, an entire @tech{TEI document}.
+ rather than, say, an entire @tech{TEI document} value.
 }
 
 @defproc[(instance-title [info instance-info?])
          string-immutable/c]{
- Returns the title of the document, including subtitles.
+ Returns the title of the @tech{instance}, including subtitles.
 
  See also @racket[title<?].
 }
@@ -75,13 +99,12 @@ That transition will likely result in changes to this interface.
 
 @defproc[(instance-citation [info instance-info?])
          string-immutable/c]{
- Returns the human-readable citation for the work.
+ Returns a human-readable citation describing the @tech{instance}.
 }
  
 @defproc[(instance-publication-date [info instance-info?])
          date?]{
- Returns the publication date of the specific version of the work
- on which the TEI document is based. 
+ Returns the publication date of the @tech{instance}. 
 }
  
 @defproc[(instance-orig-publication-date [info instance-info?])
@@ -94,25 +117,31 @@ That transition will likely result in changes to this interface.
 @defproc[(instance-publication-original? [info instance-info?])
          boolean?]{
  Indicates whether the version represented by @racket[info]
- was the first version of the work as a whole to be published.
+ was the first @tech{instance} of the work as a whole to be published.
  If @racket[instance-publication-original?] returns a non-false value,
  @racketblock[(equal? (instance-publication-date info)
                       (instance-orig-publication-date info))]
- will allways be @racket[#t]; however, it is possible for a
- non-original version to be publised in the same year as the
+ will allways be @racket[#true]; however, it is possible for a
+ non-original @tech{instance} to be publised in the same year as the
  original, so the inverse does not hold.
 }
 
 @defproc[(instance-book/article [info instance-info?])
          (or/c 'book 'article)]{
- Indicates whether @racket[info] represents a book or an article.
+ Indicates whether the @tech{instance} is a book or an article.
 }
 
 @defproc[(instance-get-resp-string [info instance-info?] [resp symbol?])
          string-immutable/c]{
- Returns a string naming the author or editor whose
- @attr{xml:id} attribute value is the string form of @racket[resp],
- raising an exception if none exists.
+ Returns a string, suitable for display to end users,
+ naming the @tag{author} or @tag{editor} specified by the TEI XML element
+ with an @attr{xml:id} attribute value of @racket[(symbol->string resp)].
+ An exception is raised if @racket[resp] does not identify such an element
+ in Digital @Ricoeur's TEI XML document for the @tech{instance}
+ represented by @racket[info].
+
+ This is a fairly low-level function:
+ for most purposes, @racket[segment-resp-string] is preferred.
 }
 
 
@@ -138,15 +167,15 @@ That transition will likely result in changes to this interface.
             chaperone-contract?]
            [(instance-set/c)
             flat-contract?])]{
- Constructs contracts recognizing @tech{instance sets}
- where the elements of the set must satisfy @racket[elem/c].
+ Constructs a contract recognizing @tech{instance sets}
+ where the elements of the set satisfy @racket[elem/c].
  If @racket[elem/c] is a flat contract, the result will be a flat
  contract; otherwise, the result will be a chaperone contract.
 
  The contract produced by @racket[(instance-set/c)] accepts all
  @tech{instance sets}.
  Using @racket[(instance-set/c)] may provide better error reporting
- than using @racket[instance-set?] as a contract and may
+ than using @racket[instance-set?] as a contract, and it may
  be checked more efficiently than @racket[(instance-set/c any/c)]
  or @racket[(instance-set/c instance-info?)],
  but any of those variants would accept the same values.
@@ -157,6 +186,11 @@ That transition will likely result in changes to this interface.
  with @racket[for]-like forms.
  An @racket[in-instance-set] application may provide better
  performance when it appears directly in a @racket[for] clause.
+}
+
+@defproc[(instance-set* [info instance-info?] ...)
+         (instance-set/c)]{
+ Equivalent to @racket[(instance-set (list info ...))].
 }
 
 
@@ -185,15 +219,18 @@ That transition will likely result in changes to this interface.
 @subsection{Class-based Objects}
 @defmixin[instance-info-mixin () (instance-info<%>)]{
 
- An instance of a class extended with @racket[instance-info-mixin]
+ An object that is an instance (in the sense of @racketmodname[racket/class])
+ of a class extended with @racket[instance-info-mixin]
  can be used as an @tech{instance info} value.
  This is the prefered way for class-based objects
  to support the @tech{instance info} API.
 
- The resulting class will implement the @racket[instance-info<%>]
+ The class returned by @racket[instance-info-mixin]
+ will implement the @racket[instance-info<%>]
  interface, which also makes some of the @tech{instance info}
  functions available as methods for use with @racket[inherit],
  @racket[send], etc.
+ Note that all such methods are declared with @racket[public-final].
                                            
  @defconstructor/auto-super[([instance-info instance-info?])]{                  
 
@@ -208,9 +245,8 @@ That transition will likely result in changes to this interface.
 
 @definterface[instance-info<%> ()]{
 
- An interface identifying classes which have been extended
- with @racket[instance-info-mixin].
- Objects which implement @racket[instance-info<%>] can be used
+ Identifies classes returned by @racket[instance-info-mixin].
+ Objects which satisfy @racket[(is-a?/c instance-info<%>)] can be used
  as @tech{instance info} values.
 
  In addition to the methods documented below,

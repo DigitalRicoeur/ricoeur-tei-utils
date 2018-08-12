@@ -39,6 +39,8 @@
                   (->* {}
                        {(stream/c instance-info?)}
                        instance-set?)]
+          [instance-set*
+           (-> instance-info? ... instance-set?)]
           [instance-info-mixin 
            (and/c mixin-contract
                   (-> instance-info-mixin-arg/c
@@ -143,6 +145,9 @@
   #|(λ (this)
     (equal-secondary-hash-code
      (instance-title/symbol this)))|#)
+
+(define (instance-set* . args)
+  (make-immutable-instance-set args))
 
 (define/subexpression-pos-prop instance-set/c
   (let ([immutable-instance-set?

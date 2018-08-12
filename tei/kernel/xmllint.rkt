@@ -43,8 +43,9 @@
         (log-warning "xmllint not found")
         #f)))
 
-(define (xmllint-available?)
-  (not (not xmllint)))
+(define xmllint-available?
+  (let ([? (not (not xmllint))])
+    (λ () ?)))
 
 (define empty-input-port
   (open-input-string ""))

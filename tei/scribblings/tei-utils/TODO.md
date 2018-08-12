@@ -1,13 +1,9 @@
 Some documentation to-dos:
 
-  - Explain relationship between "TEI document" and "instance"
-  
   - Explain paragraph inference (likely w/ change to guidelines doc)
   
   - Implementation details for #lang ricoeur/tei/kernel
-    have not been reviewed beyond getting the document to compile
-    and build w/o warnings.
-    Need to update/correct what's there and check completeness.
+    do not currently cover the bindings re-exported by the language.
     
   - Add implementation details for TEI Lint.
   

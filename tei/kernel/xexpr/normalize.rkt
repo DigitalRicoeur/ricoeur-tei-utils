@@ -18,6 +18,13 @@
            (-> raw-xexpr-atom/c string-immutable/c)]
           [non-element-body->plain-text
            (-> (listof raw-xexpr-atom/c) string-immutable/c)]
+          [write-xexpr/standardized
+           (->* {xexpr/c}
+                {output-port?}
+                any)]
+          [read-xexpr/standardized
+           (->* {input-port?}
+                xexpr/c)]
           ))
 
 (define normalize-xexpr
@@ -83,6 +90,24 @@
                              (list _ content))
                      content))
       (or content "")])))
+
+(define (write-xexpr/standardized xs [out (current-output-port)])
+  (parameterize ([empty-tag-shorthand 'always]
+                 [collapse-whitespace #f])
+    (write-xexpr xs out)))
+
+(define (discard-bom p)
+  (void (regexp-try-match #rx"^\uFEFF" p)))
+
+(define (read-xexpr/standardized [in (current-input-port)])
+  (parameterize ([collapse-whitespace #f]
+                 [read-comments #t]
+                 [xml-count-bytes #f]
+                 [xexpr-drop-empty-attributes #f])
+    (discard-bom in)
+    (xml->xexpr
+     (document-element
+      (read-xml in)))))
 
 
 

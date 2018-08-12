@@ -36,17 +36,15 @@
            (-> (or/c tei-element? normalized-xexpr-atom/c)
                normalized-xexpr/c)]
           [element-or-xexpr->plain-text
-           (->* {(or/c tei-element? raw-xexpr-atom/c)}
-                {#:include-header? any/c}
-                string-immutable/c)]
+           (-> (or/c tei-element? raw-xexpr-atom/c)
+               string-immutable/c)]
           ))
 
 (module+ for-lang
   (provide (contract-out
             [prop:element->plain-text 
              (struct-type-property/c
-              (or/c (-> any/c string?)
-                    (-> any/c boolean? string?)))]
+              (-> any/c string?))]
             )))
 
 (module* private* #f
@@ -96,25 +94,15 @@
                 has-prop:element->plain-text?
                 get:element->plain-text}
   (make-struct-type-property
-   'prop:element->plain-text
-   (λ (proc info)
-     (if (procedure-arity-includes? proc 2)
-         proc
-         (λ (e _)
-           (proc e))))))
+   'prop:element->plain-text))
 
-(define (element->plain-text e include-header?)
-  ((get:element->plain-text e) e include-header?))
-
-(define (element-or-xexpr->plain-text e/xs
-                                      #:include-header? [include-header? #t])
+(define (element->plain-text e)
   (string->immutable-string
-   (element-or-xexpr->plain-text* e/xs
-                                  (any->boolean include-header?))))
+   ((get:element->plain-text e) e)))
 
-(define (element-or-xexpr->plain-text* e/xs include-header?)
+(define (element-or-xexpr->plain-text e/xs)
   (if (has-prop:element->plain-text? e/xs)
-      (element->plain-text e/xs include-header?)
+      (element->plain-text e/xs)
       (non-element-xexpr->plain-text e/xs)))
 
 (struct tei-element (name attributes)
@@ -146,10 +134,10 @@
   (make-default-to-plain-text-proc get-children
                                    child->plain-text)
   ;; macro to avoid use-before-definition of accessor
-  (λ (this include-header?)
+  (λ (this)
     (string-join
      (for/list ([child (in-list (get-children this))])
-       (child->plain-text child include-header?))
+       (child->plain-text child))
      "")))
 
 (struct elements-only-element tei-element (body body/elements-only)
@@ -168,7 +156,7 @@
      (make-element-write-proc 'content-containing-element 3))]
   #:property prop:element->plain-text
   (make-default-to-plain-text-proc content-containing-element-body
-                                   element-or-xexpr->plain-text*))
+                                   element-or-xexpr->plain-text))
 
 (define-match-expander match:content-containing-element
   (syntax-parser

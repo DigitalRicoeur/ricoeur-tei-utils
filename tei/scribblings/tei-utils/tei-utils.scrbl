@@ -10,7 +10,7 @@
           )
 
 This manual documents a Racket library for
-working with TEI XML documents developed for Digital Ricœur.
+working with Digital Ricœur's TEI XML documents.
 In addition to being valid and well-formed XML, the
 documents should conform to the structure specified in
 @(guidelines-doc).
