@@ -139,7 +139,7 @@
 
 @defproc[(tei-document-unskip-guess-paragraphs
           [doc (tei-document/paragraphs-status/c 'skip)])
-         [doc (tei-document/paragraphs-status/c 'todo)]]{
+         (tei-document/paragraphs-status/c 'todo)]{
  Returns a new @tech{TEI document} value like @racket[doc],
  but annotated to indicate that paragraph-guessing should
  be performed as soon as possible.

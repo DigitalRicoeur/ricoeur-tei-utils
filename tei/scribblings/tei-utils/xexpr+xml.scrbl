@@ -131,7 +131,7 @@
          string-immutable/c]{
  Like @racket[non-element-xexpr->plain-text], but concatenates the
  string forms of a list of non-element @tech{raw xexprs}.
- As the name of @racket[non-element-xexpr->plain-text] suggests,
+ As the name of @racket[non-element-body->plain-text] suggests,
  @racket[body] is usually the body of a @tech{raw xexpr} element
  that may not contain any child elements.
 }
