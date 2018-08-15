@@ -16,7 +16,7 @@ This specifcation operates on several different levels, including:
   @item{The computer-verifiable contracts that enforce the
  specification (see @racket[tei-xexpr/c]); and
 }
-  @item{The implementation of the @tech{tei element struct types}
+  @item{The implementation of the @tech{TEI element struct types}
  that provide an initial layer of abstraction over the details
  of the documents' structure.
  })
