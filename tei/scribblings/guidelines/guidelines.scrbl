@@ -224,7 +224,7 @@ Whitespace (including indentation) is not significant.
 
 @defkeyword["text-lang"]{
  The @kwref{text-lang} (i.e. the value of the @attr{xml:lang}
- attribute of the @tag{text} element) must be either
+ attribute of the @tag{text} element) must be either:
  @itemlist[
  @item{@racket["en"] if the document is primarily in English; or}
  @item{@racket["fr"] if the document is primarily in French.}]
