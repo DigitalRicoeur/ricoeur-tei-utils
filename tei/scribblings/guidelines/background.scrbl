@@ -2,7 +2,7 @@
 
 @title[#:version ""]{Background: XML and TEI}
 
-@(require (submod ricoeur/tei/kernel doc))
+@(require "for-guidelines.rkt")
 
 These guidelines assume familiarity with basic concepts of
 XML and the TEI system. This section serves as a brief
@@ -11,23 +11,23 @@ more extensive background information to external resources.
 
 @section{XML}
 
-XML ("eXtensible Markup Language") is a system for (among other things)
+XML (``eXtensible Markup Language'') is a system for (among other things)
 adding structured, machine-readable @tech{metadata} to text-based
 documents. It is maintained as an international standard by the
 World Wide Web Consortium (W3C).
 
 @margin-note{@deftech{Metadata} is data about data. For example,
- in our context, the sentence @tt{"The text used here is
+ in our context, the sentence ``@tt{The text used here is
   B. Jowett's translation of The Dialogues of Plato, 
-  Vol. I, Random House, New York."} is a piece of data.
+  Vol. I, Random House, New York.}'' is a piece of data.
  The information that the sentence was an end-note to page 135 of
- Ricœur's "The Function Of Fiction In Shaping Reality" and that it was
+ Ricœur's ``The Function Of Fiction In Shaping Reality'' and that it was
  added by the translator is @tech{metadata}.}
 
-Describing XML as a "markup language" is a statement about its
+Describing XML as a ``markup language'' is a statement about its
 @deftech{concrete syntax}: the way in which it is written down.
 In general terms, an XML document begins with a human-readable
-plain-text document and then "marks up" the structure of the document
+plain-text document, then ``marks up'' the structure of the document
 and additional @tech{metadata} using @deftech{tags}, special bits
 of syntax enclosed in angle brackets (@litchar{<} and @litchar{>}).
 @margin-note{This is a simplification: comments, declarations, and
@@ -43,7 +43,7 @@ Consider the following example:
  123-141}@litchar{</bibl>})
 
 In this example, the portions typeset like @tt{this} are
-data, and the portions typeset like @litchar{this} are XML
+textual data, and the portions typeset like @litchar{this} are XML
 syntax. Considering only the XML syntax, we see an opening
 @tag{bibl} @tech{tag}, an opening @tag{date} @tech{tag},
 a closing @tag{date} @tech{tag},
@@ -72,7 +72,7 @@ as specifying a publication date.
 @margin-note{Readers will notice the close relationship between
 @tech{elements}, the abstract, logical entities, and @tech{tags},
 the notations in XML's @tech{concrete syntax} that mark them.
-In practice, "element" and "tag" are often used synonymously.}
+In practice, ``element'' and ``tag'' are often used synonymously.}
 
 In addition to its contents, an @tech{element} may have
 @deftech{attributes}, which provide additional machine-readable
@@ -92,7 +92,7 @@ replaced with the corresponding XML @tech{entities}
 under @secref["Prerequisites"] below. No attempt is made here
 to explain the other, more advanced uses of @tech{entities} in XML.
 
-XML is specifically an "extensible" markup language because,
+XML is specifically an ``extensible'' markup language because,
 beyond the common @tech{concrete syntax} of @tech{tags} and its
 interpretation as @tech{elements}, @tech{attributes}, and
 @tech{entities}, it makes little attempt to specify the
@@ -104,21 +104,21 @@ They will typically be codified in a
 which is a formal, machine-checkable specification for the structure
 of an XML document. Many projects in the humanities (including ours)
 use @tech{Document Type Definitions} based on the TEI model, which is
-described below. An XML document may refer to the DTD on which it is
-based using a @deftech{DOCTYPE declaration}: in our case,
-@tt{<!DOCTYPE TEI SYSTEM "DR-TEI.dtd">}.
+described below.
 
 @subsection{Further Reading}
 
 Many systematic introductions to XML for beginners are available
 freely online, such as the
 @hyperlink["https://www.w3schools.com/Xml/"]{XML Tutorial} from
-the website "W3 Schools". In fact, many of these tutorials
+the website ``W3 Schools.'' In fact, many of these tutorials
 cover far more detail about XML than is
 necessary to contribute to this project.
 
 The W3C publishes a page called
 @hyperlink["https://www.w3.org/standards/xml/core"]{XML Essentials}.
+
+
 
 @section{TEI}
 
@@ -129,10 +129,10 @@ or how the hierarchy of @tech{elements} and textual data should
 be structured in a document. The Text Encoding Initiative
 consortium (TEI) publishes a standard (also referred to as TEI)
 based on XML suitable for many projects in the humanities.
-This standard is described at @url["http://www.tei-c.org"].
+This standard is described at @url["https://www.tei-c.org"].
 
 The TEI standard is what tells us, for example, that the @tag{p}
-@tech{element} means "this is a paragraph", as well as specifying
+@tech{element} means ``this is a paragraph,'' as well as specifying
 the structure for the catalog information in the @tag{teiHeader}
 @tech{element}.
 
@@ -147,7 +147,7 @@ define such customizations with relative ease.
 Digital Ricœur's specific customization of the TEI standard is
 known as @tt{DR-TEI.dtd}. It comes with documentation automatically
 generaterd by the TEI consortium's tools, which is available at
-@url{https://manuals.digitalricoeur.org/DR-TEI_doc.html}.
+@|DR-TEI-link|.
 We also impose additional requirements on our TEI documents that are
 not easily specified using a custom DTD: these requirements
 are specified in this manual and are checked by the tools
