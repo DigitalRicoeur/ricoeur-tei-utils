@@ -67,8 +67,7 @@
  Use @racket[write-tei-document] rather than other methods
  for writing XML: @racket[write-tei-document]
  uses @racket[write-xexpr/standardized] to generate consistent
- output and includes an XML declaration and
- appropriate @tt{DOCTYPE} declaration.
+ output and includes an appropriate prelude.
 }
 
 @defproc[(tei-document->plain-text [doc tei-document?]

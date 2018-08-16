@@ -48,15 +48,21 @@
                [1 body]
                [0-1 back])
    #:required-order (front body back)
+   #:attr-contracts
+   ([xml:lang (or/c "en" "fr")])
+   #:required-attrs (xml:lang)
    #:predicate tei-text-element?
    #:prose ƒ{
 
- The ƒtag{text} element may contain only (in order) 
- a ƒtag{front} element, a ƒtag{body} element,
- and a ƒtag{back} element,
- but the ƒtag{front} and ƒtag{back} elements are optional.
+      The ƒtag{text} element may contain only (in order) 
+      a ƒtag{front} element, a ƒtag{body} element,
+      and a ƒtag{back} element,
+      but the ƒtag{front} and ƒtag{back} elements are optional.
+      It must have a ƒattr{xml:lang} attribute specifying the
+      primary language of the document: ƒracket["en"] for English or
+      ƒracket["fr"] for French.
 
- ƒdefine-elements-together[
+      ƒdefine-elements-together[
  #:inset? #t
  ;; This is where I miss being able to say that
  ;; body+front+back have the same children
@@ -78,11 +84,11 @@
                [0+ pb]
                [0+ ab]
                [0+ div])])]{
-  The ƒtag{body}, ƒtag{front}, and ƒtag{back} elements
-  may contain ƒtag{head}, 
-  ƒtag{p}, ƒtag{pb}, ƒtag{ab}, and ƒtag{div} elements.
- }
- })
+       The ƒtag{body}, ƒtag{front}, and ƒtag{back} elements
+       may contain ƒtag{head}, 
+       ƒtag{p}, ƒtag{pb}, ƒtag{ab}, and ƒtag{div} elements.
+      }
+      })
 
 
 ƒsection{Structural Elements}
@@ -123,26 +129,26 @@
    [get-n (fmap string->immutable-string
                 (false->maybe (attributes-ref attrs 'n)))])
  #|END #:constructor|#]
-   #:prose ƒ{
-      The ƒtag{div} element may contain
-      ƒtag{head}, ƒtag{list}, ƒtag{p},
-      ƒtag{pb}, ƒtag{ab}, ƒtag{sp}, or nested ƒtag{div} elements.
-      It must have a ƒattr{type} attribute with a value of
-      ƒracket["chapter"], ƒracket["part"], ƒracket["section"],
-      ƒracket["dedication"], ƒracket["contents"], ƒracket["intro"],
-      ƒracket["bibl"] (for a bibliography),
-      ƒracket["ack"] (for acknowledgements), or ƒracket["index"].
-      If the division is numbered, it should have an
-      ƒattr{n} attribute giving the page number
-      as given in the source (i.e. possibly as a Roman numeral).
-      Any ƒtag{div} element may, and a ƒtag{div} representing a
-      section not by Paul Ricœur must, have a ƒattr{resp} attribute
-      that is valid per the TEI standard, as discussed above under
-      ƒsecref["Sections_Not_by_Ric_ur"].
-      ƒmargin-note{If a type of division arises that does not
-       fit neatly into these categories, we should decide on a standard
-       value for the ƒtt{type} attribute and amend this document.}
-      })
+   #:prose ƒ[]{
+ The ƒtag{div} element may contain
+ ƒtag{head}, ƒtag{list}, ƒtag{p},
+ ƒtag{pb}, ƒtag{ab}, ƒtag{sp}, or nested ƒtag{div} elements.
+ It must have a ƒattr{type} attribute with a value of
+ ƒracket["chapter"], ƒracket["part"], ƒracket["section"],
+ ƒracket["dedication"], ƒracket["contents"], ƒracket["intro"],
+ ƒracket["bibl"] (for a bibliography),
+ ƒracket["ack"] (for acknowledgements), or ƒracket["index"].
+ If the division is numbered, it should have an
+ ƒattr{n} attribute giving the page number
+ as given in the source (i.e. possibly as a Roman numeral).
+ Any ƒtag{div} element may, and a ƒtag{div} representing a
+ section not by Paul Ricœur must, have a ƒattr{resp} attribute
+ that is valid per the TEI standard, as discussed above under
+ ƒsecref["Sections_Not_by_Ric_ur"].
+ ƒmargin-note{If a type of division arises that does not
+  fit neatly into these categories, we should decide on a standard
+  value for the ƒtt{type} attribute and amend this document.}
+ })
 
 ƒ(define-element pb
    #:attr-contracts ([n string?])
@@ -195,11 +201,11 @@
    #:required-attrs (who)
    #:constructor [#:attributes attrs
                   (declare-resp-field attrs #:key who)]
-   #:prose ƒ{
-                   The ƒtag{sp} ("speech") element must have a valid ƒattr{who}
-                   attribute and may contain ƒtag{list}, ƒtag{p}, ƒtag{pb}, or ƒtag{ab}
-                   elements.
-                   })
+   #:prose ƒ[]{
+ The ƒtag{sp} ("speech") element must have a valid ƒattr{who}
+ attribute and may contain ƒtag{list}, ƒtag{p}, ƒtag{pb}, or ƒtag{ab}
+ elements.
+ })
 
 
 ƒsection{Content-Containing Elements}

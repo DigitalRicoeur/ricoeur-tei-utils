@@ -86,12 +86,11 @@ the same source file that defines the Racket enforcement code.
       (get-field text this)))
    #:prose ƒ{
 
- The document should begin with an XML declaration and DOCTYPE
- declaration, which must be exactly as follows:
+ The document should begin with a prelude,
+ which must be exactly as follows:
  ƒ(nested #:style 'inset
           (verbatim
-           ƒtt{<?xml version="1.0" encoding="utf-8"?>}"\n"
-           ƒtt{<!DOCTYPE TEI SYSTEM "DR-TEI.dtd">}))
+           ƒtt{<?xml version="1.0" encoding="utf-8"?>}))
 
  The root element is a ƒtag{TEI} element,
  which contains exactly (in order)
@@ -120,13 +119,15 @@ the same source file that defines the Racket enforcement code.
                         body))]
        [else
         body])) 
-   (define (write-tei-document doc [out (current-output-port)])
+   (define* (write-tei-document doc [out (current-output-port)])
+     #:with [(define prelude
+               (string->immutable-string
+                ƒstring-append{
+              <?xml version="1.0" encoding="utf-8"?>ƒ"\n"}))]        
      (parameterize ([current-output-port out])
        (call/prettyprint-xml-out
         (λ () 
-          (displayln ƒstring-append{
- <?xml version="1.0" encoding="utf-8"?>
- <!DOCTYPE TEI SYSTEM "DR-TEI.dtd">})
+          (write-string prelude)
           (write-xexpr/standardized (tei-element->xexpr doc))))))
    #|END begin-for-runtime|#)
 

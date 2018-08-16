@@ -10,9 +10,11 @@
          racket/match
          racket/list
          adjutor
+         "../schema.rkt"
          )
 
 (provide (all-from-out adjutor)
+         DR-TEI_doc.html
          (contract-out
           [tag
            (-> (or/c symbol? string?) element?)]

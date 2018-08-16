@@ -7,3 +7,17 @@
                  ricoeur/tei/search
                  ricoeur/tei/corpus
                  )
+
+(module+ test
+  (require rackunit/docs-complete)
+
+  (define reexported-undocumented
+    '(UTC
+      define*/contract))
+
+  (check-docs 'ricoeur/tei/base #:skip reexported-undocumented)
+
+  (check-docs 'ricoeur/tei #:skip reexported-undocumented)
+  #|END module+ test|#)
+
+

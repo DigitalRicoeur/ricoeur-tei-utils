@@ -2,7 +2,7 @@
 
 (define collection "ricoeur")
 (define pkg-desc "TEI utilities for Digital Ricoeur")
-(define version "0.5")
+(define version "0.5.1")
 (define pkg-authors '(philip))
 
 ;; Executables to build are listed in "tei/tools/info.rkt".
@@ -42,5 +42,6 @@
                      "data-doc"
                      "scribble-doc"
                      "todo-list" ;; TODO: eliminate this dependency
+                     "racket-index"
                      ))
 

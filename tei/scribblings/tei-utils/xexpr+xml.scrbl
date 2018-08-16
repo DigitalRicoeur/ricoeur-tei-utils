@@ -242,13 +242,27 @@ typically a noop.
 @defproc[(valid-xml-file? [#:quiet? quiet? any/c #t]
                           [pth path-string?] ...+)
          boolean?]{
- Checks that every @racket[pth] is a valid XML file.
+ Checks that every @racket[pth] is a valid TEI XML file
+ according to Digital @Ricoeur's customized DTD
+ (but @italic{not} the additional project-specific requirements
+ enforced by contracts like @racket[any-tei-xexpr/c]).
 
  When @racket[quiet?] is @racket[#false], writes any
  validation error messages (from @tt{xmllint}) to
  @racket[current-error-port].
 
  If @exec{xmllint} is not available, always returns @racket[#true].
+
+ @history[
+ #:changed "0.5.1" @elem{Changed to always use Digital @Ricoeur's DTD.
+   Previously, @racket[valid-xml-file?] was not specific to Digital @|Ricoeur|.
+   It had the same meaning as passing @DFlag{valid} to @exec{xmllint}, and
+   it depended on a system @tt{DOCTYPE} declaration to find the DTD file
+   via a relative path reference.
+   Instead, @racket[valid-xml-file?] now uses a DTD file distributed with
+   this library, which improves reliability at the cost of rejecting 
+   XML files that might be valid according to other arbitrary DTDs.
+   }]
 }
 
 @defproc[(directory-validate-xml [dir (and/c path-string? directory-exists?)]
@@ -256,13 +270,19 @@ typically a noop.
          boolean?]{
  Checks that every path satisfying @racket[xml-path?]
  in @racket[dir] and its recursive subdirectories
- is a valid XML file.
+ is a valid TEI XML file according to Digital @Ricoeur's customized DTD,
+ as with @racket[valid-xml-file?].
 
  When @racket[quiet?] is @racket[#false], writes any
  validation error messages (from @exec{xmllint}) to
  @racket[current-error-port].
 
  If @exec{xmllint} is not available, always returns @racket[#true].
+
+ @history[
+ #:changed "0.5.1" @elem{Changed to be specific to Digital @Ricoeur's
+   DTD, consistent with the change to @racket[valid-xml-file?].
+   }]
 }
 
 @defproc[(call/prettyprint-xml-out [thunk (-> any/c)])

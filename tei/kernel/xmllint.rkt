@@ -8,6 +8,7 @@
          setup/matching-platform
          racket/runtime-path
          "pre-kernel-lib.rkt"
+         "schema.rkt"
          (for-syntax racket/base
                      setup/matching-platform
                      ))
@@ -59,7 +60,7 @@
                           (current-error-port))])
         (apply system*
                xmllint
-               "--valid"
+               "--dtdvalid" DR-TEI.dtd ;; path->url ????
                "--noout"
                l-pths))))
 

@@ -8,6 +8,8 @@
 @(require racket/runtime-path
           racket/list
           (submod ricoeur/tei/kernel doc)
+          scribble/core
+          scribble/html-properties
           (for-syntax racket/base
                       syntax/parse
                       adjutor
@@ -34,7 +36,8 @@ These requirements are documented in this manual.
 
 @margin-note{
  For additional documentation pertaining only to the requirements specified
- by the DTD, see @url{https://manuals.digitalricoeur.org/DR-TEI_doc.html}.
+ by the DTD, see
+ @elem[#:style (style #f (list (link-resource DR-TEI_doc.html)))]{DR-TEI_doc.html}.
 }
 
 We have implemented a number of tools
@@ -103,7 +106,6 @@ Whitespace (including indentation) is not significant.
   "example.xml"
   (verbatim
    @litchar{<?xml version="1.0" encoding="utf-8"?>}"\n"
-   @litchar{<!DOCTYPE TEI SYSTEM "DR-TEI.dtd">}"\n"
    @litchar{<TEI version="5.0" xmlns="http://www.tei-c.org/ns/1.0">}"\n"
    "  "@litchar{<teiHeader>}"\n"
    "    "@litchar{<fileDesc>}"\n"
@@ -134,7 +136,7 @@ Whitespace (including indentation) is not significant.
    "      "@litchar{</textClass>}"\n"
    "    "@litchar{</profileDesc>}"\n"
    "  "@litchar{</teiHeader>}"\n"
-   "  "@litchar{<text>}"\n"
+   "  "@litchar{<text xml:lang=}@kwref{text-lang}@litchar{>}"\n"
    "    "@litchar{<body>}"\n"
    "      "@litchar{<ab>}"\n"
    "        "@kwref{main-text}"\n"
@@ -218,6 +220,14 @@ Whitespace (including indentation) is not significant.
  @item{@racket["https://schema.digitalricoeur.org/taxonomy/type#book"],
    if the document is a book.
    }]
+}
+
+@defkeyword["text-lang"]{
+ The @kwref{text-lang} (i.e. the value of the @attr{xml:lang}
+ attribute of the @tag{text} element) must be either
+ @itemlist[
+ @item{@racket["en"] if the document is primarily in English; or}
+ @item{@racket["fr"] if the document is primarily in French.}]
 }
 
 @defkeyword["main-text"]{
