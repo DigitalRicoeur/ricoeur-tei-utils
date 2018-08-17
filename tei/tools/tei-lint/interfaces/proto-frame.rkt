@@ -14,7 +14,7 @@
             [proto-frame%
              (class/c
               (init [lint-status lint-status/c]
-                    [maybe-title (maybe/c string?)]
+                    [maybe-title (maybe/c string-immutable/c)]
                     [make-frame (-> (is-a?/c frame%))]
                     [dir-frame dir-frame/false/c]))]
             )))

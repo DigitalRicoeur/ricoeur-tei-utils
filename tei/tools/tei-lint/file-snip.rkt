@@ -33,7 +33,7 @@
 (define file-snip*%
   (class* pict-snip% {(interface (lint-status<%>)
                         [get-quasititle
-                         (->m string?)])}
+                         (->m string-immutable/c)])}
     (super-new)
     (init [(_proto-frame proto-frame)]
           [(_path path)])
@@ -42,7 +42,8 @@
       [path _path]
       [quasititle (match (send proto-frame get-maybe-title)
                     [(just str) str]
-                    [_ (path->string* path)])])
+                    [_ (string->immutable-string
+                        (path->string* path))])])
     (define/public-final (get-lint-status)
       (send proto-frame get-lint-status))
     (define/public-final (get-quasititle)
