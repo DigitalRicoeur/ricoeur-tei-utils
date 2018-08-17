@@ -44,7 +44,7 @@
       (make-custodian))
     (define child-eventspace
       (parameterize ([current-custodian cust])
-        (make-eventspace)))
+        (make+register-eventspace)))
     (define file-snips
       (let ([progress (new loading-frame%
                            [dir dir])])
@@ -94,25 +94,20 @@
     (show #t)
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     (define/public-final (refresh-directory!)
-      (cond
-        [(eq? (current-thread)
-              (eventspace-handler-thread child-eventspace))
-         (parameterize ([current-eventspace (get-eventspace)])
-           (queue-callback
-            (λ () (do-refresh-directory!))))
-         (yield never-evt)]
-        [else
-         (do-refresh-directory!)]))
-    (define/private (do-refresh-directory!)
+      ;; Checking for the handler thread of child-eventspace
+      ;; isn't good enough b/c could be in some document
+      ;; frame's eventspace.
       (thread-send
        refresh-worker
-       (λ () 
-         (custodian-shutdown-all cust)
-         (show #f)
-         (make-directory-frame dir))))
+       (λ ()
+         (call/disable-implicit-exit
+          (λ () 
+            (custodian-shutdown-all cust)
+            (show #f)
+            (make-directory-frame dir))))))
     (define/public-final (call-in-directory-context thunk)
       (parameterize ([current-eventspace child-eventspace]
-                     [current-custodian cust]) ;; unclear if cust would shut down child eventspaces otherwise
+                     [current-custodian cust]) ;; otherwise I don't think cust would shut down child eventspaces
         (thunk)))
     (define/public-final (open-additional)
       (let ([dir (get-xml-directory)])

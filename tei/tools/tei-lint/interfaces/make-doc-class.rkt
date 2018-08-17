@@ -73,7 +73,8 @@
        [maybe-title (just title)]
        [make-frame
         (λ ()
-          (parameterize ([current-eventspace (make-eventspace)])
+          (parameterize ([current-eventspace
+                          (make+register-eventspace)])
             (new tei-document-frame%
                  [dir-frame (get-dir-frame/false)]
                  [lint-status status]

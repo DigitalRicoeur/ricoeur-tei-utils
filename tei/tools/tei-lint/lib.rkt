@@ -12,6 +12,7 @@
 (require-provide "lib/ed.rkt"
                  "lib/xml-preview.rkt"
                  "lib/long-path.rkt"
+                 "lib/shutdown.rkt"
                  )
 
 (provide photo-bitmap

@@ -9,16 +9,13 @@
   (start))
 
 (define (start)
-  #|(when (current-eventspace-has-menu-root?)
-    (displayln "Root menu bar!")
-    (define mb
-    (new menu-bar%	 
-         [parent 'root]))
-    (new menu%
-         [parent mb]
-         [label "Please stay open!"]))|#
-  (new splash-frame%)
-  (yield never-evt))
+  (application-quit-handler
+   (λ () (exit 0)))
+  (define (the-yield-handler _)
+    (wait-to-implicitly-exit))
+  (executable-yield-handler the-yield-handler)
+  (parameterize ([executable-yield-handler the-yield-handler])
+    (new splash-frame%)))
 
 (define-syntax (lift stx)
   (syntax-case stx ()
