@@ -9,8 +9,9 @@
          pict
          )
 
-(require-provide "ed.rkt"
-                 "long-path.rkt"
+(require-provide "lib/ed.rkt"
+                 "lib/xml-preview.rkt"
+                 "lib/long-path.rkt"
                  )
 
 (provide photo-bitmap
@@ -149,19 +150,20 @@
      (send dc set-pen old-pen)
      (send dc set-brush old-brush))])
 
-(define status-dot-pict-cache
-  (make-hasheq))
-
-(define (status-dot-pict status)
-  (hash-ref status-dot-pict-cache
-            status
-            (λ ()
-              (define rslt
-                (dc (λ (dc x y) (draw-status-dot dc status x y))
-                    STATUS_DOT_SIZE
-                    STATUS_DOT_SIZE))
-              (hash-set! status-dot-pict-cache status rslt)
-              rslt)))
+(define* status-dot-pict
+  (def
+    [(make status)
+     (dc (λ (dc x y) (draw-status-dot dc status x y))
+         STATUS_DOT_SIZE
+         STATUS_DOT_SIZE)]
+    [error (make 'error)]
+    [warning (make 'warning)]
+    [ok (make 'ok)])
+  (λ (status)
+    (case status
+      [(error) error]
+      [(warning) warning]
+      [else ok])))
 
 (define status-canvas%
   (class message%
@@ -169,27 +171,6 @@
     (super-new [label
                 (pict->bitmap (status-dot-pict status)
                               #:make-bitmap make-screen-bitmap)])))
-#|
-(define/contract status-canvas%
-  (class/c (init [status (or/c 'ok 'warning 'error)])
-           [set-status (->m (or/c 'ok 'warning 'error) any)])
-  (class canvas%
-    (init [(init-status status)]
-          [(init-size size) 20])
-    (define status
-      init-status)
-    (super-new [style '(transparent)]
-               [min-width STATUS_DOT_SIZE]
-               [min-height STATUS_DOT_SIZE]
-               [stretchable-width #f]
-               [stretchable-height #f])
-    (inherit get-dc refresh-now)
-    (define/public (set-status new-status)
-      (set! status new-status)
-      (refresh-now))
-    (define/override (on-paint)
-      (draw-status-dot (get-dc) status))))
-|#
 
 (struct xmllint-error (str))
 

@@ -15,6 +15,4 @@ reference when maintaining the library.
 
 @include-section["implementation/lang/lang-kernel.scrbl"]
 @include-section["implementation/search.scrbl"]
-@section{``TEI Lint'' Implementation}
-This section will contain details on the implementation
-of ``TEI Lint''.
+@include-section["implementation/tei-lint.scrbl"]

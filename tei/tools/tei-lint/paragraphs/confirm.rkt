@@ -3,7 +3,6 @@
 (require framework
          ricoeur/tei/base
          "../lib.rkt"
-         "../xml-preview.rkt"
          "common.rkt"
          )
 

@@ -3,9 +3,10 @@
 (require framework
          ricoeur/tei/base
          "../lib.rkt"
-         "../interfaces.rkt"
-         "../menu.rkt"
-         "../proto-frame.rkt"
+         "interfaces.rkt"
+         "menu.rkt"
+         "proto-frame.rkt"
+         (submod "proto-frame.rkt" private)
          )
 
 (provide tei-document-proto-frame%/c
@@ -16,7 +17,7 @@
           ))
 
 (define/final-prop tei-document-proto-frame%/c
-  (and/c (subclass?/c proto-frame%)
+  (and/c (implementation?/c proto-frame<%>)
          (class/c
           (init [doc tei-document?]
                 [path path-string?]
@@ -72,13 +73,14 @@
        [maybe-title (just title)]
        [make-frame
         (λ ()
-          (new tei-document-frame%
-               [dir-frame (get-dir-frame/false)]
-               [lint-status status]
-               [path path]
-               [old-modify-seconds old-modify-seconds]
-               [title title]
-               [initialize initialize]))]))))
+          (parameterize ([current-eventspace (make-eventspace)])
+            (new tei-document-frame%
+                 [dir-frame (get-dir-frame/false)]
+                 [lint-status status]
+                 [path path]
+                 [old-modify-seconds old-modify-seconds]
+                 [title title]
+                 [initialize initialize])))]))))
 
       
 

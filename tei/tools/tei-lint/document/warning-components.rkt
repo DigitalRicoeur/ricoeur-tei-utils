@@ -5,7 +5,7 @@
          "../lib.rkt"
          "../interfaces.rkt"
          "../paragraphs.rkt"
-         "../pb-report.rkt"
+         "pb-report.rkt"
          )
 
 (provide document-frame-component:paragraphs

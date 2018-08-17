@@ -1,6 +1,6 @@
 #lang scribble/manual
 
-@title[#:version ""]{Digital Ricœur TEI Library}
+@title[#:version tei-utils-version]{Digital Ricœur TEI Library}
 @author[(author+email @elem{Philip M@superscript{c}Grath}
                       "philip@philipmcgrath.com")]
 @defmodule[#:multi (ricoeur/tei ricoeur/tei/base)]

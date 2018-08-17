@@ -1,7 +1,6 @@
 #lang racket/gui
 
-(require adjutor
-         )
+(require adjutor)
 
 (provide (contract-out
           [scroll-editor-to-top

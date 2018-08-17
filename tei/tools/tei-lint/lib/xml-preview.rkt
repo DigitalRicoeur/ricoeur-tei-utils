@@ -2,8 +2,8 @@
 
 (require framework
          ricoeur/tei/base
-         ricoeur/tei/tools/tei-lint/lib
-         ricoeur/tei/tools/tei-lint/xml-color
+         "ed.rkt"
+         "xml-color.rkt"
          )
 
 (provide xml-preview-text%)

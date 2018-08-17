@@ -1,15 +1,15 @@
-#lang racket
+#lang racket/base
 
 (require racket/runtime-path
          pict
          file/ico
-         )
+         icns)
 
 (define-runtime-path png-path
   "tei-lint.png")
-(define icns-path
+(define-runtime-path icns-path
   "tei-lint.icns")
-(define ico-path
+(define-runtime-path ico-path
   "tei-lint.ico")
 
 (define icon
@@ -24,15 +24,9 @@
  ico-path
  #:exists 'replace)
 
-(define sips
-  (find-executable-path "sips"))
-
-(when sips
-  (void
-   (parameterize ([current-output-port (open-output-nowhere)])
-       (system* sips
-                "-s" "format" "icns"
-                ico-path
-                "--out" icns-path))))
-
+(with-output-to-file icns-path
+  #:exists 'replace
+  (λ ()
+    (void (write-bytes
+           (pict->icns-bytes icon)))))
 

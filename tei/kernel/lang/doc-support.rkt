@@ -49,10 +49,14 @@
                   nested-flow?)]
             )))
 
+(TODO/void tagfont: #:
+           should it resemble the TEI Lint syntax colorer?)
+(define tagfont
+  litchar)
 
 (define (deftag tag-str)
   (toc-target2-element #f
-                       (litchar tag-str)
+                       (tagfont tag-str)
                        (list 'tei (list 'prefixable tag-str))
                        (tt tag-str)))
 
@@ -62,7 +66,7 @@
         (symbol->string raw)
         raw))
   (link-element #f
-                (litchar tag-str)
+                (tagfont tag-str)
                 (list 'tei (cons 'prefixable
                                  (doc-prefix mod-path (list tag-str))))))
 

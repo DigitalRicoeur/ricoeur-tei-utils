@@ -4,7 +4,6 @@
          ricoeur/tei/base
          "lib.rkt"
          "interfaces.rkt"
-         "menu.rkt"
          "file-snip.rkt"
          )
 
@@ -22,6 +21,12 @@
 (define (make-directory-frame dir)
   (new directory-frame%
        [dir dir]))
+
+(define refresh-worker
+  (thread (λ ()
+            (let loop ()
+              (thread (thread-receive))
+              (loop)))))
 
 (define directory-frame%
   (class* frame% {directory-frame<%>}
@@ -55,13 +60,6 @@
                [parent row]
                [label "Refresh"]
                [callback (λ (b e) (refresh-directory!))]))
-        #|(define ed
-          (new text%))
-        (define ec
-          (new editor-canvas%
-               [style '(transparent auto-hscroll auto-vscroll)]
-               [parent this]
-               [editor ed]))|#
         (define file-snips
           (sort 
            (let ([pths (for/list ([pth (in-directory dir)]
@@ -79,12 +77,6 @@
                               [dir-valid? dir-valid?])
                          (progress++)))))
            file-snip-before?))
-        #|(for ([snip (in-list (sort file-snips
-                                   file-snip-before?))])
-          (send ed insert snip))
-        (scroll-editor-to-top ed)
-        (send ed lock #t) (TODO/void avoid lock - customize text%)
-        (send ed hide-caret #t)|#
         (define ec
           (new editor-canvas%
                [style '(transparent auto-hscroll auto-vscroll)]
@@ -112,11 +104,15 @@
         [else
          (do-refresh-directory!)]))
     (define/private (do-refresh-directory!)
-      (custodian-shutdown-all cust)
-      (show #f)
-      (make-directory-frame dir))
+      (thread-send
+       refresh-worker
+       (λ () 
+         (custodian-shutdown-all cust)
+         (show #f)
+         (make-directory-frame dir))))
     (define/public-final (call-in-directory-context thunk)
-      (parameterize ([current-eventspace child-eventspace])
+      (parameterize ([current-eventspace child-eventspace]
+                     [current-custodian cust]) ;; unclear if cust would shut down child eventspaces otherwise
         (thunk)))
     (define/public-final (open-additional)
       (let ([dir (get-xml-directory)])

@@ -25,7 +25,7 @@
 (define (file-snip-before? a b)
   (let ([a-status (send a get-lint-status)]
         [b-status (send b get-lint-status)])
-    (or (status-more-urgent? a-status b-status)
+    (or (lint-status-more-urgent? a-status b-status)
         (and (eq? a-status b-status)
              (title<? (send a get-quasititle)
                       (send b get-quasititle))))))

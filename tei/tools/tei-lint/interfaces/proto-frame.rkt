@@ -2,22 +2,29 @@
 
 (require framework
          ricoeur/tei/base
-         "lib.rkt"
+         "../lib.rkt"
          "interfaces.rkt"
          "menu.rkt"
          )
 
-(provide (contract-out
-          [proto-frame%
-           (class/c
-            (init [lint-status lint-status/c]
-                  [maybe-title (maybe/c string?)]
-                  [make-frame (-> (is-a?/c frame%))]
-                  [dir-frame dir-frame/false/c]))]
-          ))
+(provide proto-frame<%>)
+
+(module+ private
+  (provide (contract-out
+            [proto-frame%
+             (class/c
+              (init [lint-status lint-status/c]
+                    [maybe-title (maybe/c string?)]
+                    [make-frame (-> (is-a?/c frame%))]
+                    [dir-frame dir-frame/false/c]))]
+            )))
+
+(define proto-frame<%>
+  (interface (lint-status<%> get-dir-frame/false<%>)
+    [show (->m any/c any)]))
 
 (define proto-frame%
-  (class* object% {lint-status<%> get-dir-frame/false<%>}
+  (class* object% {proto-frame<%>}
     (super-new)
     (init [(status lint-status)]
           [(t maybe-title)]
@@ -48,4 +55,3 @@
       maybe-title)
     #|END class proto-frame%|#))
 
-            

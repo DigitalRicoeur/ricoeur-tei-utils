@@ -1,9 +1,11 @@
 #lang at-exp racket
 
 (require scribble/manual
+         setup/getinfo
+         pkg/lib
          (except-in (submod ricoeur/tei/kernel doc)
-                    tag)
-         )
+                    DR-TEI_doc.html
+                    tag))
 
 (require-provide (provide-only (submod ricoeur/tei/kernel doc))
                  scribble/core
@@ -29,6 +31,7 @@
 (provide guidelines-doc
          guidelines-secref
          Ricoeur
+         tei-utils-version
          defpredicate
          submodlink
          make-tei-eval
@@ -52,6 +55,14 @@
 (define tag
   (make-other-doc-tag guidelines))
 
+
+(define tei-utils-version
+  (let ([dir (pkg-directory "ricoeur-tei-utils")])
+    (or (and dir
+             (let ([ref (get-info/full dir)])
+               (and ref
+                    (ref 'version (λ () #f)))))
+        "")))
 
 
 (define-syntax-parser defpredicate

@@ -20,6 +20,7 @@
                "data-lib"
                "db-lib"
                "draw-lib"
+               "icns"
                "parser-tools-lib"
                "pict-snip-lib"
                "typed-racket-lib"

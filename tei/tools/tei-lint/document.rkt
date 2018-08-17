@@ -4,7 +4,6 @@
          ricoeur/tei/base
          "lib.rkt"
          "interfaces.rkt"
-         "document/make-class.rkt"
          "document/warning-components.rkt"
          "document/info-components.rkt"
          )
