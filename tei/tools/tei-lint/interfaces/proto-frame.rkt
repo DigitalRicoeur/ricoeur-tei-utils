@@ -22,7 +22,7 @@
 (define proto-frame<%>
   (interface (lint-status<%> get-dir-frame/false<%>)
     [use-fresh-eventspace? (->m any/c)]
-    [show (->m any/c any)]))
+    [show! (->m any)]))
 
 (define proto-frame%
   (class* object% {proto-frame<%>}
@@ -35,24 +35,25 @@
       [dir-frame d]
       [lint-status status]
       [maybe-title t])
-    (define pr:frame
-      (delay/sync ; values fixes for error frame
-       (cond
-         [dir-frame
-           (send dir-frame
-                 call-in-directory-context
-                 do-make-frame
-                 (use-fresh-eventspace?))]
-         [else
-          (do-make-frame)])))
+    (define initialize-sema (make-semaphore 1))
+    (define (frame/thunk)
+      (cond
+        [dir-frame
+         (send dir-frame
+               call-in-directory-context
+               do-make-frame
+               (use-fresh-eventspace?))]
+        [else
+         (do-make-frame)]))
+    (define/public-final (show!)
+      (when (procedure? frame/thunk)
+        (call-with-semaphore initialize-sema
+          (λ ()
+            (when (procedure? frame/thunk)
+              (set! frame/thunk (frame/thunk))))))
+      (send frame/thunk show #t))
     (define/public (use-fresh-eventspace?)
       #false) 
-    (define/public-final (show should-show?)
-      (if should-show?
-          (send (force pr:frame) show #t)
-          (when (or (promise-forced? pr:frame)
-                    (promise-running? pr:frame))
-            (send (force pr:frame) show #f))))
     (define/public-final (get-dir-frame/false)
       dir-frame)
     (define/public-final (get-lint-status)

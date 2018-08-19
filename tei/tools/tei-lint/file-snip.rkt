@@ -77,7 +77,7 @@
          (set! mouse-state 'left-down)]
         [(left-up)
          (when mouse-state
-           (send proto-frame show #t))
+           (send proto-frame show!))
          (set! mouse-state #f)]
         [else
          (set! mouse-state #f)

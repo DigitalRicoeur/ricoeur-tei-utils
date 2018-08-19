@@ -61,23 +61,25 @@
                [parent row]
                [label "Refresh"]
                [callback (λ (b e) (refresh-directory!))]))
-        (define file-snips
-          (sort 
-           (let ([pths (for/list ([pth (in-directory dir)]
-                                  #:when (xml-path? pth))
-                         pth)])
-             (send progress set-range (length pths))
-             (define dir-valid?
-               (directory-validate-xml #:quiet? #t
-                                       dir))
-             (with-method ([progress++ {progress ++}])
-               (for/list ([pth (in-list pths)])
-                 (begin0 (new file-snip%
-                              [path pth]
-                              [dir-frame this]
-                              [dir-valid? dir-valid?])
-                         (progress++)))))
-           file-snip-before?))
+        (define* file-snips
+          (define pths
+            (for/list ([pth (in-directory dir)]
+                       #:when (xml-path? pth))
+              pth))
+          (send progress set-range (length pths))
+          (define dir-valid?
+            (directory-validate-xml #:quiet? #t
+                                    dir))
+          (define unsorted-file-snips
+            (parameterize ([current-custodian cust])
+              (with-method ([progress++ {progress ++}])
+                (for/list ([pth (in-list pths)])
+                  (begin0 (new file-snip%
+                               [path pth]
+                               [dir-frame this]
+                               [dir-valid? dir-valid?])
+                          (progress++))))))
+          (sort unsorted-file-snips file-snip-before?))
         (define ec
           (new editor-canvas%
                [style '(transparent auto-hscroll auto-vscroll)]
