@@ -28,6 +28,7 @@
                  #:unless (sync/timeout 0 es))
         es))
     (unless (null? live-eventspaces)
+      ;; should a peek on blockers-ach also go into the choice-evt ??
       (yield (apply choice-evt live-eventspaces))
       (wait-to-implicitly-exit)))
   ;; Call (clear-blockers) before checking eventspaces

@@ -71,14 +71,14 @@
              )
     (define/public (set-natural-height)
       (min-height (inexact->exact (get-natural-height))))
-    (define/public (get-natural-width)
+    (define/public (get-natural-width) ;; maybe not necessary ?
       (define-values (w h)
         (get-text-extent))
       (+ w (* 2 (horizontal-inset)) 5))
     (define/public (get-natural-height)
       (define-values (w h)
         (get-text-extent))
-      (+ h (* 2 (vertical-inset)) 5)) ; don't know why 5, but it fixes problems
+      (+ h (* 2 (vertical-inset)) 5)) ;; don't know why 5, but it fixes problems
     (define/public (get-text-extent)
       (let ([w (box 0)]
             [h (box 0)])

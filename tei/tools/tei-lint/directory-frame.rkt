@@ -1,6 +1,7 @@
 #lang racket/gui
 
 (require framework
+         racket/async-channel
          ricoeur/tei/base
          "lib.rkt"
          "interfaces.rkt"
@@ -105,10 +106,21 @@
             (custodian-shutdown-all cust)
             (show #f)
             (make-directory-frame dir))))))
-    (define/public-final (call-in-directory-context thunk)
-      (parameterize ([current-eventspace child-eventspace]
-                     [current-custodian cust]) ;; otherwise I don't think cust would shut down child eventspaces
-        (thunk)))
+    (define/public-final (call-in-directory-context thunk use-fresh-eventspace?)
+      (parameterize ([current-custodian cust])
+        (define ach
+          (make-async-channel))
+        (define es
+          (if use-fresh-eventspace?
+              (make+register-eventspace)
+              child-eventspace))
+        (parameterize ([current-eventspace es])
+          (queue-callback
+           (λ ()
+             (parameterize ([current-custodian cust]
+                            [current-eventspace es])
+               (async-channel-put ach (thunk)))))
+          (yield ach))))
     (define/public-final (open-additional)
       (let ([dir (get-xml-directory)])
         (when dir

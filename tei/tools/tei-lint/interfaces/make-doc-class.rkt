@@ -64,6 +64,8 @@
           path
           old-modify-seconds)
     (inherit get-dir-frame/false)
+    (define/override (use-fresh-eventspace?)
+      #t)
     (let-values ([(status initialize)
                   (document-frame-component-run dfc doc)])
       (define title
@@ -73,15 +75,13 @@
        [maybe-title (just title)]
        [make-frame
         (λ ()
-          (parameterize ([current-eventspace
-                          (make+register-eventspace)])
-            (new tei-document-frame%
-                 [dir-frame (get-dir-frame/false)]
-                 [lint-status status]
-                 [path path]
-                 [old-modify-seconds old-modify-seconds]
-                 [title title]
-                 [initialize initialize])))]))))
+          (new tei-document-frame%
+               [dir-frame (get-dir-frame/false)]
+               [lint-status status]
+               [path path]
+               [old-modify-seconds old-modify-seconds]
+               [title title]
+               [initialize initialize]))]))))
 
       
 

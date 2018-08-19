@@ -21,6 +21,7 @@
 
 (define proto-frame<%>
   (interface (lint-status<%> get-dir-frame/false<%>)
+    [use-fresh-eventspace? (->m any/c)]
     [show (->m any/c any)]))
 
 (define proto-frame%
@@ -35,12 +36,17 @@
       [lint-status status]
       [maybe-title t])
     (define pr:frame
-      (delay/sync
-       (if dir-frame
+      (delay/sync ; values fixes for error frame
+       (cond
+         [dir-frame
            (send dir-frame
                  call-in-directory-context
-                 do-make-frame)
-           (do-make-frame))))
+                 do-make-frame
+                 (use-fresh-eventspace?))]
+         [else
+          (do-make-frame)])))
+    (define/public (use-fresh-eventspace?)
+      #false) 
     (define/public-final (show should-show?)
       (if should-show?
           (send (force pr:frame) show #t)

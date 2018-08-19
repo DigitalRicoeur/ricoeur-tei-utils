@@ -54,7 +54,7 @@
 (define directory-frame<%>
   (interface (frame<%>)
     [open-additional (->m any)]
-    [call-in-directory-context (->m (-> any) any)]
+    [call-in-directory-context (->m (-> any/c) any/c any/c)]
     [refresh-directory! (->m any)]))
 
 (define/final-prop dir-frame/false/c
