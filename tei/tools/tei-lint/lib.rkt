@@ -23,6 +23,8 @@
          TEI-frame<%>
          STATUS_DOT_SIZE
          insert-message-row
+         white
+         invalid-bg-color
          (contract-out
           [path->string*
            (-> path-string? string?)]
@@ -55,6 +57,12 @@
                 {real? real?}
                 any)]
           ))
+
+(define white
+  (make-color 255 255 255))
+
+(define invalid-bg-color
+  (make-color 255 0 0 0.333))
 
 (define (path->string* p)
   (if (string? p)
