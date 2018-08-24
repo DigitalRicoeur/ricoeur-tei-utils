@@ -17,10 +17,13 @@
   (class text%
     (init [content '()]
           [auto-wrap #t]
+          [center? #f]
           )
     (inherit insert
              begin-edit-sequence
              end-edit-sequence
+             set-paragraph-alignment
+             last-paragraph
              )
     (super-new [auto-wrap auto-wrap]
                )
@@ -32,11 +35,18 @@
           (insert str)))
     (end-edit-sequence)
     (scroll-editor-to-top this)
+    (when center?
+      (align-center))
     (set! initializing? #f)
     (define/augment (can-delete? start len)
       #f)
     (define/augment (can-insert? start len)
       initializing?)
+    (define/private (align-center)
+      (define stop (last-paragraph))
+      (for ([i (in-naturals)]
+            #:final (= i stop))
+        (set-paragraph-alignment i 'center)))
     #|END class t%|#))
 
 
@@ -49,10 +59,12 @@
           [auto-hscroll #t]
           [auto-vscroll #t]
           [style null]
+          [center? #f]
           )
     (define t
       (new t%
            [content content]
+           [center? center?]
            [auto-wrap auto-wrap]
            [line-spacing line-spacing]))
     (super-new [style (let* ([style (if auto-hscroll
@@ -126,7 +138,6 @@ ed.rkt:110:8: sequence-contract-violation: negative:
                [transparent #t]
                [style '(no-border no-hscroll no-focus)])
     #|END class editor-message%|#))
-
 
 
 #|

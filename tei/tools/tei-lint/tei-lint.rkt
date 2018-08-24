@@ -33,13 +33,19 @@
   (class tei-lint-menu-bar-frame%
     (inherit show)
     (super-new [label "TEI Lint"]
-               [height (floor (* 5/4 (send photo-bitmap get-height)))])
-    (let ([row (new horizontal-pane% [parent this])])
+               [spacing 10]
+               [alignment '(center top)])
+    (let ([row (new horizontal-pane%
+                    [alignment '(center center)]
+                    [stretchable-height #f]
+                    [parent this])])
       (new message%
            [parent row]
            [label photo-bitmap])
       (define col
-        (new vertical-pane% [parent row]))
+        (new vertical-pane%
+             [alignment '(center center)]
+             [parent row]))
       (new message%
            [parent col]
            [label "Digital Ricœur"]
@@ -47,14 +53,44 @@
       (new message%
            [parent col]
            [label  "TEI Lint"]
-           [font title-font])
-      (new editor-message%
-           [parent col]
-           [content "To begin, choose a directory containing TEI XML files."])
-      (new button%
-           [parent col]
-           [label "Choose Directory …"]
-           [callback (λ (b e) (choose-directory))]))
+           [font title-font]))
+    (let ([row (new horizontal-pane%
+                    [alignment '(center top)]
+                    [parent this])])
+      (let ([col (new vertical-pane%
+                      [alignment '(center top)]
+                      [stretchable-width #f]
+                      [parent row])])
+        (new message%
+             [label "New Document"]
+             [font subtitle-font]
+             [parent col])
+        (new editor-message%
+             [content "Start a new TEI document based on a plain-text file."]
+             [center? #t]
+             [parent col])
+        (new button%
+             [label "Create TEI Document …"]
+             [callback (λ (b e) (choose-raw-text-file))]
+             [parent col]))
+      (new vertical-pane%
+           [parent row])
+      (let ([col (new vertical-pane%
+                      [alignment '(center top)]
+                      [stretchable-width #f]
+                      [parent row])])
+        (new message%
+             [label "Check Directory"]
+             [font subtitle-font]
+             [parent col])
+        (new editor-message%
+             [content "Check a directory containing TEI XML files for errors."]
+             [center? #t]
+             [parent col])
+        (new button%
+             [parent col]
+             [label "Choose Directory …"]
+             [callback (λ (b e) (choose-directory))])))
     (show #t)
     (unless (xmllint-available?)
       (show-xmllint-warning this))
