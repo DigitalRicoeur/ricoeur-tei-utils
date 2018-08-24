@@ -5,7 +5,7 @@
          pict
          pict/snip
          "lib.rkt"
-         "interfaces.rkt"
+         "toolkit.rkt"
          "lint-file.rkt"
          )
 

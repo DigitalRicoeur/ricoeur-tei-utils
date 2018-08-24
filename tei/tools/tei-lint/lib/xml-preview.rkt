@@ -6,7 +6,10 @@
          "xml-color.rkt"
          )
 
-(provide xml-preview-text%)
+(provide (contract-out
+          [xml-preview-text%
+           any/c]
+          ))
 
 ;; This seems to work elsewhere, but the overlap
 ;; problem happens in main.

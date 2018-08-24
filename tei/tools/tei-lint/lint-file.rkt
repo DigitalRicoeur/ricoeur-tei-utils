@@ -3,7 +3,7 @@
 (require framework
          ricoeur/tei/base
          "lib.rkt"
-         "interfaces.rkt"
+         "toolkit.rkt"
          "document.rkt"
          )
 

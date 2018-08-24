@@ -18,9 +18,7 @@
 
 
 
-(define* dialog:confirm-ready-to-save%
-  (define citation-editor-canvas%
-    (natural-height-mixin constant-editor-canvas%))
+(define dialog:confirm-ready-to-save%
   (class dialog%
     (inherit show)
     (init [(maybe-pth maybe-plain-text-path)]
@@ -78,7 +76,7 @@
              [parent row]
              [font bold-system-font]
              [label "Citation:"])
-        (new citation-editor-canvas%
+        (new editor-message%
              [parent row]
              [content citation-str]))
       (let ([grp (new vertical-pane%

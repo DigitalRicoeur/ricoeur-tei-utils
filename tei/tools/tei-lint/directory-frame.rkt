@@ -4,7 +4,7 @@
          racket/async-channel
          ricoeur/tei/base
          "lib.rkt"
-         "interfaces.rkt"
+         "toolkit.rkt"
          "file-snip.rkt"
          )
 

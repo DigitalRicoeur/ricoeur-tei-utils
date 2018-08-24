@@ -1,11 +1,7 @@
 #lang racket/gui
 
-(require ricoeur/tei
+(require adjutor
          racket/runtime-path
-         data/maybe
-         xml/path
-         gregor
-         adjutor
          pict
          )
 
@@ -15,20 +11,17 @@
                  "lib/shutdown.rkt"
                  )
 
-(provide photo-bitmap 
-         status-canvas% 
-         progress-gauge% 
+(provide photo-bitmap
          bold-system-font
          big-bold-system-font 
-         STATUS-DOT-SIZE 
-         insert-message-row
          white 
          invalid-bg-color
+         ;; should have contracts:
+         progress-gauge%
+         insert-message-row
          (contract-out
           [path->string* 
            (-> path-string? string?)]
-          [status-dot-pict 
-           (-> (or/c 'ok 'error 'warning) pict?)]
           [get-xml-directory 
            (->* {}
                 {(or/c (is-a?/c frame%)
@@ -106,22 +99,6 @@
     (init [label bmp])
     (super-new [label label])))
 
-(define (pict->canvas% pict)
-  (def
-    [init-drawer (make-pict-drawer pict)]
-    [w (inexact->exact (ceiling (pict-width pict)))]
-    [h (inexact->exact (ceiling (pict-height pict)))])
-  (class canvas% 
-    (init [style '(transparent)])
-    (super-new [style style]
-               [min-width w]
-               [min-height h]
-               [stretchable-width #f]
-               [stretchable-height #f])
-    (inherit get-dc refresh-now)
-    (define/override (on-paint)
-      (init-drawer (get-dc) 0 0))))
-
 (define (red-text-pict txt)
   (colorize (text txt '(aligned bold . system)) "red"))
 
@@ -129,50 +106,7 @@
 (define (red-text-message str)
   (pict->message% (red-text-pict str)))
 
-(def
-  [STATUS_DOT_INNER_SIZE 20]
-  [STATUS_DOT_BORDER 1]
-  [STATUS-DOT-SIZE (+ STATUS_DOT_BORDER
-                      STATUS_DOT_INNER_SIZE)]
-  [dot-pen (make-pen #:width STATUS_DOT_BORDER)]
-  [ok-brush (make-brush #:color "green")]
-  [warning-brush (make-brush #:color "yellow")]
-  [error-brush (make-brush #:color "red")]
-  [status->brush
-   (match-lambda
-     ['ok ok-brush]
-     ['warning warning-brush]
-     ['error error-brush])]
-  [(draw-status-dot dc status [x 0] [y 0])
-   (let ([old-pen (send dc get-pen)]
-         [old-brush (send dc get-brush)])
-     (send dc set-pen dot-pen)
-     (send dc set-brush (status->brush status))
-     (send dc draw-ellipse x y STATUS_DOT_INNER_SIZE STATUS_DOT_INNER_SIZE)
-     (send dc set-pen old-pen)
-     (send dc set-brush old-brush))])
 
-(define* status-dot-pict
-  (def
-    [(make status)
-     (dc (λ (dc x y) (draw-status-dot dc status x y))
-         STATUS-DOT-SIZE
-         STATUS-DOT-SIZE)]
-    [error (make 'error)]
-    [warning (make 'warning)]
-    [ok (make 'ok)])
-  (λ (status)
-    (case status
-      [(error) error]
-      [(warning) warning]
-      [else ok])))
-
-(define status-canvas%
-  (class message%
-    (init status)
-    (super-new [label
-                (pict->bitmap (status-dot-pict status)
-                              #:make-bitmap make-screen-bitmap)])))
 
 
 

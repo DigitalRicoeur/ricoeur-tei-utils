@@ -7,9 +7,12 @@
 (module+ test
   (require rackunit))
 
-(provide path-message%
-         path->wrapped-pict
-         )
+(provide (contract-out
+          [path->wrapped-pict
+           any/c]
+          [path-message%
+           any/c]
+          ))
 
 
 (define (pth->l-strings p)

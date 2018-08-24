@@ -4,6 +4,7 @@
          ricoeur/tei/base
          "../lib.rkt"
          "interfaces.rkt"
+         "status-dot.rkt"
          "menu.rkt"
          "proto-frame.rkt"
          (submod "proto-frame.rkt" private)
