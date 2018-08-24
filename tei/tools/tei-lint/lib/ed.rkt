@@ -37,7 +37,7 @@
       #f)
     (define/augment (can-insert? start len)
       initializing?)
-    #|END|#))
+    #|END class t%|#))
 
 
 (define constant-editor-canvas%
@@ -83,7 +83,8 @@
       (let ([w (box 0)]
             [h (box 0)])
         (send t get-extent w h)
-        (values (unbox w) (unbox h))))))
+        (values (unbox w) (unbox h))))
+    #|END class constant-editor-canvas%|#))
 
 
 
@@ -96,6 +97,7 @@
          (loop (add1 wait)))]
       [else
        (send ed scroll-to-position 0)])))
+
 
 (define natural-height-mixin
   (mixin {(class->interface constant-editor-canvas%)} {}
@@ -111,34 +113,23 @@
 ed.rkt:110:8: sequence-contract-violation: negative:
  method set-max-width cannot be called, except in states
 (unlocked write-lock), args 441|#
-        (with-handlers ([exn:fail? (λ (e)
-                                     (log-error
-                                      (exn-message e)))])
-          (send parent reflow-container)))
+        (send parent reflow-container))
       (set-natural-height)
       (when parent
-        (send parent reflow-container)))))
+        (send parent reflow-container)))
+    #|END natural-height-mixin|#))
+
 
 (define editor-message%
   (class (natural-height-mixin constant-editor-canvas%)
     (super-new [auto-hscroll #f]
                [transparent #t]
                [style '(no-border no-hscroll no-focus)])
-    ))
+    #|END class editor-message%|#))
+
+
 
 #|
-(define path-editor-message%
-  (class constant-editor-canvas%
-    (super-new [transparent #t]
-               [auto-hscroll #f]
-               [style '(no-border no-hscroll)]
-               )))
-
-(define bold-path-editor-message%
-  (class path-editor-message%
-    (super-new)))
-
-#;
 (module+ main
   (define f
     (new frame%

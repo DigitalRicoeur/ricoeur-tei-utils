@@ -1,10 +1,6 @@
 #lang racket/gui
 
-(require framework
-         ricoeur/tei/base
-         ricoeur/tei/tools/tei-lint/lib
-         "interfaces.rkt"
-         )
+(require "interfaces.rkt" adjutor)
 
 (provide (contract-out
           [menu-bar:file%
@@ -14,6 +10,8 @@
            (class/c
             (init [dir-frame dir-frame/false/c]))]
           ))
+
+(TODO/void replace this w/ something based on tei-lint-menu-bar%)
 
 (define menu-item:disabled%
   (class menu-item%
@@ -38,7 +36,7 @@
                   (λ (i e) (send dir-frame show #t)))])
   (new %
        [parent m-file]
-       [label "Open Additional Directory …"]
+       [label "Check Additional Directory…"]
        [callback (callback-when
                   (λ (i e)
                     (send dir-frame open-additional)))]

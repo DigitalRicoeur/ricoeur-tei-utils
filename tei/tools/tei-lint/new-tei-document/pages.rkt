@@ -749,7 +749,7 @@
 (module+ main
   (provide (all-defined-out))
   (define f
-    (new frame% [label "Pages Test"]))
+    (new tei-lint-menu-bar-frame% [label "Pages Test"]))
 
   (define pages-panel
     (new pages-panel%

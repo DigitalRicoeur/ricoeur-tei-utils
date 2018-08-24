@@ -8,7 +8,8 @@
          "file-snip.rkt"
          )
 
-(provide (contract-out
+(provide lint-directory
+         (contract-out
           [make-directory-frame
            (-> (and/c path-string?
                       directory-exists?)
@@ -124,11 +125,13 @@
                (async-channel-put ach (thunk)))))
           (yield ach))))
     (define/public-final (open-additional)
-      (let ([dir (get-xml-directory)])
-        (when dir
-          (make-directory-frame dir))))
+      (lint-directory))
     #|END class directory-frame%|#))
 
+(define (lint-directory)
+  (let ([dir (get-xml-directory)])
+    (when dir
+      (make-directory-frame dir))))
 
 (define file-snip-editor%
   (class text%

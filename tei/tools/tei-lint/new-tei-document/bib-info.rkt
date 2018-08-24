@@ -677,7 +677,7 @@
 (module+ main
   (provide (all-defined-out))
   (define f
-    (new frame%
+    (new tei-lint-menu-bar-frame%
          [label "Test"]))
 
   (define info-panel

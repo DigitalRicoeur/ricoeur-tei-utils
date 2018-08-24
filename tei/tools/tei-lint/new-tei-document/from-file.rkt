@@ -10,7 +10,8 @@
 (provide (contract-out
           [create-new-tei-document
            (->* {}
-                {(or/c #f (is-a?/c frame%) (is-a?/c dialog%))}
+                {(or/c #f (is-a?/c frame%) (is-a?/c dialog%))
+                 #:after-frame-show (-> any)}
                 any)]
           ))
 
@@ -88,25 +89,35 @@
     [else
      'no-problems]))
 
-(define (create-new-tei-document [parent #f])
+(define (create-new-tei-document [parent #f]
+                                 #:after-frame-show [after-show-callback void])
   (TODO/void block auto shutdown)
   (define pth
     (get-txt-path parent))
   (when pth
-    (create-new-tei-document/from-file pth parent)))
+    (create-new-tei-document/from-file pth
+                                       parent
+                                       #:after-frame-show after-show-callback)))
 
-(define (create-new-tei-document/from-file pth [parent #f])
+(define (create-new-tei-document/from-file pth
+                                           [parent #f]
+                                           #:after-frame-show [after-show-callback void])
   (create-new-tei-document/from-string pth
                                        (file->text-string pth)
-                                       parent))
+                                       parent
+                                       #:after-frame-show after-show-callback))
 
-(define (create-new-tei-document/from-string maybe-pth str [parent #f])
+(define (create-new-tei-document/from-string maybe-pth
+                                             str
+                                             [parent #f]
+                                             #:after-frame-show [after-show-callback void])
   (when (no-escaped-entity-problems? maybe-pth str parent)
     (define f
       (new new-tei-document-frame%
            [string str]
            [path maybe-pth]))
     (send f show #t)
+    (after-show-callback)
     f))
 
 

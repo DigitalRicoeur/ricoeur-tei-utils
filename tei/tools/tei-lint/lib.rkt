@@ -8,6 +8,7 @@
 (require-provide "lib/ed.rkt"
                  "lib/xml-preview.rkt"
                  "lib/long-path.rkt"
+                 "lib/menu-bar.rkt"
                  "lib/shutdown.rkt"
                  )
 

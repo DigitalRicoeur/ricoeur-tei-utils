@@ -470,6 +470,7 @@
 (define (confirm-saved maybe-plain-text-path
                        xml-path
                        [parent #f])
+  (TODO/void use current-create-new-tei-document to offer to do another)
   (define bx:result
     (call-in-eventspace-thread
      #:parent parent
@@ -562,7 +563,7 @@
   
 
 (define new-tei-document-frame%
-  (class frame%
+  (class tei-lint-menu-bar-frame%
     (inherit show)
     (init [(str string)]
           [(_maybe-pth path)]
