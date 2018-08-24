@@ -168,7 +168,7 @@
   (define-values {values-vec labels-lst}
     (let ([this-year (->year (now))])
       (for/lists/define (year-ints year-strings)
-                        ([y (in-naturals 1900)]
+                        ([y (in-naturals 1913)] ;; Ricoeur's birth year
                          #:final (= y this-year))
         (values y (number->string y)))
       (values (apply vector-immutable #f year-ints)
@@ -215,7 +215,8 @@
 (define* labeled-date-widget%
   (define year+month-widget%
     (class horizontal-pane%
-      (init [callback void])
+      (init [callback void]
+            [month-callback void])
       (super-new)
       (define y
         (new year-choice%
@@ -223,6 +224,7 @@
              [parent this]))
       (define m
         (new month-choice%
+             [callback month-callback]
              [parent this]))
       (define/public (get-validated-value)
         (define year
@@ -237,8 +239,10 @@
     (red-text-message "Please select a publication year."))
   (class vertical-panel%
     (inherit add-child delete-child)
+    (init label
+          [(_validation-callback validation-callback) void])
     (define ui-shows-valid? #t)
-    (init label)
+    (define validation-callback _validation-callback)
     (super-new [alignment '(left top)])
     (new message%
          [label label] 
@@ -246,6 +250,7 @@
     (define year+month-row
       (new year+month-widget%
            [callback (λ (c e) (check-validity))]
+           [month-callback (λ (c e) (validation-callback))]
            [parent this]))
     (define invalid-message
       (new invalid-year-message%
@@ -253,6 +258,7 @@
            [parent this]))
     (define/private (check-validity)
       (get-validated-value)
+      (validation-callback)
       (void))
     (define/public (get-validated-value)
       (define rslt
@@ -289,6 +295,8 @@
     (red-text-message "Please choose \"Yes\" or \"No.\""))
   (class vertical-panel%
     (inherit add-child delete-child change-children)
+    (init [(_validation-callback validation-callback) void])
+    (define validation-callback _validation-callback)
     (define ui-state 'init) ;; (or/c 'init 'yes 'no 'bad)
     (super-new [alignment '(left top)])
     (define orig?-ctl
@@ -303,9 +311,11 @@
       (new labeled-date-widget%
            [parent this]
            [label "Original publication date:"]
+           [validation-callback validation-callback]
            [style '(deleted)]))
     (define/private (on-toggle)
       (get-validated-orig?-value)
+      (validation-callback)
       (void))
     (define/private (get-validated-orig?-value)
       (define orig?
@@ -359,22 +369,52 @@
   (or/c (list/c natural-number/c)
         (list/c natural-number/c natural-number/c))) ;;between/c ??
 
-(define publication-date-widget%
+(define* publication-date-widget%
+  (define invalid-order-message%
+    (red-text-message "The publication dates must be in order."))
   (class group-box-panel%
+    (inherit add-child delete-child)
+    (define ui-shows-order-valid? #t)
     (super-new [label "Publication Date:"]
                [alignment '(left top)])
-    (define this-date
-      (new labeled-date-widget%
-           [label "Publication date of this instance:"]
+    (define-values {this-date orig-date}
+      (let ([validation-callback (λ () (on-state-change))])
+        (values
+         (new labeled-date-widget%
+              [label "Publication date of this instance:"]
+              [validation-callback validation-callback]
+              [parent this])
+         (new orig-date-widget%
+              [validation-callback validation-callback]
+              [parent this]))))
+    (define invalid-message
+      (new invalid-order-message%
+           [style '(deleted)]
            [parent this]))
-    (define orig-date
-      (new orig-date-widget%
-           [parent this]))
-    (TODO/void publication dates: check orig is <= this)
+    ;;;;;;;;;;;;;;;;;;;;
+    (define/private (on-state-change)
+      (get-validated-value)
+      (void))
     (define/public (get-validated-value)
       (define t (send this-date get-validated-value))
       (define o (send orig-date get-validated-value))
-      (and t o (publication-date-spec t o)))
+      (define order-ok?
+        (in-order-if-applicable? t o))
+      (if order-ok?
+          (unless ui-shows-order-valid?
+            (set! ui-shows-order-valid? #t)
+            (delete-child invalid-message))
+          (when ui-shows-order-valid?
+            (set! ui-shows-order-valid? #f)
+            (add-child invalid-message)))
+      (and t o order-ok? (publication-date-spec t o)))
+    (define/private (in-order-if-applicable? this orig)
+      (cond
+        [(and (list? this) (list? orig))
+         (date<=? (apply date orig)
+                  (apply date this))]
+        [else
+         'not-applicable]))
     #|END class publication-date-widget%|#))
 
 
@@ -411,14 +451,14 @@
   (match-lambda
     [(author/editor-spec type xml:id? name)
      (list (if (eq? 'author type)
-            'author
-            'editor)
-       (append (list-unless (eq? 'author type)
-                 `([type ,(string->immutable-string
-                           (symbol->string type))]))
-               (list-when xml:id?
-                 `([xml:id ,xml:id?])))
-       name)]))
+               'author
+               'editor)
+           (append (list-unless (eq? 'author type)
+                     `([type ,(string->immutable-string
+                               (symbol->string type))]))
+                   (list-when xml:id?
+                     `([xml:id ,xml:id?])))
+           name)]))
 
 (define* a/e-type-choice%
   (define-values {types-vec choices-lst}
