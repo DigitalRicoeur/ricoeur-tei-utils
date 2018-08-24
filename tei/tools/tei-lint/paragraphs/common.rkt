@@ -7,10 +7,6 @@
          )
 
 (provide (contract-out
-          [call-in-eventspace-thread
-           (->* {(-> any/c)}
-                {#:parent (or/c #f (is-a?/c top-level-window<%>))}
-                any/c)]
           [add-title+path
            (->* {(or/c (is-a?/c frame%)
                        (is-a?/c dialog%)
@@ -27,22 +23,6 @@
                  #:parent (or/c #f (is-a?/c top-level-window<%>))}
                 any)]
           ))
-
-(define (call-in-eventspace-thread thunk
-                                   #:parent [parent #f])
-  (define es
-    (if parent 
-        (send parent get-eventspace)
-        (current-eventspace)))
-  (if (eq? (current-thread) (eventspace-handler-thread es))
-      ;; In the right thread:
-      (thunk)
-      ;; Not in the right thread:
-      (let ([ch (make-channel)])
-        (parameterize ([current-eventspace es])
-          (queue-callback
-           (λ () (channel-put ch (thunk)))))
-        (channel-get ch))))
 
 
 (define narrower-path-message%

@@ -370,6 +370,7 @@
     (define orig-date
       (new orig-date-widget%
            [parent this]))
+    (TODO/void publication dates: check orig is <= this)
     (define/public (get-validated-value)
       (define t (send this-date get-validated-value))
       (define o (send orig-date get-validated-value))

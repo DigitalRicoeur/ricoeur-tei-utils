@@ -16,12 +16,142 @@
           ))
 
 
+
+
+(define* dialog:confirm-ready-to-save%
+  (define citation-editor-canvas%
+    (natural-height-mixin constant-editor-canvas%))
+  (class dialog%
+    (inherit show)
+    (init [(maybe-pth maybe-plain-text-path)]
+          info
+          page-description-strings
+          [(_bx bx:result)])
+    (define bx:result _bx)
+    (super-new [label "Confirm Save - TEI Lint"]
+               [alignment '(center top)])
+    (new message%
+         [label "Are you ready to save?"]
+         [font big-bold-system-font]
+         [parent this])
+    (define body
+      (new vertical-pane%
+           [alignment '(left top)]
+           [parent this]))
+    (new message%
+         [label (string-append "Please confirm that you are ready to "
+                               "save a new TEI XML document with the "
+                               "following information:")]
+         [parent body])
+    (let ()
+      (match-define (bib-info title-str
+                              b/a-sym
+                              lang-sym
+                              citation-str
+                              (publication-date-spec this-dt orig-dt)
+                              a+e)
+        info)
+      (insert-message-row
+       body
+       "Title:"
+       title-str
+       #:stretchable-height #f)
+      (insert-message-row
+       body
+       "Document Type:"
+       (case b/a-sym
+         [(book) "Book"]
+         [else "Article"])
+       #:stretchable-height #f)
+      (insert-message-row
+       body
+       "Language:"
+       (case lang-sym
+         [(en) "English"]
+         [else "French"])
+       #:stretchable-height #f)
+      (let ([row (new horizontal-pane%
+                      [alignment '(left top)]
+                      [stretchable-height #f]
+                      [parent body])])
+        (new message%
+             [parent row]
+             [font bold-system-font]
+             [label "Citation:"])
+        (new citation-editor-canvas%
+             [parent row]
+             [content citation-str]))
+      (let ([grp (new vertical-pane%
+                      [alignment '(left top)]
+                      [stretchable-height #f]
+                      [parent body])])
+        (insert-message-row
+         grp
+         "Publication Date:"
+         (publication-date-list->english this-dt)
+         #:stretchable-height #f)
+        (case orig-dt
+          [(thisIsOriginal)
+           (new message%
+                [label "This is the first published instance."]
+                [font bold-system-font]
+                [parent grp])]
+          [else
+           (insert-message-row
+            grp
+            "Original Publication Date:"
+            (publication-date-list->english orig-dt)
+            #:stretchable-height #f)]))
+      (let ([grp (new group-box-panel%
+                      [label "Authors & Editors:"]
+                      [alignment '(left top)]
+                      [stretchable-height #f]
+                      [parent body])])
+        (for ([it (in-list a+e)])
+          (new author/editor-panel%
+               [author/editor-spec it]
+               [parent grp])))
+      (let ([grp (new group-box-panel%
+                      [label "Pages:"]
+                      [alignment '(left top)]
+                      [stretchable-height #f]
+                      [parent body])])
+        (for ([s (in-list page-description-strings)])
+          (new message%
+               [label s]
+               [parent grp]))))
+    (gui-utils:ok/cancel-buttons
+     (new horizontal-pane%
+          [alignment '(right center)]
+          [stretchable-height #f]
+          [parent body])
+     (λ (b e) (return-result #t))
+     (λ (b e) (return-result #f))
+     "Save")
+    (define/public-final (return-result rslt)
+      (set-box! bx:result rslt)
+      (show #f))
+    #|END class dialog:confirm-ready-to-save%|#))
+
+
 (define (confirm-ready-to-save maybe-pth
                                valid-info
                                page-description-strings
                                [parent #f])
-  (TODO/void confirm-ready-to-save)
-  #t)
+  (call-in-eventspace-thread
+   #:parent parent
+   (λ ()
+     (define bx:result
+       (box #f))
+     (define it
+       (new dialog:confirm-ready-to-save%
+            [maybe-plain-text-path maybe-pth]
+            [info valid-info]
+            [page-description-strings page-description-strings]
+            [bx:result bx:result]
+            [parent parent]))
+     (send it show #t)
+     (unbox bx:result))))
 
 
 
@@ -271,10 +401,104 @@
       [else
        pth])))
 
+
+
+
+
+
+(define dialog:confirm-saved+ask-to-delete%
+  (class dialog%
+    (inherit show)
+    (init maybe-plain-text-path
+          xml-path
+          [(_bx bx:result)])
+    (define bx:result _bx)
+    (super-new [label "File Saved Successfully - TEI Lint"]
+               [alignment '(center top)])
+    (new message%
+         [label "File Saved Successfully"]
+         [font big-bold-system-font]
+         [parent this])
+    (define body
+      (new vertical-pane%
+           [alignment '(left top)]
+           [parent this]))
+    (new message%
+         [label "Your new TEI XML document has been saved successfully."]
+         [parent body])
+    (let ([row (new horizontal-pane%
+                    [alignment '(left top)]
+                    [parent body])])
+      (new message%
+           [label "New File:"]
+           [font bold-system-font]
+           [parent row])
+      (new path-message%
+           [path xml-path]
+           [parent row]))
+    (new message%
+         [label "Would you like to delete the old plain-text file?"]
+         [parent body])
+    (let ([row (new horizontal-pane%
+                    [alignment '(left top)]
+                    [parent body])])
+      (cond
+        [maybe-plain-text-path
+         (new message%
+              [label "Old Plain-Text File:"]
+              [parent row])
+         (new path-message%
+              [path maybe-plain-text-path]
+              [parent row])]
+        [else
+         (new message%
+              [label "(There was no plain-text file, so the answer doesn't matter.)"]
+              [parent row])]))
+    (gui-utils:ok/cancel-buttons
+     (new horizontal-pane%
+          [alignment '(right center)]
+          [stretchable-height #f]
+          [parent body])
+     (λ (b e) (return-result #t))
+     (λ (b e) (return-result #f))
+     "Delete Plain-Text File"
+     "Keep Plain-Text File")
+    (define/public-final (return-result rslt)
+      (set-box! bx:result rslt)
+      (show #f))
+    #|END class dialog:confirm-saved+ask-to-delete%|#))
+
+
 (define (confirm-saved maybe-plain-text-path
                        xml-path
                        [parent #f])
-  (TODO/void confirm-saved: show confirmation + offer to delete plain text))
+  (define bx:result
+    (call-in-eventspace-thread
+     #:parent parent
+     (λ ()
+       (define bx:result
+         (box #f))
+       (define it
+         (new dialog:confirm-saved+ask-to-delete%
+              [maybe-plain-text-path maybe-plain-text-path]
+              [xml-path xml-path]
+              [bx:result bx:result]
+              [parent parent]))
+       (send it show #t)
+       bx:result)))
+  (when (and maybe-plain-text-path
+             (unbox bx:result)
+             (file-exists? maybe-plain-text-path))
+    (delete-file maybe-plain-text-path)
+    (message-box
+     "Plain Text File Deleted - TEI Lint"
+     (string-append
+      "The plain text file \"" (path->string* maybe-plain-text-path)
+      "\" was deleted successfully.")
+     parent
+     '(ok))
+    (void)))
+     
 
 ;                                                                                                  
 ;                                                                                                  
@@ -337,6 +561,7 @@
 
 
 
+  
 
 (define new-tei-document-frame%
   (class frame%
@@ -359,6 +584,7 @@
         [maybe-pth
          (new message%
               [label "Source:"]
+              [font bold-system-font]
               [parent row])
          (new path-message%
               [path maybe-pth]

@@ -152,6 +152,8 @@
          [parent this])
     (new constant-editor-canvas%
          [content (pre-page-string val)]
+         [min-width 350]
+         [min-height 350]
          [parent this])
     #|END class pre-page-display-widget%|#))
 
@@ -212,32 +214,18 @@
     #|END class confirm-page-group-dialog%|#))
 
 (define (confirm-add-page-group grp [parent #f])
-  (define (go)
-    (define bx:result
-      (box #f))
-    (define it
-      (new confirm-page-group-dialog%
-           [parent parent]
-           [group grp]
-           [bx:result bx:result]))
-    (send it show #t)
-    (unbox bx:result))
-  (TODO/void confirm-add-page-group:
-             see call-in-eventspace-thread from
-             ricoeur/tei/tools/tei-lint/paragraphs/common)
-  (define es
-    (if parent 
-        (send parent get-eventspace)
-        (current-eventspace)))
-  (if (eq? (current-thread) (eventspace-handler-thread es))
-      ;; In the right thread:
-      (go)
-      ;; Not in the right thread:
-      (let ([ch (make-channel)])
-        (parameterize ([current-eventspace es])
-          (queue-callback
-           (λ () (channel-put ch (go)))))
-        (channel-get ch))))
+  (call-in-eventspace-thread
+   #:parent parent
+   (λ ()
+     (define bx:result
+       (box #f))
+     (define it
+       (new confirm-page-group-dialog%
+            [parent parent]
+            [group grp]
+            [bx:result bx:result]))
+     (send it show #t)
+     (unbox bx:result))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

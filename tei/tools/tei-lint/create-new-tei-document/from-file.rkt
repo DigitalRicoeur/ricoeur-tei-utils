@@ -7,6 +7,13 @@
          adjutor
          )
 
+(provide (contract-out
+          [create-new-tei-document
+           (->* {}
+                {(or/c #f (is-a?/c frame%) (is-a?/c dialog%))}
+                any)]
+          ))
+
 (define (get-txt-path [parent #f])
   (define pth
     (get-file
@@ -41,12 +48,42 @@
     (regexp-match? #rx"&amp;" str))
   (define lt?
     (regexp-match? #rx"&lt;" str))
-  (if (and amp? lt?)
-      'both
-      (or amp? lt?)))
+  (cond
+    [(and amp? lt?)
+     'both]
+    [amp? 'amp]
+    [lt? 'lt]
+    [else #f]))
 
 (define (no-escaped-entity-problems? maybe-pth str [parent #f])
-  (TODO/void no-escaped-entity-problems?))
+  (define which-entities
+    (contains-escaped-entities? str))
+  (cond
+    [which-entities
+     (case (message-box/custom
+            "Warning! - TEI Lint"
+            (string-append
+             "Warning! File contains XML entities.\n\n"
+             "The plain-text file you selected (\""
+             (if maybe-pth
+                 (path->string* maybe-pth)
+                 "actually not a file")
+             "\") already contains the XML entity escape sequence"
+             (case which-entities
+               [(both) "s \"&amp;\" and \"&lt;\"."]
+               [(amp) " \"&amp;\"."]
+               [(lt) " \"&lt;\"."])
+             "\n\nThis probably means that the file has already"
+             " been encoded and should not be used.")
+            "Use Anyway"
+            "Cancel"
+            #f
+            parent
+            '(caution no-default))
+       [(1) 'ignore-problems]
+       [else #f])]
+    [else
+     'no-problems]))
 
 (define (create-new-tei-document [parent #f])
   (TODO/void block auto shutdown)

@@ -56,6 +56,10 @@
                  (or/c 'ok 'error 'warning)}
                 {real? real?}
                 any)]
+          [call-in-eventspace-thread
+           (->* {(-> any/c)}
+                {#:parent (or/c #f (is-a?/c top-level-window<%>))}
+                any/c)]
           ))
 
 (define white
@@ -78,11 +82,13 @@
 
 (define (insert-message-row parent l r
                             #:alignment [alignment '(left top)]
+                            #:stretchable-height [stretchable-height #t]
                             #:right-message% [right-message% message%]
                             #:left-font [left-font bold-system-font])
   (define row
     (new horizontal-pane%
          [parent parent]
+         [stretchable-height stretchable-height]
          [alignment alignment]))
   (new message%
        [label l]
@@ -196,8 +202,10 @@
 
 (define progress-gauge%
   (class gauge%
-    (super-new [range 10]
-               [label #f])
+    (init [range 10]
+          [label #f])
+    (super-new [range range]
+               [label label])
     (inherit get-value set-value)
     (define/public-final (++)
       (set-value (add1 (get-value))))))
@@ -215,6 +223,22 @@
 
 
 
+
+(define (call-in-eventspace-thread thunk
+                                   #:parent [parent #f])
+  (define es
+    (if parent 
+        (send parent get-eventspace)
+        (current-eventspace)))
+  (if (eq? (current-thread) (eventspace-handler-thread es))
+      ;; In the right thread:
+      (thunk)
+      ;; Not in the right thread:
+      (let ([ch (make-channel)])
+        (parameterize ([current-eventspace es])
+          (queue-callback
+           (λ () (channel-put ch (thunk)))))
+        (channel-get ch))))
 
 
 
