@@ -5,12 +5,36 @@
 (provide (contract-out
           [scroll-editor-to-top
            (-> (is-a?/c editor<%>) any)]
-          [constant-editor-canvas%
-           any/c]
-          [editor-message%
-           any/c]
           [natural-height-mixin
-           any/c]
+           (make-mixin-contract constant-editor-canvas%)]
+          [constant-editor-canvas%
+           (class/c
+            (init [content (or/c string?
+                                 (listof (or/c string?
+                                               char?
+                                               (is-a?/c snip%))))]
+                  [auto-wrap any/c]
+                  [line-spacing (and/c real? (not/c negative?))]
+                  [transparent any/c]
+                  [auto-hscroll any/c]
+                  [auto-vscroll any/c]
+                  [style (listof (or/c 'no-border 'control-border 'combo
+                                       'no-hscroll 'no-vscroll
+                                       'hide-hscroll 'hide-vscroll
+                                       'auto-vscroll 'auto-hscroll
+                                       'resize-corner 'no-focus 'deleted
+                                       'transparent))]
+                  [center? any/c]))]
+          [editor-message%
+           (class/c
+            (init [content (or/c string?
+                                 (listof (or/c string?
+                                               char?
+                                               (is-a?/c snip%))))]
+                  [auto-wrap any/c]
+                  [line-spacing (and/c real? (not/c negative?))]
+                  [auto-vscroll any/c]
+                  [center? any/c]))]
           ))
 
 (define t%
@@ -50,6 +74,7 @@
     #|END class t%|#))
 
 
+
 (define constant-editor-canvas%
   (class editor-canvas%
     (init [content null]
@@ -67,13 +92,16 @@
            [center? center?]
            [auto-wrap auto-wrap]
            [line-spacing line-spacing]))
-    (super-new [style (let* ([style (if auto-hscroll
+    (super-new [style (let* ([style (if (and auto-hscroll
+                                             (not (memq 'auto-hscroll style)))
                                         (cons 'auto-hscroll style)
                                         style)]
-                             [style (if auto-vscroll
+                             [style (if (and auto-vscroll
+                                             (not (memq 'auto-vscroll style)))
                                         (cons 'auto-vscroll style)
                                         style)])
-                        (if transparent
+                        (if (and transparent
+                                 (not (memq 'transparent style)))
                             (cons 'transparent style)
                             style))]
                [editor t])

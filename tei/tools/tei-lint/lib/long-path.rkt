@@ -9,9 +9,18 @@
 
 (provide (contract-out
           [path->wrapped-pict
-           any/c]
+           (->* {path-string?}
+                {#:font (is-a?/c font%)
+                 #:max-width (>/c 0)
+                 #:indent (>=/c 0)} ;; there are more invariants ...
+                pict?)]
           [path-message%
-           any/c]
+           (class/c
+            (init [path (or/c #f path-string?)] ;; either path or label is required
+                  [label (or/c #f path-string?)]
+                  [max-width (>/c 0)]
+                  [indent (>=/c 0)]
+                  [font (is-a?/c font%)]))]
           ))
 
 
@@ -136,10 +145,5 @@
                         #:max-width max-width
                         #:indent indent
                         #:font font))])))
-
-#|    
-(path->wrapped-pict
-"/Users/philip/code/ricoeur/texts/TEI/reflections_on_a_new_ethos_for_Europe,_in_Kearney-Paul_Ricoeur__The_Hermeneutics_of_Action,_pp3-13.xml")
-|#
 
 

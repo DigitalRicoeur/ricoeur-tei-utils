@@ -8,7 +8,7 @@
 
 (provide (contract-out
           [xml-preview-text%
-           any/c]
+           (subclass?/c text%)]
           ))
 
 ;; This seems to work elsewhere, but the overlap
