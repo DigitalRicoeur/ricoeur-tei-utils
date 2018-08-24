@@ -15,47 +15,34 @@
                  "lib/shutdown.rkt"
                  )
 
-(provide photo-bitmap
-         status-canvas%
-         progress-gauge%
+(provide photo-bitmap 
+         status-canvas% 
+         progress-gauge% 
          bold-system-font
-         big-bold-system-font
-         TEI-frame<%>
-         STATUS_DOT_SIZE
+         big-bold-system-font 
+         STATUS-DOT-SIZE 
          insert-message-row
-         white
+         white 
          invalid-bg-color
          (contract-out
-          [path->string*
+          [path->string* 
            (-> path-string? string?)]
-          [status-dot-pict
+          [status-dot-pict 
            (-> (or/c 'ok 'error 'warning) pict?)]
-          [get-xml-directory
+          [get-xml-directory 
            (->* {}
                 {(or/c (is-a?/c frame%)
                        (is-a?/c dialog%)
                        #f)}
                 (or/c path? #f))]
-          [show-xmllint-warning
+          [show-xmllint-warning 
            (->* {}
                 {(or/c (is-a?/c frame%)
                        (is-a?/c dialog%)
                        #f)}
                 any)]
-          [pict->canvas%
-           (-> pict? (implementation?/c canvas<%>))]
-          [pict->message%
-           (-> pict? (subclass?/c message%))]
-          [red-text-pict
-           (-> string? pict?)]
-          [red-text-message
+          [red-text-message 
            (-> string? (subclass?/c message%))]
-          [struct xmllint-error ([str string?])]
-          [draw-status-dot
-           (->* {(is-a?/c dc<%>)
-                 (or/c 'ok 'error 'warning)}
-                {real? real?}
-                any)]
           [call-in-eventspace-thread
            (->* {(-> any/c)}
                 {#:parent (or/c #f (is-a?/c top-level-window<%>))}
@@ -145,7 +132,7 @@
 (def
   [STATUS_DOT_INNER_SIZE 20]
   [STATUS_DOT_BORDER 1]
-  [STATUS_DOT_SIZE (+ STATUS_DOT_BORDER
+  [STATUS-DOT-SIZE (+ STATUS_DOT_BORDER
                       STATUS_DOT_INNER_SIZE)]
   [dot-pen (make-pen #:width STATUS_DOT_BORDER)]
   [ok-brush (make-brush #:color "green")]
@@ -169,8 +156,8 @@
   (def
     [(make status)
      (dc (λ (dc x y) (draw-status-dot dc status x y))
-         STATUS_DOT_SIZE
-         STATUS_DOT_SIZE)]
+         STATUS-DOT-SIZE
+         STATUS-DOT-SIZE)]
     [error (make 'error)]
     [warning (make 'warning)]
     [ok (make 'ok)])
@@ -187,7 +174,7 @@
                 (pict->bitmap (status-dot-pict status)
                               #:make-bitmap make-screen-bitmap)])))
 
-(struct xmllint-error (str))
+
 
 (define bold-system-font
   (make-font #:family 'system
@@ -210,11 +197,6 @@
     (define/public-final (++)
       (set-value (add1 (get-value))))))
 
-
-(define TEI-frame<%>
-  (interface [(class->interface frame%)]
-    [get-status (->m (or/c 'ok 'warning 'error))]
-    [get-title (->m (maybe/c string?))]))
 
 
 

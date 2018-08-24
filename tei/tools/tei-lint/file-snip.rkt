@@ -115,7 +115,7 @@
                         #:title [title #f])
   (define padding 1.0)
   (define line-padding 1.0)
-  (define gutter (/ STATUS_DOT_SIZE 2))
+  (define gutter (/ STATUS-DOT-SIZE 2))
   (define path-pict
     (path->wrapped-pict path
                         #:max-width 600
