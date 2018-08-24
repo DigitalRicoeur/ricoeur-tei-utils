@@ -198,9 +198,10 @@
               [label "Final Page:"]
               [pre-page (last l-pre-pages)]
               [parent row])])
-      (TODO/void ok + cancel: align left or right?)
       (gui-utils:ok/cancel-buttons
        (new horizontal-pane%
+            [alignment '(right center)]
+            [stretchable-height #f]
             [parent body])
        (λ (b e) (return-result 'confirm))
        (λ (b e) (return-result #f))
@@ -390,14 +391,19 @@
              hide-invalid-message!)
     (define field #f)
     (define/override (initialize-prelude-children)
+      (define grp
+        (new vertical-pane%
+             [alignment '(left top)]
+             [stretchable-height #f]
+             [parent this]))
       (set! field
             (new positive-integer-field%
                  [label "Add this many pages:"]
                  [validation-callback (λ (n) (check-validity n))]
-                 [parent this]))
+                 [parent grp]))
       (new message%
            [label "that don't have page numbers in the source."]
-           [parent this]))
+           [parent grp]))
     (super-new [add-button-label "Add Unnumbered Pages"])
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     (define/augment (reset!)
@@ -433,20 +439,25 @@
       (define (validation-callback _)
         (get-validated-values)
         (void))
+      (define grp
+        (new vertical-pane%
+             [alignment '(left top)]
+             [stretchable-height #f]
+             [parent this]))
       (set! count-field 
             (new positive-integer-field%
                  [label "Add this many pages:"]
                  [validation-callback validation-callback]
-                 [parent this]))
+                 [parent grp]))
       (new message%
            [label "numbered with Arabic numerals"]
-           [parent this])
+           [parent grp])
       (set! init-num-field
             (new positive-integer-field%
                  [label "starting with number:"]
                  [init-value "1"]
                  [validation-callback validation-callback]
-                 [parent this])))
+                 [parent grp])))
     (super-new [add-button-label "Add Numbered Pages"])
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     (define/augment (reset!)
@@ -504,23 +515,28 @@
       (define (validation-callback _)
         (get-validated-values)
         (void))
+      (define grp
+        (new vertical-pane%
+             [alignment '(left top)]
+             [stretchable-height #f]
+             [parent this]))
       (set! count-field 
             (new positive-integer-field%
                  [label "Add this many pages:"]
                  [validation-callback validation-callback]
-                 [parent this]))
+                 [parent grp]))
       (new message%
            [label "numbered with Roman numerals"]
-           [parent this])
+           [parent grp])
       (set! init-num-field
             (new positive-integer-field%
                  [label "starting with number:"]
                  [init-value "1"]
                  [validation-callback validation-callback]
-                 [parent this]))
+                 [parent grp]))
       (define row
         (new horizontal-pane%
-             [parent this]))
+             [parent grp]))
       (new message%
            [label "using"]
            [parent row])

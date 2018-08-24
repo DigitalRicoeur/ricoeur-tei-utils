@@ -7,17 +7,12 @@
          gregor)
 
 (provide bib-info-panel% ;; method: get-bib-info
-         author/editor-type/c
+         author/editor-spec? 
          publication-date-list/c
          (contract-out
           [struct publication-date-spec
             ([this publication-date-list/c]
              [orig (or/c 'thisIsOriginal publication-date-list/c)])
-            #:omit-constructor]
-          [struct author/editor-spec
-            ([type author/editor-type/c]
-             [xml:id? (or/c #f (and/c string-immutable/c trimmed-string-px))]
-             [name (and/c string-immutable/c trimmed-string-px)])
             #:omit-constructor]
           [struct bib-info
             ([title (or/c #f (and/c string-immutable/c trimmed-string-px))]
@@ -27,6 +22,10 @@
              [date (or/c #f publication-date-spec?)]
              [authors+editors (non-empty-listof author/editor-spec?)])
             #:omit-constructor]
+          [author/editor-spec->xexpr
+           (-> author/editor-spec?
+               (or/c (tei-xexpr/c author)
+                     (tei-xexpr/c editor)))]
           [bib-info-valid?
            (-> bib-info? any/c)]
           [author/editor-panel%
@@ -399,9 +398,6 @@
 (struct author/editor-spec (type xml:id? name)
   #:transparent)
 
-(define/final-prop author/editor-type/c
-  (or/c 'author 'editor 'translator 'compiler 'preface))
-
 (define (a/e-type->string type)
   (case type
     [(author) "Author"]
@@ -409,6 +405,19 @@
     [(translator) "Translator"]
     [(compiler) "Compiler"]
     [(preface) "Preface author"]))
+
+(define author/editor-spec->xexpr
+  (match-lambda
+    [(author/editor-spec type xml:id? name)
+     (list (if (eq? 'author type)
+            'author
+            'editor)
+       (append (list-unless (eq? 'author type)
+                 `([type ,(string->immutable-string
+                           (symbol->string type))]))
+               (list-when xml:id?
+                 `([xml:id ,xml:id?])))
+       name)]))
 
 (define* a/e-type-choice%
   (define-values {types-vec choices-lst}
@@ -512,7 +521,7 @@
     (super-new [label "Authors & Editors:"]
                [alignment '(left top)])
     (define vals
-      (list (author/editor-spec 'author #f "Paul Ricœur")))
+      (list (author/editor-spec 'author "ricoeur" "Paul Ricœur")))
     (define current-vals-panel
       (new vertical-panel%
            [alignment '(left top)]
