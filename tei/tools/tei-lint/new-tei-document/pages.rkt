@@ -1,7 +1,7 @@
 #lang racket/gui
 
 (require ricoeur/tei/tools/tei-lint/lib
-         ricoeur/tei
+         ricoeur/tei/base
          framework
          adjutor
          data/maybe

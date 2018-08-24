@@ -12,6 +12,7 @@
 (define (start)
   (application-quit-handler
    (λ () (exit 0)))
+  (application-preferences-handler #f)
   (define (the-yield-handler _)
     (wait-to-implicitly-exit))
   (executable-yield-handler the-yield-handler)

@@ -23,7 +23,6 @@
            (submod "..")))
 
 (provide term/c
-         trimmed-string-px
          searchable-document-set?
          document-search-results?
          search-result?
@@ -90,9 +89,6 @@
   ;; Since #px"\\S" has security implications,
   ;; we have to care that it's sound.
   (and/c string-immutable/c #px"\\S"))
-
-(define/final-prop trimmed-string-px
-  #px"^\\S$|^\\S.*\\S$")
 
 (struct normalized-term (string)
   #:transparent

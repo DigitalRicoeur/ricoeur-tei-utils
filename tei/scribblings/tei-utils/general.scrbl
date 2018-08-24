@@ -21,7 +21,10 @@
   path or string} values, respectively.
 }
 
-
+@defthing[trimmed-string-px pregexp?
+          #:value #px"^\\S$|^\\S.*\\S$"]{
+ Matches non-empty strings that neither start nor end with whitespace.
+}
 
 @defproc[(title<? [a string-immutable/c] [b string-immutable/c]) any/c]{
 

@@ -3,7 +3,7 @@
 @title{``TEI Lint'' Implementation}
 @defmodule[ricoeur/tei/tools/tei-lint/tei-lint]
 @(require "../for-manual.rkt"
-          (for-label ricoeur/tei/tools/tei-lint/interfaces
+          (for-label ricoeur/tei/tools/tei-lint/lint/toolkit
                      (except-in racket/gui
                                 date
                                 date?)
@@ -14,7 +14,7 @@ This section will contain details on the implementation
 of @guidelines-secref["TEI_Lint"].
 
 @section{Interfaces}
-@defmodule[ricoeur/tei/tools/tei-lint/interfaces]
+@defmodule[ricoeur/tei/tools/tei-lint/lint/toolkit]
 
 @deftogether[
  (@defthing[lint-status/c flat-contract?

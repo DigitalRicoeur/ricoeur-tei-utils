@@ -10,6 +10,7 @@
 
 (provide string-immutable/c
          path-string-immutable/c
+         trimmed-string-px
          (contract-out
           [title<?
            (-> string-immutable/c string-immutable/c any/c)]
@@ -29,6 +30,9 @@
    'path-string-immutable/c
    (or/c path? (and/c string-immutable/c
                       path-string?))))
+
+(define/final-prop trimmed-string-px
+  #px"^\\S$|^\\S.*\\S$")
 
 (define (attributes-ref attrs k)
   (define rslt

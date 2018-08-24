@@ -358,8 +358,6 @@ library can be used independently.
    @defproc[(search-result-excerpt [search-result search-result?])
             (maybe/c (and/c string-immutable/c
                             trimmed-string-px))]
-   @defthing[trimmed-string-px pregexp?
-             #:value #px"^\\S$|^\\S.*\\S$"]
    @defform[#:kind "match expander"
             (search-result excerpt-pat)])]{
  A @deftech{search result} value, recognized by @racket[search-result?],

@@ -3,7 +3,7 @@
 (require "bib-info.rkt"
          "pages.rkt"
          ricoeur/tei/tools/tei-lint/lib
-         ricoeur/tei
+         ricoeur/tei/base
          framework
          adjutor
          )

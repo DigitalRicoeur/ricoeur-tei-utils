@@ -2,7 +2,7 @@
 
 (require "new-tei-document-frame.rkt"
          ricoeur/tei/tools/tei-lint/lib
-         ricoeur/tei
+         ricoeur/tei/base
          framework
          adjutor
          )
