@@ -14,6 +14,9 @@
                 any)]
           ))
 
+(module+ main
+  (create-new-tei-document))
+
 (define (get-txt-path [parent #f])
   (define pth
     (get-file
