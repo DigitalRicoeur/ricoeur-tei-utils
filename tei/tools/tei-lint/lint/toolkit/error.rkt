@@ -34,10 +34,8 @@
 
           
 (define error-frame%
-  (class frame%
-    (init path
-          val
-          [dir-frame #f])
+  (class dir-menu-bar-frame%
+    (init path val)
     (super-new [label (gui-utils:quote-literal-label
                        (string-append (if (string? path)
                                           path
@@ -67,8 +65,5 @@
          [content (match val
                     [(exn:fail msg _) msg]
                     [str str])])
-    (new menu-bar:file+edit%
-         [parent this]
-         [dir-frame dir-frame])
     #|END class error-frame%|#))
 

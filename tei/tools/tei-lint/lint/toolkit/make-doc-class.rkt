@@ -24,7 +24,7 @@
                 [old-modify-seconds real?]))))
 
 (define tei-document-frame%
-  (class* frame% {tei-document-frame<%>}
+  (class* dir-menu-bar-frame% {tei-document-frame<%>}
     (init [(status lint-status)]
           [(secs old-modify-seconds)]
           [(pth path)]
@@ -48,12 +48,10 @@
                        (string-append title
                                       " - TEI Lint"))]
                [alignment '(left top)]
+               [dir-frame dir-frame]
                [width 400]
                [height 500])
     (initialize this)
-    (new menu-bar:file+edit%
-         [parent this]
-         [dir-frame dir-frame])
     #|END class tei-document-frame%|#))
 
 

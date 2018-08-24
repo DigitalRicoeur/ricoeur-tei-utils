@@ -31,12 +31,13 @@
               (loop)))))
 
 (define directory-frame%
-  (class* frame% {directory-frame<%>}
+  (class* dir-menu-bar-frame% {directory-frame<%>}
     (init [(_dir dir)])
     (define dir _dir)
     (super-new [label (gui-utils:quote-literal-label
                        (string-append (path->string* dir)
                                       " - TEI Lint"))]
+               [dir-frame this]
                [width 800]
                [height 600]
                [alignment '(left top)])
@@ -49,6 +50,7 @@
         (make+register-eventspace)))
     (define file-snips
       (let ([progress (new loading-frame%
+                           [dir-frame this]
                            [dir dir])])
         (let ([row (new horizontal-pane%
                         [parent this]
@@ -87,9 +89,6 @@
                [parent this]
                [editor (new file-snip-editor%
                             [snips file-snips])]))
-        (new menu-bar:file%
-             [parent this]
-             [dir-frame this])
         ;; Refresh the editor-canvas here b/c otherwise some strange
         ;; circumstance sometimes makes it appear empty.
         (send ec refresh) 
@@ -156,7 +155,7 @@
     #|END class file-snip-editor%|#))
 
 (define loading-frame%
-  (class frame%
+  (class dir-menu-bar-frame%
     (init dir
           [dir-string (path->string* dir)])
     (super-new [label (gui-utils:quote-literal-label

@@ -1,17 +1,23 @@
 #lang racket/gui
 
-(require "interfaces.rkt" adjutor)
+(require "interfaces.rkt"
+         ricoeur/tei/tools/tei-lint/lib
+         adjutor)
 
-(provide (contract-out
-          [menu-bar:file%
+(provide dir-menu-bar-frame<%>
+         (contract-out
+          [dir-menu-bar%
            (class/c
             (init [dir-frame dir-frame/false/c]))]
-          [menu-bar:file+edit%
+          [dir-menu-bar-frame-mixin
+           (->* {(subclass?/c frame%)}
+                {#:pass-through? any/c}
+                (class/c
+                 (init [dir-frame dir-frame/false/c])))]
+          [dir-menu-bar-frame%
            (class/c
             (init [dir-frame dir-frame/false/c]))]
           ))
-
-(TODO/void replace this w/ something based on tei-lint-menu-bar%)
 
 (define menu-item:disabled%
   (class menu-item%
@@ -19,58 +25,51 @@
     (define/override-final (is-enabled?)
       #f)))
 
-(define (append-directory-frame-menu-items m-file
-                                           [dir-frame #f])
-  (define %
-    (if dir-frame
-        menu-item%
-        menu-item:disabled%))
-  (define-syntax-rule (callback-when thunk)
-    (if dir-frame
-        thunk
-        void))
-  (new %
-       [parent m-file]
-       [label "Show Directory"]
-       [callback (callback-when
-                  (λ (i e) (send dir-frame show #t)))])
-  (new %
-       [parent m-file]
-       [label "Check Additional Directory…"]
-       [callback (callback-when
-                  (λ (i e)
-                    (send dir-frame open-additional)))]
-       [shortcut #\O])
-  (new %
-       [parent m-file]
-       [label "Refresh Directory"]
-       [callback (callback-when
-                  (λ (i e)
-                    (send dir-frame refresh-directory!)))]
-       [shortcut #\R]))
-
-(define file-menu%
-  (class menu%
-    (init [dir-frame #f])
-    (super-new [label "File"])
-    (append-directory-frame-menu-items this dir-frame)))
-
-
-(define menu-bar:file%
-  (class menu-bar%
+(define dir-menu-bar%
+  (class tei-lint-menu-bar%
+    (init [(_dir-frame dir-frame) #f])
+    (define dir-frame _dir-frame)
     (super-new)
-    (init [dir-frame #f])
-    (new file-menu%
-         [parent this]
-         [dir-frame dir-frame])))
+    (define/override (initialize-file-menu-extras m-file)
+      (new separator-menu-item%
+           [parent m-file])
+      (define %
+        (if dir-frame menu-item% menu-item:disabled%))
+      (define-syntax-rule (callback-when thunk)
+        (if dir-frame thunk void))
+      (new %
+           [parent m-file]
+           [label "Show Directory"]
+           [callback (callback-when
+                      (λ (i e) (send dir-frame show #t)))])
+      (new %
+           [parent m-file]
+           [label "Refresh Directory"]
+           [callback (callback-when
+                      (λ (i e) (send dir-frame refresh-directory!)))]
+           [shortcut #\R])
+      (void))
+    #|END class dir-frame-menu-bar%|#))
 
-(define menu-bar:file+edit%
-  (class menu-bar:file%
-    (super-new)
-    (let ([m-edit (new menu%
-                       [label "Edit"]
-                       [parent this])])
-      (append-editor-operation-menu-items m-edit #t))))
+(define-member-name secret-method (generate-member-key))
+
+(define dir-menu-bar-frame<%>
+  (interface () secret-method))
+
+(define (dir-menu-bar-frame-mixin % #:pass-through? [pass-through? #f])
+  (class* % {dir-menu-bar-frame<%>}
+    (init [dir-frame #f])
+    (if pass-through?
+        (super-new [dir-frame dir-frame])
+        (super-new))
+    (new dir-menu-bar%
+         [dir-frame dir-frame]
+         [parent this])
+    (define/public-final (secret-method)
+      (void))))
+
+(define dir-menu-bar-frame%
+  (dir-menu-bar-frame-mixin frame%))
 
 
     

@@ -15,7 +15,7 @@
              (class/c
               (init [lint-status lint-status/c]
                     [maybe-title (maybe/c string-immutable/c)]
-                    [make-frame (-> (is-a?/c frame%))]
+                    [make-frame (-> (is-a?/c dir-menu-bar-frame<%>))]
                     [dir-frame dir-frame/false/c]))]
             )))
 
