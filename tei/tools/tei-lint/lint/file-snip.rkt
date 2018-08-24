@@ -4,7 +4,7 @@
          ricoeur/tei/base
          pict
          pict/snip
-         "lib.rkt"
+         ricoeur/tei/tools/tei-lint/lib
          "toolkit.rkt"
          "lint-file.rkt"
          )

@@ -3,7 +3,7 @@
 (require framework
          racket/async-channel
          ricoeur/tei/base
-         "lib.rkt"
+         ricoeur/tei/tools/tei-lint/lib
          "toolkit.rkt"
          "file-snip.rkt"
          )

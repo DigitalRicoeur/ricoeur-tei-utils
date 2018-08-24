@@ -2,7 +2,7 @@
 
 (require ricoeur/tei/base
          "lib.rkt"
-         "directory-frame.rkt"
+         "lint/directory-frame.rkt"
          )
 
 (module+ main

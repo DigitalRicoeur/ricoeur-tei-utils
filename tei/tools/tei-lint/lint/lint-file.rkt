@@ -2,7 +2,7 @@
 
 (require framework
          ricoeur/tei/base
-         "lib.rkt"
+         ricoeur/tei/tools/tei-lint/lib
          "toolkit.rkt"
          "document.rkt"
          )
