@@ -8,8 +8,9 @@
 
 (provide (contract-out
           [paragraphs:confirm
-           (->* {tei-document? ;TODO
-                 tei-document?} ; 'line-breaks 'blank-lines
+           (->* {tei-document? ;; maybe 'todo 'skip ???
+                 (tei-document/paragraphs-status/c
+                  (or/c 'line-breaks 'blank-lines))}
                 {#:path (or/c #f path-string?)
                  #:parent (or/c #f (is-a?/c top-level-window<%>))}
                 (or/c 'confirm 'cancel))]
@@ -95,10 +96,12 @@
           (define ed
             (new xml-preview-text%
                  [doc doc]))
-          (new editor-canvas%
-               [parent col]
-               [style '(auto-hscroll auto-vscroll)]
-               [editor ed])
+          (send (new editor-canvas%
+                     [parent col]
+                     [style '(auto-hscroll auto-vscroll)]
+                     [editor ed])
+                allow-tab-exit
+                #t)
           ed)
         (values (make-ed-col "Original" doc)
                 (make-ed-col "With Paragraphs" new-doc))))

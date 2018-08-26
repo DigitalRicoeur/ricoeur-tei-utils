@@ -40,6 +40,7 @@
                 [parent row]
                 [content (for/list ([m (in-list messages)])
                            (format "• ~a\n" m))]
+                [allow-tab-exit #t]
                 [min-height 300])]))))))
 
 (define none-message%

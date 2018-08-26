@@ -24,6 +24,7 @@
                                        'auto-vscroll 'auto-hscroll
                                        'resize-corner 'no-focus 'deleted
                                        'transparent))]
+                  [allow-tab-exit (or/c boolean? 'super)]
                   [center? any/c]))]
           [editor-message%
            (class/c
@@ -85,6 +86,7 @@
           [auto-vscroll #t]
           [style null]
           [center? #f]
+          [(_allow-tab-exit allow-tab-exit) 'super]
           )
     (define t
       (new t%
@@ -109,6 +111,16 @@
              horizontal-inset
              min-height
              )
+    (define allow-tab-exit-mode _allow-tab-exit)
+    (super allow-tab-exit allow-tab-exit-mode)
+    (define/override allow-tab-exit
+      (case-lambda
+        [()
+         (super allow-tab-exit)]
+        [(on?)
+         (case allow-tab-exit-mode
+           [(super) (super allow-tab-exit on?)]
+           [else (void)])]))
     (define/public (set-natural-height)
       (min-height (inexact->exact (get-natural-height))))
     (define/public (get-natural-width) ;; maybe not necessary ?
@@ -164,6 +176,7 @@ ed.rkt:110:8: sequence-contract-violation: negative:
   (class (natural-height-mixin constant-editor-canvas%)
     (super-new [auto-hscroll #f]
                [transparent #t]
+               [allow-tab-exit #t]
                [style '(no-border no-hscroll no-focus)])
     #|END class editor-message%|#))
 

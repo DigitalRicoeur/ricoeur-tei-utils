@@ -45,6 +45,7 @@
     (define/public-final (get-path)
       path)
     (super-new [label (gui-utils:quote-literal-label
+                       #:quote-amp? #f
                        (string-append title
                                       " - TEI Lint"))]
                [alignment '(left top)]

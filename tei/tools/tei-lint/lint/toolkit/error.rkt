@@ -37,9 +37,8 @@
   (class dir-menu-bar-frame%
     (init path val)
     (super-new [label (gui-utils:quote-literal-label
-                       (string-append (if (string? path)
-                                          path
-                                          (path->string path))
+                       #:quote-amp? #f
+                       (string-append (path->string* path)
                                       " - TEI Lint"))]
                [alignment '(center top)]
                [width 400]
@@ -62,6 +61,7 @@
     (new constant-editor-canvas%
          [parent this]
          [min-height 400]
+         [allow-tab-exit #t]
          [content (match val
                     [(exn:fail msg _) msg]
                     [str str])])

@@ -22,9 +22,16 @@
    (-> any)
    (-> (-> any) any)))
 
+(define ((make-default-proc which))
+  (message-box
+   (string-append which " - TEI Lint")
+   (string-append
+    "The default `" which "` handler was invoked."))
+  (void))
+
 (define* current-lint-directory
-  (define (proc)
-    (displayln "Called current-lint-directory"))
+  (define proc
+    (make-default-proc "current-lint-directory"))
   (case-lambda
     [()
      (proc)]
@@ -32,8 +39,8 @@
      (set! proc new-proc)]))
 
 (define* current-create-new-tei-document
-  (define (proc)
-    (displayln "Called current-create-new-tei-document"))
+  (define proc
+    (make-default-proc "current-create-new-tei-document"))
   (case-lambda
     [()
      (proc)]
@@ -41,8 +48,8 @@
      (set! proc new-proc)]))
 
 (define* current-open-splash-frame
-  (define (proc)
-    (displayln "Called current-open-splash-frame"))
+  (define proc
+    (make-default-proc "current-open-splash-frame"))
   (case-lambda
     [()
      (proc)]

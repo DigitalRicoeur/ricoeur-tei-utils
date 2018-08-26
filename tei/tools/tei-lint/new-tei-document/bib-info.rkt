@@ -26,8 +26,8 @@
            (-> author/editor-spec?
                (or/c (tei-xexpr/c author)
                      (tei-xexpr/c editor)))]
-          [bib-info-valid?
-           (-> bib-info? any/c)]
+          [valid-bib-info?
+           (-> any/c any/c)]
           [author/editor-panel%
            (class/c
             (init [author/editor-spec author/editor-spec?]
@@ -615,7 +615,7 @@
                   authors+editors)
   #:transparent)
 
-(define bib-info-valid?
+(define valid-bib-info?
   (match-lambda
     [(bib-info (not #f) (not #f) (not #f)
                (not #f) (not #f) (not #f))

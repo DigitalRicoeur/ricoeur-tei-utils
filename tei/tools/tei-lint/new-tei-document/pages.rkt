@@ -152,6 +152,7 @@
          [parent this])
     (new constant-editor-canvas%
          [content (pre-page-string val)]
+         [allow-tab-exit #t]
          [min-width 350]
          [min-height 350]
          [parent this])

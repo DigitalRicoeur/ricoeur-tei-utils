@@ -11,7 +11,8 @@
 (provide (contract-out
           [paragraphs:prompt%
            (class/c
-            (init-field [doc tei-document?] ;; 'skip 'todo
+            (init-field [doc (tei-document/paragraphs-status/c
+                              (or/c 'skip 'todo))]
                         [pth (or/c #f path-string?)]
                         [old-modify-seconds real?]
                         [dir-frame dir-frame/false/c]
@@ -85,10 +86,12 @@
     (define ed
       (new xml-preview-text%
            [doc doc]))
-    (new editor-canvas%
-         [parent row]
-         [style '(auto-hscroll auto-vscroll)]
-         [editor ed])
+    (send (new editor-canvas%
+               [parent row]
+               [style '(auto-hscroll auto-vscroll)]
+               [editor ed])
+          allow-tab-exit
+          #t)
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -130,32 +133,6 @@
           #:path pth
           #:dir-frame dir-frame
           #:parent this)]))
-    (define/override (on-traverse-char evt)
-      (case (send evt get-key-code)
-        [(#\return numpad-enter)
-         (send cancel-button
-               command
-               (new control-event%
-                    [event-type 'button]
-                    [time-stamp (current-inexact-milliseconds)]))]
-        [else
-         (super on-traverse-char evt)]))
     #|END class paragraphs:prompt%|#))
 
-
-
-
-
-
-
-
-(module+ main
-  (define p
-    "/Users/philip/code/ricoeur/scratch/new-paragraphs/raw-blank-lines-example.xml")
-  (send (new paragraphs:prompt%
-             [pth p]
-             [doc (file->tei-document p)])
-        show
-        #t)
-  #|END module+ main|#)
 

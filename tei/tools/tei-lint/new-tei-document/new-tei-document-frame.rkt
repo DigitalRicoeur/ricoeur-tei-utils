@@ -17,6 +17,24 @@
 
 
 
+;                                                                  
+;                                                                  
+;                                                                  
+;                                                                  
+;                                                                  
+;                                                                  
+;   ; ;;    ;; ;;;    ;;;             ;;      ;;   ;     ;    ;;;  
+;   ;;  ;   ;;;     ;;   ;          ;;  ;    ;  ;   ;   ;   ;;   ; 
+;   ;;  ;   ;;      ;    ;           ;          ;;  ;   ;   ;    ; 
+;   ;;  ;;  ;;     ;;;;;;;;           ;;      ;;;;   ;  ;  ;;;;;;;;
+;   ;;  ;   ;;      ;                   ;;   ;  ;;   ; ;    ;      
+;   ;;  ;   ;;      ;;   ;          ;   ;   ;;  ;;   ; ;    ;;   ; 
+;   ;;;;    ;;        ;;;            ;;;     ;;; ;    ;       ;;;  
+;   ;;                                                             
+;   ;;                                                             
+;   ;;                                                             
+;                                                                  
+
 
 (define dialog:confirm-ready-to-save%
   (class dialog%
@@ -156,6 +174,24 @@
 
 
 
+;                                                                                  
+;                                                                                  
+;                                                                                  
+;                                                                                  
+;                       ;;;    ;               ;            ;;                  ;; 
+;                     ;;       ;;              ;;           ;;                  ;; 
+;   ;;  ;;  ;; ;    ;;;;;;; ;;;;;   ;; ;    ;;;;;     ;;    ;; ;      ;;;    ;;;;; 
+;   ;;  ;;  ;;; ;     ;;       ;;   ;;; ;      ;;   ;;  ;   ;;; ;   ;;   ;  ;   ;; 
+;   ;;  ;;  ;;  ;;    ;;       ;;   ;;  ;;     ;;    ;      ;;  ;;  ;    ;  ;   ;; 
+;   ;;  ;;  ;;  ;;    ;;       ;;   ;;  ;;     ;;     ;;    ;;  ;; ;;;;;;;;;;   ;; 
+;   ;;  ;;  ;;  ;;    ;;       ;;   ;;  ;;     ;;       ;;  ;;  ;;  ;       ;   ;; 
+;    ; ;;;  ;;  ;;    ;;       ;;   ;;  ;;     ;;   ;   ;   ;;  ;;  ;;   ;  ;   ;; 
+;     ; ;;  ;;  ;;    ;;       ;;   ;;  ;;     ;;    ;;;    ;;  ;;    ;;;    ;;; ; 
+;                                                                                  
+;                                                                                  
+;                                                                                  
+;                                                                                  
+
 
 (define unfinished-steps-dialog%
   (class dialog%
@@ -229,13 +265,23 @@
         show
         #t))
 
-
-
-
-
-
-
-
+;                                  
+;                                  
+;                                  
+;                                  
+;                                  
+;                                  
+;     ;;      ;;   ;     ;    ;;;  
+;   ;;  ;    ;  ;   ;   ;   ;;   ; 
+;    ;          ;;  ;   ;   ;    ; 
+;     ;;      ;;;;   ;  ;  ;;;;;;;;
+;       ;;   ;  ;;   ; ;    ;      
+;   ;   ;   ;;  ;;   ; ;    ;;   ; 
+;    ;;;     ;;; ;    ;       ;;;  
+;                                  
+;                                  
+;                                  
+;                                  
 
 (define (month-int->2digit-string x)
   (define str
@@ -400,8 +446,23 @@
        pth])))
 
 
-
-
+;                                                                          
+;                                                                          
+;                                                                          
+;                                                                          
+;                            ;;                                            
+;                            ;;                                            
+;   ; ;;     ;;;      ;;   ;;;;;;;            ;;      ;;   ;     ;    ;;;  
+;   ;;  ;   ;   ;   ;;  ;    ;;             ;;  ;    ;  ;   ;   ;   ;;   ; 
+;   ;;  ;   ;   ;    ;       ;;              ;          ;;  ;   ;   ;    ; 
+;   ;;  ;; ;;   ;;    ;;     ;;               ;;      ;;;;   ;  ;  ;;;;;;;;
+;   ;;  ;   ;   ;       ;;   ;;                 ;;   ;  ;;   ; ;    ;      
+;   ;;  ;   ;   ;   ;   ;     ;             ;   ;   ;;  ;;   ; ;    ;;   ; 
+;   ;;;;     ;;;     ;;;       ;;;           ;;;     ;;; ;    ;       ;;;  
+;   ;;                                                                     
+;   ;;                                                                     
+;   ;;                                                                     
+;                                                                          
 
 
 (define dialog:confirm-saved+ask-to-delete%
@@ -470,7 +531,6 @@
 (define (confirm-saved maybe-plain-text-path
                        xml-path
                        [parent #f])
-  (TODO/void use current-create-new-tei-document to offer to do another)
   (define bx:result
     (call-in-eventspace-thread
      #:parent parent
@@ -495,27 +555,26 @@
       "The plain text file \"" (path->string* maybe-plain-text-path)
       "\" was deleted successfully.")
      parent
-     '(ok))
-    (void)))
+     '(ok))))
      
 
-;                                                                                                  
-;                                                                                                  
-;                                                                                                  
-;                                                                                                  
-;                                                   ;;;;                                           
-;                                                     ;;                                           
-;      ;;;   ;;;    ;; ;;;    ;;;              ;;;    ;;      ;;      ;;      ;;      ;;;     ;;   
-;    ;;   ; ;   ;   ;;;     ;;   ;           ;;   ;   ;;     ;  ;   ;;  ;   ;;  ;   ;;   ;  ;;  ;  
-;    ;      ;   ;   ;;      ;    ;           ;        ;;        ;;   ;       ;      ;    ;   ;     
-;   ;;     ;;   ;;  ;;     ;;;;;;;;         ;;        ;;      ;;;;    ;;      ;;   ;;;;;;;;   ;;   
-;    ;      ;   ;   ;;      ;                ;        ;;     ;  ;;      ;;      ;;  ;           ;; 
-;    ;;   ; ;   ;   ;;      ;;   ;           ;;   ;    ;    ;;  ;;  ;   ;   ;   ;   ;;   ;  ;   ;  
-;      ;;;   ;;;    ;;        ;;;              ;;;      ;;   ;;; ;   ;;;     ;;;      ;;;    ;;;   
-;                                                                                                  
-;                                                                                                  
-;                                                                                                  
-;                                                                                                  
+;                                          
+;                                          
+;                                          
+;                                          
+;                                   ;;;;   
+;                                     ;;   
+;   ; ;;      ;;    ;; ;      ;;;     ;;   
+;   ;;  ;    ;  ;   ;;; ;   ;;   ;    ;;   
+;   ;;  ;       ;;  ;;  ;;  ;    ;    ;;   
+;   ;;  ;;    ;;;;  ;;  ;; ;;;;;;;;   ;;   
+;   ;;  ;    ;  ;;  ;;  ;;  ;         ;;   
+;   ;;  ;   ;;  ;;  ;;  ;;  ;;   ;     ;   
+;   ;;;;     ;;; ;  ;;  ;;    ;;;       ;; 
+;   ;;                                     
+;   ;;                                     
+;   ;;                                     
+;                                          
 
 
 (define workspace-panel%
@@ -538,6 +597,7 @@
                                    str
                                    "\n\n\n")]
          [min-width 300]
+         [allow-tab-exit #t]
          [parent bib-container])
     (define pages-panel
       (new pages-panel%
@@ -559,7 +619,23 @@
     #|END class workspace-panel%|#))
 
 
-
+;                                          
+;                                          
+;                                          
+;                                          
+;       ;;;                                
+;     ;;                                   
+;   ;;;;;;; ;; ;;;    ;;   ; ;; ;;    ;;;  
+;     ;;    ;;;      ;  ;  ;; ;; ;  ;;   ; 
+;     ;;    ;;          ;; ;; ;; ;; ;    ; 
+;     ;;    ;;        ;;;; ;; ;; ;;;;;;;;;;
+;     ;;    ;;       ;  ;; ;; ;; ;; ;      
+;     ;;    ;;      ;;  ;; ;; ;; ;; ;;   ; 
+;     ;;    ;;       ;;; ; ;; ;; ;;   ;;;  
+;                                          
+;                                          
+;                                          
+;                                          
   
 
 (define new-tei-document-frame%
@@ -567,7 +643,17 @@
     (inherit show)
     (init [(str string)]
           [(_maybe-pth path)]
-          [label "New TEI Document - TEI Lint"])
+          [label
+           (cond
+             [_maybe-pth
+              (match-define-values {_ (app path-element->string name) _}
+                (split-path _maybe-pth))
+              (if (infix: (string-length name) <= 100)
+                  (string-append name " - New TEI Document - TEI Lint")
+                  (string-append (substring name 0 100)
+                                 "... - New TEI Document - TEI Lint"))]
+             [else
+              "New TEI Document - TEI Lint"])])
     (define maybe-pth _maybe-pth)
     (super-new [label label]
                [alignment '(center top)])
@@ -613,7 +699,7 @@
       (define maybe-ab-xexpr
         (send pages-panel get-ab-xexpr))
       (cond
-        [(and (bib-info-valid? info)
+        [(and (valid-bib-info? info)
               maybe-ab-xexpr)
          (when (confirm-ready-to-save maybe-pth
                                       info
@@ -636,7 +722,8 @@
           (λ ()
             (write-tei-document doc)))
         (confirm-saved maybe-pth xml-path this)
-        (show #f)))
+        (show #f)
+        (current-open-splash-frame)))
     #|END class new-document-frame%|#))
 
 

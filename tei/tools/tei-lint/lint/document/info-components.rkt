@@ -65,7 +65,8 @@
          [content citation])))
 
 (define citation-editor-canvas%
-  (natural-height-mixin constant-editor-canvas%))
+  (class (natural-height-mixin constant-editor-canvas%)
+    (super-new [allow-tab-exit #t])))
 
 
 
