@@ -65,6 +65,7 @@ That transition will likely result in changes to this interface.
                             (code:line #:orig-publication-date orig-publication-date-pat)
                             (code:line #:publication-date publication-date-pat)
                             (code:line #:publication-original? publication-original?-pat)
+                            (code:line #:language language-pat)
                             (code:line #:book/article book/article-pat))]]{
  Matches any @tech{instance info} value, then matches any
  sub-patterns against the values that would be returned by the
@@ -124,6 +125,12 @@ That transition will likely result in changes to this interface.
  will allways be @racket[#true]; however, it is possible for a
  non-original @tech{instance} to be publised in the same year as the
  original, so the inverse does not hold.
+}
+
+@defproc[(instance-language [info instance-info?])
+         (or/c 'en 'fr)]{
+ Identifies the primary language of the @tech{instance}.
+ English and French are currently supported.
 }
 
 @defproc[(instance-book/article [info instance-info?])
@@ -288,6 +295,12 @@ That transition will likely result in changes to this interface.
             (get-publication-original?)
             boolean?]{
   Like @racket[(instance-publication-original? #,(this-obj))].
+ }
+
+ @defmethod[#:mode public-final
+            (get-language)
+            (or/c 'en 'fr)]{
+  Like @racket[(instance-language #,(this-obj))].
  }
 
  @defmethod[#:mode public-final

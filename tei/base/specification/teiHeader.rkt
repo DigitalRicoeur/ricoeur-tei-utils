@@ -12,16 +12,21 @@
                      ))
 ƒ(begin-for-runtime
    (require (submod ricoeur/tei/kernel private)
-            (submod ricoeur/tei/kernel
-                    private-plain-instance-info)
             xml/path
             )
    (provide teiHeader? ;; private
             profileDesc? ;; private
             textClass? ;; private
             tei-keywords? ;; private
+            ;; all these are private:
+            tH-title
+            tH-resp-table
+            tH-citation
+            tH-orig-publication-date
+            tH-publication-date
+            tH-publication-original?
+            tH-book/article
             ))
-
 
 ƒdefine-elements-together[
  ([teiHeader
@@ -29,24 +34,30 @@
    #:children ([1 fileDesc]
                [1 profileDesc])
    #:predicate teiHeader?
+   #:begin
+   [(define-syntax-rule (define-teiHeader-accessors
+                          [name proc field] ...)
+      (begin (define (name it)
+               (proc (get-field field it)))
+             ...))
+    (define-teiHeader-accessors
+      [tH-title fileDesc-title fileD]
+      [tH-resp-table fileDesc-resp-table fileD]
+      [tH-citation fileDesc-citation fileD]
+      [tH-orig-publication-date fileDesc-orig-publ-date fileD]
+      [tH-publication-date fileDesc-this-publ-date fileD]
+      [tH-publication-original? fileDesc-this-is-orig? fileD]
+      [tH-book/article textClass-book/article textC]
+      )]
    #:constructor
    [#:body/elements-only body/elements-only
+    (field fileD #:hide)
+    (field textC #:hide)
     (match-define (list fileD (app profileDesc-textClass
                                    textC))
       body/elements-only)
     (declare-paragraphs-status-field
      (textClass-guess-paragraphs-status textC))
-    (define/field info
-      (make-plain-instance-info
-       #:title (fileDesc-title fileD)
-       #:resp-table (fileDesc-resp-table fileD)
-       #:citation (fileDesc-citation fileD)
-       #:orig-publication-date (fileDesc-orig-publ-date fileD)
-       #:publication-date (fileDesc-this-publ-date fileD)
-       #:publication-original? (fileDesc-this-is-orig? fileD)
-       #:book/article (textClass-book/article textC)))
-    (lift-property prop:instance-info
-                   (λ (this) (get-field info this)))
     #|END teiHeader|#]]
   [fileDesc
    #:children ([1 titleStmt]

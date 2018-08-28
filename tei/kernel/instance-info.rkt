@@ -19,7 +19,8 @@
          instance-citation 
          instance-orig-publication-date 
          instance-publication-date 
-         instance-publication-original? 
+         instance-publication-original?
+         instance-language
          instance-book/article
          (rename-out
           [immutable-instance-set? instance-set?])
@@ -44,8 +45,10 @@
           [instance-info-mixin 
            (and/c mixin-contract
                   (-> instance-info-mixin-arg/c
-                      (class/c
-                       (init [instance-info instance-info?]))))]
+                      (and/c
+                       (implementation?/c instance-info<%>)
+                       (class/c
+                        (init [instance-info instance-info?])))))]
           ))
 
 (module+ private
@@ -59,6 +62,7 @@
                  #:orig-publication-date date?
                  #:publication-date date?
                  #:publication-original? any/c
+                 #:language (or/c 'en 'fr)
                  #:book/article (or/c 'book 'article)
                  plain-instance-info?)]
             )))
@@ -74,6 +78,7 @@
                              orig-publ-date
                              this-publ-date
                              publication-original?
+                             language
                              book/article
                              )
   #:transparent
@@ -94,6 +99,8 @@
                     #:defaults ([publication-date-pat #'_]))
          (~optional (~seq #:publication-original? publication-original?-pat:expr)
                     #:defaults ([publication-original?-pat #'_]))
+         (~optional (~seq #:language lang-pat:expr)
+                    #:defaults ([lang-pat #'_]))
          (~optional (~seq #:book/article book/article-pat:expr)
                     #:defaults ([book/article-pat #'_])))
         ...)
@@ -105,6 +112,7 @@
                             orig-publication-date-pat
                             publication-date-pat
                             publication-original?-pat
+                            lang-pat
                             book/article-pat)
      #'(or plain-pat
            (? instance-info?
@@ -117,6 +125,7 @@
                                   #:orig-publication-date orig-publ-date
                                   #:publication-date this-publ-date
                                   #:publication-original? publication-original?
+                                  #:language lang
                                   #:book/article book/article)
   (when publication-original?
     (unless (equal? orig-publ-date this-publ-date)
@@ -129,6 +138,7 @@
                        orig-publ-date
                        this-publ-date
                        (any->boolean publication-original?)
+                       lang
                        book/article)) 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -140,11 +150,8 @@
     (eq? (instance-title/symbol a)
          (instance-title/symbol b)))
   (λ (this)
-    (eq-hash-code ;equal-hash-code
-     (instance-title/symbol this)))
-  #|(λ (this)
-    (equal-secondary-hash-code
-     (instance-title/symbol this)))|#)
+    (eq-hash-code
+     (instance-title/symbol this))))
 
 (define (instance-set* . args)
   (make-immutable-instance-set args))
@@ -194,6 +201,7 @@
   [instance-orig-publication-date plain-instance-info-orig-publ-date]
   [instance-publication-date plain-instance-info-this-publ-date]
   [instance-publication-original? plain-instance-info-publication-original?]
+  [instance-language plain-instance-info-language]
   [instance-book/article plain-instance-info-book/article])
 
    
@@ -244,7 +252,8 @@
          get-citation 
          get-orig-publication-date 
          get-publication-date 
-         get-publication-original? 
+         get-publication-original?
+         get-language
          get-book/article 
          [get-resp-string (->m symbol? string-immutable/c)])))
     (values
@@ -270,6 +279,7 @@
          [get-orig-publication-date plain-instance-info-orig-publ-date]
          [get-publication-date plain-instance-info-this-publ-date]
          [get-publication-original? plain-instance-info-publication-original?]
+         [get-language plain-instance-info-language]
          [get-book/article plain-instance-info-book/article])
        #|END mixin|#))))
 

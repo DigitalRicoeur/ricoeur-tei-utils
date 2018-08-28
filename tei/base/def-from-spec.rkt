@@ -24,16 +24,12 @@
          tei-element-name/c
          (except-out (combine-out
                       (all-from-out "specification/text.rkt")
-                      (all-from-out "specification/teiHeader.rkt")
                       (except-out (all-from-out "specification/specification.rkt")
                                   main-spec))
-                     profileDesc?
                      tei-ab?
                      tei-document-text-element
-                     tei-keywords?
                      tei-text-element?
-                     teiHeader?
-                     textClass?)
+                     text-lang)
          (contract-out
           [file->tei-document
            (-> (and/c path-string-immutable/c

@@ -30,6 +30,8 @@
             xml
             openssl/md5
             racket/promise
+            (submod ricoeur/tei/kernel
+                    private-plain-instance-info)
             ))
 
 Digital Ricœur imposes requirements for the structure of TEI
@@ -58,12 +60,21 @@ the same source file that defines the Racket enforcement code.
    #:constructor
    [#:body/elements-only body/elements-only
     #:this/thunk get-this
-    (field teiHeader #:hide)
     (field text #:accessor tei-document-text-element #:hide)
     (match-define (list teiHeader text)
       body/elements-only)
     (declare-paragraphs-status-field
      (tei-document-paragraphs-status teiHeader))
+    (define/field info
+      (make-plain-instance-info
+       #:title (tH-title teiHeader)
+       #:resp-table (tH-resp-table teiHeader)
+       #:citation (tH-citation teiHeader)
+       #:orig-publication-date (tH-orig-publication-date teiHeader)
+       #:publication-date (tH-publication-date teiHeader)
+       #:publication-original? (tH-publication-original? teiHeader)
+       #:language (text-lang text)
+       #:book/article (tH-book/article teiHeader)))
     (define/field pr:md5
       (delay/thread
        (define-values (in-from-pipe out-to-pipe)
@@ -76,8 +87,7 @@ the same source file that defines the Racket enforcement code.
                  (close-output-port out-to-pipe)))
        (string->symbol (md5 in-from-pipe))))]
    #:property prop:instance-info (λ (this)
-                                   (get-plain-instance-info
-                                    (get-field teiHeader this)))
+                                   (get-field info this))
    #:begin [(define (tei-document-checksum doc)
               (force (get-field pr:md5 doc)))]
    #:property prop:element->plain-text

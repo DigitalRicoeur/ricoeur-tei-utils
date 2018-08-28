@@ -21,6 +21,7 @@
             div-type/c
             tei-ab? ;; private
             tei-text-element? ;; private
+            text-lang ;; private
             (contract-out
              [pb-get-page-string
               (-> tei-pb? (maybe/c string-immutable/c))]
@@ -52,17 +53,22 @@
    ([xml:lang (or/c "en" "fr")])
    #:required-attrs (xml:lang)
    #:predicate tei-text-element?
+   #:constructor [
+ #:attributes attrs
+ (define/field #:infer lang
+   (string->symbol
+    (attributes-ref attrs 'xml:lang)))]
    #:prose ƒ{
 
-      The ƒtag{text} element may contain only (in order) 
-      a ƒtag{front} element, a ƒtag{body} element,
-      and a ƒtag{back} element,
-      but the ƒtag{front} and ƒtag{back} elements are optional.
-      It must have a ƒattr{xml:lang} attribute specifying the
-      primary language of the document: ƒracket["en"] for English or
-      ƒracket["fr"] for French.
+  The ƒtag{text} element may contain only (in order) 
+  a ƒtag{front} element, a ƒtag{body} element,
+  and a ƒtag{back} element,
+  but the ƒtag{front} and ƒtag{back} elements are optional.
+  It must have a ƒattr{xml:lang} attribute specifying the
+  primary language of the document: ƒracket["en"] for English or
+  ƒracket["fr"] for French.
 
-      ƒdefine-elements-together[
+  ƒdefine-elements-together[
  #:inset? #t
  ;; This is where I miss being able to say that
  ;; body+front+back have the same children
@@ -84,11 +90,11 @@
                [0+ pb]
                [0+ ab]
                [0+ div])])]{
-       The ƒtag{body}, ƒtag{front}, and ƒtag{back} elements
-       may contain ƒtag{head}, 
-       ƒtag{p}, ƒtag{pb}, ƒtag{ab}, and ƒtag{div} elements.
-      }
-      })
+   The ƒtag{body}, ƒtag{front}, and ƒtag{back} elements
+   may contain ƒtag{head}, 
+   ƒtag{p}, ƒtag{pb}, ƒtag{ab}, and ƒtag{div} elements.
+  }
+  })
 
 
 ƒsection{Structural Elements}
