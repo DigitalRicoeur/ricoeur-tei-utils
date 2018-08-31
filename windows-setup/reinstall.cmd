@@ -11,7 +11,7 @@ ECHO Press enter to begin.
 PAUSE
 cd ..
 "C:\Program Files\Racket\raco.exe" pkg remove --force ricoeur-tei-utils
-"C:\Program Files\Racket\raco.exe" pkg install --name ricoeur-tei-utils
+"C:\Program Files\Racket\raco.exe" pkg install --auto --name ricoeur-tei-utils
 ECHO Press enter to close this window.
 PAUSE
 

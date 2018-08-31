@@ -9,27 +9,17 @@ fast:
 
 .PHONY: install
 install:
-	raco pkg install --name ricoeur-tei-utils -i
+	raco pkg install --auto --name ricoeur-tei-utils -i
 
 .PHONY: reinstall
 reinstall:
 	git pull --ff-only
 	-raco pkg remove --force ricoeur-tei-utils
-	raco pkg install --name ricoeur-tei-utils -i
+	raco pkg install --auto --name ricoeur-tei-utils -i
 
 
 .PHONY: gui-icons
-gui-icons: tei-lint-icons migration-assistant-icons
-
-.PHONY: migration-assistant-icons
-migration-assistant-icons: \
-  tei/tools/migration/migration-assistant.png \
-  tei/tools/migration/migration-assistant.icns \
-  tei/tools/migration/migration-assistant.ico
-
-tei/tools/migration/%png tei/tools/migration/%icns tei/tools/migration/%ico: \
-  tei/tools/migration/icon.rkt
-	racket -l ricoeur/tei/tools/migration/icon.rkt
+gui-icons: tei-lint-icons 
 
 .PHONY: tei-lint-icons
 tei-lint-icons: \
