@@ -14,7 +14,6 @@
                      ))
 
 (provide xmllint-available?
-         xml-path?
          (contract-out
           [valid-xml-file?
            (->* {path-string?}
@@ -35,14 +34,23 @@
       null))
 
 (define xmllint
-  (or (find-executable-path "xmllint")
-      (and (not (null? list:xmllint-win32-x86_64))
-           (dynamic-require (car list:xmllint-win32-x86_64)
-                            'xmllint
-                            (λ () #f)))
-      (begin 
-        (log-warning "xmllint not found")
-        #f)))
+  (let ([pth
+         (or (find-executable-path "xmllint")
+             (and (not (null? list:xmllint-win32-x86_64))
+                  (dynamic-require (car list:xmllint-win32-x86_64)
+                                   'xmllint
+                                   (λ () #f))))])
+    (cond
+      [(and pth
+            (memq 'execute (file-or-directory-permissions pth)))
+       pth]
+      [pth
+       (eprintf "warning: xmllint not executable\n  path: ~e"
+                pth)
+       #f]
+      [else
+       (log-warning "xmllint not found")
+       #f])))
 
 (define xmllint-available?
   (let ([? (not (not xmllint))])

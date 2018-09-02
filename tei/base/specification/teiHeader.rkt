@@ -173,7 +173,7 @@
     #:contains-text
     #:extra-check
     (λ (val maybe-blame neg-party)
-      (or (regexp-match? #px"\\S"
+      (or (regexp-match? #px"[^\\s]"
                          (non-element-body->plain-text (get-body val)))
           (and maybe-blame
                (raise-blame-error

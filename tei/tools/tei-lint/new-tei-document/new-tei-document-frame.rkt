@@ -403,13 +403,22 @@
   (xexpr->tei-element TEI-xexpr))
 
 
-(define (get-destination-path [parent #f])
-  (define pth
+(define (get-destination-path [suggested-pth #f]
+                              #:parent [parent #f])
+  (define* pth
+    (define-values {suggest-dir suggest-name}
+      (cond
+        [suggested-pth
+         (match-define-values {dir name _}
+           (split-path suggested-pth))
+         (values dir name)]
+        [else
+         (values #f #f)]))
     (put-file
      "Save the new TEI XML document as:"
      parent
-     #f
-     #f
+     suggest-dir
+     suggest-name
      "xml"
      null
      '(["TEI XML" "*.xml"])))
@@ -445,6 +454,16 @@
       [else
        pth])))
 
+(define (make-save-exn-handler [parent #f])
+  (match-lambda
+    [(exn:fail message _)
+     (message-box
+      "Error Saving File - TEI Lint"
+      (string-append "Error saving file:\n"
+                     message)
+      parent
+      '(ok stop))
+     (void)]))
 
 ;                                                                          
 ;                                                                          
@@ -714,16 +733,21 @@
       (define doc
         (make-tei-document valid-info ab-xexpr))
       (define xml-path
-        (get-destination-path this))
+        (get-destination-path
+         (and maybe-pth
+              (path-replace-extension maybe-pth
+                                      #".xml"))
+         #:parent this))
       (when xml-path
-        (with-output-to-file xml-path
-          #:mode 'text
-          #:exists 'replace ;; checked in get-destination-path
-          (λ ()
-            (write-tei-document doc)))
-        (confirm-saved maybe-pth xml-path this)
-        (show #f)
-        (current-open-splash-frame)))
+        (with-handlers ([exn:fail (make-save-exn-handler this)])
+          (with-output-to-file/unless-exn xml-path
+            #:mode 'text
+            #:exists 'replace ;; checked in get-destination-path
+            (λ ()
+              (write-tei-document doc)))
+          (confirm-saved maybe-pth xml-path this)
+          (show #f)
+          (current-open-splash-frame))))
     #|END class new-document-frame%|#))
 
 

@@ -72,7 +72,7 @@ library can be used independently.
                         [#:exact? exact? any/c #f])
            (instance-set/c document-search-results?)]
    @defthing[term/c flat-contract?
-             #:value (and/c string-immutable/c #px"\\S")])]{
+             #:value (and/c string-immutable/c #px"[^\\s]")])]{
  Searches for @racket[term], an immutable string containing at least one non-whitespace
  character, in the @tech{TEI documents} encapsulated by @racket[(current-corpus)].
 

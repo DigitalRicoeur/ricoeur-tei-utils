@@ -74,7 +74,8 @@
                         trimmed-string-px))]
             [segment-make-search-results
              (-> segment?
-                 (listof (maybe/c (and/c string-immutable/c #px"\\S")))
+                 (listof (maybe/c (and/c string-immutable/c
+                                         #px"[^\\s]")))
                  (listof search-result?))]
             [search-result-nullify-excerpt
              (-> search-result? search-result?)]
@@ -86,9 +87,10 @@
 
 
 (define/final-prop term/c
-  ;; Since #px"\\S" has security implications,
+  ;; n.b. \S only matches ASCII
+  ;; Since #px"[^\\s]" has security implications,
   ;; we have to care that it's sound.
-  (and/c string-immutable/c #px"\\S"))
+  (and/c string-immutable/c #px"[^\\s]"))
 
 (struct normalized-term (string)
   #:transparent

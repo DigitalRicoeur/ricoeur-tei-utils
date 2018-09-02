@@ -107,7 +107,7 @@ including everything necessary to implement new kinds of
 @defproc[(segment-make-search-results [seg segment?]
                                       [excerpts
                                        (listof (maybe/c (and/c string-immutable/c
-                                                               #px"\\S")))])
+                                                               #px"[^\\s]")))])
          (listof search-result?)]{
  Returns a @tech{search result} value for each element of
  the @racket[excerpts] list.

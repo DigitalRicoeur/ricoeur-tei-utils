@@ -32,7 +32,9 @@
                       path-string?))))
 
 (define/final-prop trimmed-string-px
-  #px"^\\S$|^\\S.*\\S$")
+  ;; n.b. \S only matches ASCII
+  ;; TODO: add tests
+  #px"^[^\\s]$|^[^\\s].*[^\\s]$")
 
 (define (attributes-ref attrs k)
   (define rslt
@@ -44,7 +46,7 @@
 
 (define normalize-title
   (match-lambda
-    [(pregexp #px"^(?i:an?|the)\\s+(\\S.*)$" (list _ trimmed))
+    [(pregexp #px"^(?i:an?|the)\\s+([^\\s].*)$" (list _ trimmed))
      ;; N.B.: If this were exported, should use string->immutable-string
      trimmed]
     [full full]))

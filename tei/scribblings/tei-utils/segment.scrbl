@@ -68,7 +68,7 @@ It also defines an extensible interface for working with @tech{segment metadata}
  (@defproc[(tei-document-segments [doc tei-document?])
            (listof base-segment?)]
    @defstruct*[base-segment ([meta segment-meta?]
-                             [body (and/c string-immutable/c #px"\\S")])
+                             [body (and/c string-immutable/c #px"[^\\s]")])
                #:omit-constructor])]{
  The function @racket[tei-document-segments] splits a @tech{TEI document}
  @racket[doc] into a list of @tech{segments}:

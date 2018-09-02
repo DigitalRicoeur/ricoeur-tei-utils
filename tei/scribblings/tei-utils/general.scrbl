@@ -22,7 +22,7 @@
 }
 
 @defthing[trimmed-string-px pregexp?
-          #:value #px"^\\S$|^\\S.*\\S$"]{
+          #:value #px"^[^\\s]$|^[^\\s].*[^\\s]$"]{
  Matches non-empty strings that neither start nor end with whitespace.
 }
 
