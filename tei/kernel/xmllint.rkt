@@ -39,11 +39,28 @@
              (and (not (null? list:xmllint-win32-x86_64))
                   (dynamic-require (car list:xmllint-win32-x86_64)
                                    'xmllint
-                                   (λ () #f))))])
+                                   (λ () #f))))]
+        [null-out (open-output-nowhere)]
+        [null-in (open-input-string "")])
+    (define (check-can-run pth)
+      (parameterize ([current-output-port null-out]
+                     [current-error-port null-out]
+                     [current-input-port null-in])
+        (with-handlers ([exn:fail? (λ (e) #f)])
+          (system* pth #"--version"))))
     (cond
       [(and pth
-            (memq 'execute (file-or-directory-permissions pth)))
+            (file-exists? pth)
+            (check-can-run pth))
        pth]
+      [(and (file-exists? "/opt/local/bin/xmllint")
+            (check-can-run (check-can-run "/opt/local/bin/xmllint")))
+       (eprintf "~a;\n ~a\n  broken: ~e\n  using: ~e"
+                "warning: xmllint: couldn't run found executable"
+                "falling back to system version"
+                pth
+                "/opt/local/bin/xmllint")
+       "/opt/local/bin/xmllint"]
       [pth
        (eprintf "warning: xmllint not executable\n  path: ~e"
                 pth)
