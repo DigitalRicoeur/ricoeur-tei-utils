@@ -739,7 +739,7 @@
                                       #".xml"))
          #:parent this))
       (when xml-path
-        (with-handlers ([exn:fail (make-save-exn-handler this)])
+        (with-handlers ([exn:fail? (make-save-exn-handler this)])
           (with-output-to-file/unless-exn xml-path
             #:mode 'text
             #:exists 'replace ;; checked in get-destination-path
