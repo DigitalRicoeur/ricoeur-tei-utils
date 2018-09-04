@@ -5,78 +5,26 @@
 
 (require "doc-support.rkt"
          (submod "doc-support.rkt" private)
-         "begin-for-runtime.rkt"
-         (submod "begin-for-runtime.rkt" private)
-         (only-in scribble/manual/lang
-                  [#%top-interaction scribble-top-interaction]
-                  [#%module-begin scribble-module-begin])
+         (except-in ricoeur-doc-lang/doc-time
+                    tag)
+         ricoeur-doc-lang/prose-body
          scribble/decode
          (for-syntax "ir/struct.rkt"
                      "ir/syntax-class.rkt"
                      ))
 
-(require-provide (provide-only "doc-support.rkt"
-                               "begin-for-runtime.rkt")
-                 scribble/manual
-                 syntax/parse/define
-                 (for-syntax racket/base
-                             syntax/parse
-                             syntax/flatten-begin
+(require-provide (for-syntax syntax/flatten-begin
                              racket/match
                              racket/sequence
                              ))
 
-(provide (except-out (all-from-out racket)
-                     #%top-interaction
-                     #%module-begin)
+(provide (all-from-out ricoeur-doc-lang/doc-time)
+         (all-from-out "doc-support.rkt")
          define-element
          define-elements-together
-         (rename-out
-          [module-begin #%module-begin]
-          [scribble-top-interaction #%top-interaction]
-          ))
+         )
+     
 
-(define-syntax-parser module-begin
-  [(_ doc body:expr ...)
-   ;; scribble-module-begin would expand things twice
-   #:do [(define lift-ctx
-           (gensym 'lifts))
-         (define stop-list
-           (list #'begin ;; it's implicitly added, but let's be clear
-                 ;; Need to not try to expand these:
-                 #'#%require
-                 #'#%provide
-                 #'define-values
-                 #'define-syntaxes
-                 #'module #'module* #'module+))]
-   #:with (expanded-body:expr ...)
-   (let loop ([to-go (syntax->list #'(body ...))]
-              [lifted-so-far null]
-              [expanded-body-so-far null])
-     (match to-go
-       ['()
-        (append lifted-so-far expanded-body-so-far)]
-       [(cons body-stx to-go)
-        (syntax-parse (local-expand/capture-lifts body-stx
-                                                  'module
-                                                  stop-list
-                                                  #f
-                                                  lift-ctx)
-          #:literals {begin}
-          [(begin lifted:expr ... (begin nested:expr ...))
-           (loop (append (flatten-all-begins
-                          #'(begin nested ...))
-                         to-go)
-                 lifted-so-far
-                 expanded-body-so-far)]
-          [(begin lifted:expr ... expanded-body:expr)
-           (loop to-go
-                 (append lifted-so-far
-                         (syntax->list #'(lifted ...)))
-                 (append expanded-body-so-far
-                         (list #'expanded-body)))])]))
-   #'(scribble-module-begin doc expanded-body ...)])
-      
 
 (begin-for-syntax
   (define-splicing-syntax-class inset-clause

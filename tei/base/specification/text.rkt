@@ -42,7 +42,7 @@
              )))
 ƒ(TODO/void module+ #:
             ambiguous binding error for |"begin"| with
-            "(begin-for-runtime (module+ private ...))")
+            "(begin-for-runtime (module+ private (provide ...)))")
 
 ƒ(define-element text
    #:children ([0-1 front]
