@@ -1,22 +1,32 @@
+.PHONY: all
+PKGNAME = ricoeur-tei-utils
+all: setup
+
+
 .PHONY: setup
 setup:
 	git pull --ff-only
 	raco setup --doc-index ricoeur
 
+
 .PHONY: fast
 fast:
 	raco setup --no-docs --no-pkg-deps ricoeur/tei
 
+
 .PHONY: install
+INSTALL = raco pkg install --auto --name $(PKGNAME) -i
 install:
-	raco pkg install --auto --name ricoeur-tei-utils -i
+	$(INSTALL)
+
 
 .PHONY: reinstall
 reinstall:
 	git pull --ff-only
-	-raco pkg remove --force ricoeur-tei-utils
-	raco pkg install --auto --name ricoeur-tei-utils -i
+	-raco pkg remove --force $(PKGNAME)
+	$(INSTALL)
 
+########################################
 
 .PHONY: gui-icons
 gui-icons: tei-lint-icons 
