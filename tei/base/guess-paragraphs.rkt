@@ -1,9 +1,9 @@
 #lang racket
 
 (require ricoeur/tei/kernel
-         ricoeur/tei/base/def-from-spec
+         "def-from-spec.rkt"
          syntax/parse/define
-         (submod ricoeur/tei/base/def-from-spec private)
+         (submod "def-from-spec.rkt" private-to-base)
          (only-in (submod ricoeur/tei/kernel private)
                   has-tei-document-paragraphs-status?
                   has-tei-document-paragraphs-status/c)

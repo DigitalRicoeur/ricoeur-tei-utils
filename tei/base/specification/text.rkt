@@ -2,49 +2,45 @@
 
 ƒ[#:spec text-spec]
 
-ƒtitle{The text Element}
+ƒtitle{The ƒtt{text} Element}
+
+ƒbegin-for-runtime[
+ (provide tei-pb?
+          tei-note?
+          div?
+          div-type/c
+          (contract-out
+           [pb-get-page-string
+            (-> tei-pb? (maybe/c string-immutable/c))]
+           [pb-get-kind
+            (-> tei-pb? (or/c 'none 'number 'roman 'other))]
+           [pb-get-numeric
+            (-> tei-pb? (maybe/c natural-number/c))]
+           [tei-note-get-place
+            (-> tei-note? (or/c 'foot 'end))]
+           [tei-note-get-n
+            (-> tei-note? string-immutable/c)]
+           [tei-note-get-transl?
+            (-> tei-note? (or/c #f 'transl))]
+           [div-get-type
+            (-> div? div-type/c)]
+           [div-get-n
+            (-> div? (maybe/c string-immutable/c))]
+           ))
+ (module+ private-to-base
+   (provide tei-ab? 
+            tei-text-element? 
+            text-lang))
+ (require (submod ricoeur/tei/kernel private)
+          roman-numeral)
+ ]
 
 ƒ(require-self-for-label)
 ƒ(require (for-label ricoeur/tei/kernel
                      (except-in racket
                                 date?
-                                date
-                                )))
+                                date)))
 
-ƒ(begin-for-runtime
-   (require (submod ricoeur/tei/kernel private)
-            roman-numeral
-            )
-   (provide tei-pb?
-            tei-note?
-            div?
-            div-type/c
-            tei-ab? ;; private
-            tei-text-element? ;; private
-            text-lang ;; private
-            (contract-out
-             [pb-get-page-string
-              (-> tei-pb? (maybe/c string-immutable/c))]
-             [pb-get-kind
-              (-> tei-pb? (or/c 'none 'number 'roman 'other))]
-             [pb-get-numeric
-              (-> tei-pb? (maybe/c natural-number/c))]
-             [tei-note-get-place
-              (-> tei-note? (or/c 'foot 'end))]
-             [tei-note-get-n
-              (-> tei-note? string-immutable/c)]
-             [tei-note-get-transl?
-              (-> tei-note? (or/c #f 'transl))]
-             [div-get-type
-              (-> div? div-type/c)]
-             [div-get-n
-              (-> div? (maybe/c string-immutable/c))]
-             )))
-ƒ(begin-for-runtime
-   (module+ private
-     (provide tei-ab?
-              tei-text-element?
-              text-lang)))
 
 ƒ(define-element text
    #:children ([0-1 front]

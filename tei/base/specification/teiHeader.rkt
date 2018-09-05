@@ -2,31 +2,30 @@
 
 ƒ[#:spec teiHeader-spec]
 
-ƒtitle{The teiHeader Element}
+ƒtitle{The ƒtt{teiHeader} Element}
 
-ƒ(require (for-label ricoeur/tei/kernel
-                     (except-in racket
-                                date?
-                                date
-                                )
-                     ))
-ƒ(begin-for-runtime
-   (require (submod ricoeur/tei/kernel private)
-            xml/path
-            )
-   (provide teiHeader? ;; private
-            profileDesc? ;; private
-            textClass? ;; private
-            tei-keywords? ;; private
-            ;; all these are private:
-            tH-title
+ƒbegin-for-runtime[
+ (module+ private-to-base
+   (provide teiHeader? 
+            profileDesc? 
+            textClass?
+            tei-keywords?))
+ (module+ private-to-spec
+   (provide tH-title
             tH-resp-table
             tH-citation
             tH-orig-publication-date
             tH-publication-date
             tH-publication-original?
-            tH-book/article
-            ))
+            tH-book/article))
+ (require (submod ricoeur/tei/kernel private)
+          xml/path)
+ ]
+
+ƒ(require (for-label ricoeur/tei/kernel
+                     (except-in racket
+                                date?
+                                date)))
 
 ƒdefine-elements-together[
  ([teiHeader
@@ -197,7 +196,7 @@
   The ƒtag{author} element contains free-form text and may have
   an optional ƒattr{xml:id} attribute. As a special case,
   the ID ƒracket["ricoeur"] is reserved for use with Paul Ricœur across all
-  documents.
+  documents. ƒTODO/void[author: not empty]
   })
                  
  ƒ(define-element editor
@@ -217,7 +216,7 @@
   its value must be either ƒracket["editor"], ƒracket["translator"],
   ƒracket["compiler"], or ƒracket["preface"] (to indicate the author of
   a preface). Ommiting the ƒattr{role} attribute is equivalent to a value
-  of ƒracket["editor"].
+  of ƒracket["editor"]. ƒTODO/void[author: not empty]
 
   ƒmargin-note{If a type of editor arises that does not
    fit neatly into these categories, we should decide on a standard
@@ -455,11 +454,7 @@
        (non-element-body->plain-text
         (get-body val)))
      (case body-string
-       [("todo"
-         "line-breaks"
-         "blank-lines"
-         "done"
-         "skip")
+       [("todo" "line-breaks" "blank-lines" "done" "skip")
         #t]
        [else
         (and maybe-blame

@@ -2,34 +2,15 @@
 
 (require ricoeur/tei/kernel
          (submod ricoeur/tei/kernel private)
-         racket/contract
-         (only-in xml
-                  collapse-whitespace
-                  read-comments
-                  xml-count-bytes
-                  xexpr-drop-empty-attributes
-                  xml->xexpr
-                  document-element
-                  read-xml)
-         "specification/specification.rkt"
-         (except-in "specification/text.rkt"
-                    text-spec)
-         (except-in "specification/teiHeader.rkt"
-                    teiHeader-spec)
-         )
+         racket/contract)
+
+(require-provide (except-out "specification/specification.rkt"
+                             main-spec))
 
 (provide tei-xexpr/c
          dynamic-tei-xexpr/c
          any-tei-xexpr/c
          tei-element-name/c
-         (except-out (combine-out
-                      (all-from-out "specification/text.rkt")
-                      (except-out (all-from-out "specification/specification.rkt")
-                                  main-spec))
-                     tei-ab?
-                     tei-document-text-element
-                     tei-text-element?
-                     text-lang)
          (contract-out
           [file->tei-document
            (-> (and/c path-string-immutable/c
@@ -41,14 +22,10 @@
            (-> any-tei-xexpr/c tei-element?)]
           ))
 
-(module+ private
-  (provide profileDesc?
-           tei-ab?
-           tei-document-text-element
-           tei-keywords?
-           tei-text-element?
-           teiHeader?
-           textClass?))
+(module+ private-to-base
+  (require-provide (submod "specification/specification.rkt"
+                           private-to-base)))
+
 
 (define-values/elements-specifications [main-spec
                                         ]

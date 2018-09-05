@@ -7,7 +7,7 @@
          racket/match
          json
          "def-from-spec.rkt"
-         (submod "def-from-spec.rkt" private)
+         (submod "def-from-spec.rkt" private-to-base)
          "get-page-breaks.rkt"
          (submod "segments/location-stack.rkt"
                  private)
@@ -18,8 +18,7 @@
                      ))
 
 (require-provide "segments/location-stack.rkt"
-                 "segments/meta.rkt"
-                 )
+                 "segments/meta.rkt")
 
 (provide (contract-out
           [tei-document-segments
@@ -432,12 +431,10 @@
     (pattern (~seq kw:keyword [name:id init:expr])))
   (syntax-parse stx
     [(_ loop:id (cl:clause ...) body ...+)
-     (define (unwrap stx)
-       (apply append (map syntax-e (syntax-e stx))))
      #`(let ()
-         (define/check-args (loop #,@(unwrap #'([cl.kw cl.name] ...)))
+         (define/check-args (loop (~@ cl.kw cl.name) ...)
            body ...)
-         (loop #,@(unwrap #'([cl.kw cl.init] ...))))]))
+         (loop (~@ cl.kw cl.init) ...))]))
 
 
 (define (init-pb+latest-pb->page init-pb latest-pb)
