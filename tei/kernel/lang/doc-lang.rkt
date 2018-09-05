@@ -5,9 +5,9 @@
 
 (require "doc-support.rkt"
          (submod "doc-support.rkt" private)
-         (except-in ricoeur-doc-lang/doc-time
+         (except-in "core/doc-time.rkt"
                     tag)
-         (submod ricoeur-doc-lang/begin-for-runtime
+         (submod "core/begin-for-runtime.rkt"
                  prose-body)
          scribble/decode
          (for-syntax "ir/struct.rkt"
@@ -19,7 +19,7 @@
                              racket/sequence
                              ))
 
-(provide (all-from-out ricoeur-doc-lang/doc-time)
+(provide (all-from-out "core/doc-time.rkt")
          (all-from-out "doc-support.rkt")
          define-element
          define-elements-together

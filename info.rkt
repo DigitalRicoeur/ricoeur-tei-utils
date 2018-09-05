@@ -41,8 +41,9 @@
                      ("_-exp" #:version "0.1")
                      "db-doc"
                      "data-doc"
+                     "gui-doc"
                      "scribble-doc"
-                     "todo-list" ;; TODO: eliminate this dependency
+                     "todo-list"
                      "racket-index"
                      ))
 

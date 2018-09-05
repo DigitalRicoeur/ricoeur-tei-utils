@@ -3,10 +3,10 @@
 (require ricoeur/tei/kernel/sans-lang
          syntax/parse/define
          racket/require
-         ricoeur/tei/kernel/lang/elem-for-runtime
-         (only-in ricoeur/tei/kernel/lang/link
+         "elem-for-runtime.rkt"
+         (only-in "link.rkt"
                   define-combined-elements-specification)
-         ricoeur-doc-lang/make-module-begin
+         "core/make-module-begin.rkt"
          (prefix-in racket: (only-in racket/base
                                      module+
                                      module*))
@@ -16,22 +16,20 @@
                      syntax/parse
                      syntax/flatten-begin
                      syntax/strip-context
-                     (multi-in ricoeur/tei/kernel/lang
-                               (ir/struct
-                                ir/syntax-class
-                                static-info
-                                ))))
+                     "ir/struct.rkt"
+                     "ir/syntax-class.rkt"
+                     "static-info.rkt"
+                     ))
 
 (require-provide (provide-only ricoeur/tei/kernel/sans-lang)
                  racket/contract
                  racket/match
                  racket/string
                  racket/list
-                 (multi ricoeur/tei/kernel/lang
-                        (stxparam
-                         adt
-                         interface-macros
-                         )))
+                 "stxparam.rkt"
+                 "adt.rkt"
+                 "interface-macros.rkt"
+                 )
 
 (provide (except-out (all-from-out racket/base)
                      #%module-begin)
