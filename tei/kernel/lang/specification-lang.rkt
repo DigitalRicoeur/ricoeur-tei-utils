@@ -7,6 +7,9 @@
          (only-in ricoeur/tei/kernel/lang/link
                   define-combined-elements-specification)
          ricoeur-doc-lang/make-module-begin
+         (prefix-in racket: (only-in racket/base
+                                     module+
+                                     module*))
          (for-syntax racket/base
                      racket/list
                      racket/sequence
@@ -33,6 +36,8 @@
 (provide (except-out (all-from-out racket/base)
                      #%module-begin)
          define-element/runtime ;; TODO: something better w/ syntax-local-require
+         module+
+         module*
          (rename-out
           [module-begin #%module-begin]
           ))
@@ -70,7 +75,7 @@
         #'#%provide 
         #'define-values
         #'define-syntaxes
-        #'module #'module* #'module+
+        #'module #'racket:module* #'racket:module+
         ))
 
 (define-syntax-parser module-begin

@@ -7,7 +7,8 @@
          (submod "doc-support.rkt" private)
          (except-in ricoeur-doc-lang/doc-time
                     tag)
-         ricoeur-doc-lang/prose-body
+         (submod ricoeur-doc-lang/begin-for-runtime
+                 prose-body)
          scribble/decode
          (for-syntax "ir/struct.rkt"
                      "ir/syntax-class.rkt"
@@ -131,8 +132,7 @@
     (pattern raw
              #:declare raw (expr/c #'pre-flow?
                                    #:name "element definition prose body expression")
-             #:with c (parameterize ([currently-expanding-prose-body? #t])
-                        (local-expand #'raw.c 'expression null)))))
+             #:with c (local-expand-prose-body-expression #'raw.c))))
              
 
 (define-syntax-parser define-elements-together/private

@@ -4,8 +4,8 @@
 
 ƒtitle{The text Element}
 
+ƒ(require-self-for-label)
 ƒ(require (for-label ricoeur/tei/kernel
-                     (submod "..")
                      (except-in racket
                                 date?
                                 date
@@ -40,9 +40,11 @@
              [div-get-n
               (-> div? (maybe/c string-immutable/c))]
              )))
-ƒ(TODO/void module+ #:
-            ambiguous binding error for |"begin"| with
-            "(begin-for-runtime (module+ private (provide ...)))")
+ƒ(begin-for-runtime
+   (module+ private
+     (provide tei-ab?
+              tei-text-element?
+              text-lang)))
 
 ƒ(define-element text
    #:children ([0-1 front]

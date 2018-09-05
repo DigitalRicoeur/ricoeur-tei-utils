@@ -4,6 +4,8 @@
          scribble/core
          syntax/parse/define
          (except-in "../../for-manual.rkt"
+                    module+
+                    module*
                     #%module-begin)
          )
 
