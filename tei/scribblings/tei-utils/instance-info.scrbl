@@ -170,6 +170,45 @@ That transition will likely result in changes to this interface.
  @tech{instance info} values from @racket[init].
 }
 
+@defproc[(instance-set* [info instance-info?] ...)
+         (instance-set/c)]{
+ Equivalent to @racket[(instance-set (list info ...))].
+}
+
+@deftogether[
+ (@defform[(for/instance-set (for-clause ...) body-or-break ... body)]
+   @defform[(for*/instance-set (for-clause ...) body-or-break ... body)])]{
+ Like @racket[for/list] and @racket[for*/list], respectively,
+ except that the last @racket[body] expression must produce an
+ @tech{instance info} value, and the result of the iteration
+ is an @tech{instance set} of the @tech{instance info} values.
+}
+
+@defproc[(instance-set->plain [st (instance-set/c)])
+         (instance-set/c)]{
+ Produces an @tech{instance set} like @racket[st],
+ but with every member of the set converted to
+ a @tech{plain instance info} value using @racket[get-plain-instance-info].
+ If @racket[st] already contains only @tech{plain instance info} values,
+ it may or may not be returned directly.
+}
+
+@defproc[(instance-set-ref [st (instance-set/c)]
+                           [title/symbol symbol?])
+         instance-info?]{
+ Returns the member of @racket[st] for which
+ @racket[instance-title/symbol] would return @racket[title/symbol].
+ If no such member exists, an exception is raised.
+}
+
+@defproc[(instance-set-try-ref [st (instance-set/c)]
+                               [title/symbol symbol?])
+         (or/c #f instance-info?)]{
+ Like @racket[instance-set-ref], but returns @racket[#false]
+ when @racket[title/symbol] is not found instead of
+ raising an exception.
+}
+
 @defproc*[([(instance-set/c [elem/c chaperone-contract?])
             chaperone-contract?]
            [(instance-set/c)
@@ -193,11 +232,6 @@ That transition will likely result in changes to this interface.
  with @racket[for]-like forms.
  An @racket[in-instance-set] application may provide better
  performance when it appears directly in a @racket[for] clause.
-}
-
-@defproc[(instance-set* [info instance-info?] ...)
-         (instance-set/c)]{
- Equivalent to @racket[(instance-set (list info ...))].
 }
 
 

@@ -16,6 +16,7 @@
          corpus-get-checksum-table
          corpus-do-term-search
          make-corpus-mixin
+         checksum-table/c
          (contract-out
           [corpus%
            (class/c
@@ -32,9 +33,7 @@
           [get-instance-info-set
            (-> (instance-set/c))]
           [get-checksum-table
-           (-> (hash/c symbol?
-                       symbol?
-                       #:immutable #t))]
+           (-> checksum-table/c)]
           [term-search
            (->* {term/c}
                 {#:ricoeur-only? any/c

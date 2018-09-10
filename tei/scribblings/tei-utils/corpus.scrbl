@@ -50,10 +50,12 @@ library can be used independently.
  of this library.
 }
 
-@defproc[(get-checksum-table)
-         (hash/c symbol?
-                 symbol?
-                 #:immutable #t)]{
+@deftogether[(@defproc[(get-checksum-table)
+                       checksum-table/c]
+               @defthing[checksum-table/c flat-contract?
+                         #:value (hash/c symbol?
+                                         symbol?
+                                         #:immutable #t)])]{
  Returns an immutable hash table summarizing the identity of the
  @tech{TEI documents} encapsulated by @racket[(current-corpus)].
 
@@ -103,9 +105,7 @@ library can be used independently.
  (@defproc[(corpus-get-instance-info-set [corpus (is-a?/c corpus%)])
            (instance-set/c)]
    @defproc[(corpus-get-checksum-table [corpus (is-a?/c corpus%)])
-            (hash/c symbol?
-                    symbol?
-                    #:immutable #t)]
+            checksum-table/c]
    @defproc[(corpus-do-term-search [corpus (is-a?/c corpus%)]
                                    [term term/c]
                                    [#:ricoeur-only? ricoeur-only? any/c #t]
@@ -149,9 +149,7 @@ library can be used independently.
  }
  @defmethod[#:mode public-final
             (get-checksum-table)
-            (hash/c symbol?
-                    symbol?
-                    #:immutable #t)]{
+            checksum-table/c]{
   Implements @racket[get-checksum-table] and
   @racket[corpus-get-checksum-table].
  }

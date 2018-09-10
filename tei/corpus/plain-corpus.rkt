@@ -7,7 +7,8 @@
          ricoeur/tei/base
          )
 
-(provide (contract-out
+(provide checksum-table/c
+         (contract-out
           [plain-corpus%
            (class/c (init [docs (instance-set/c tei-document?)]))]
           [corpus-get-instance-info-set
@@ -15,9 +16,7 @@
                (instance-set/c))]
           [corpus-get-checksum-table
            (-> (is-a?/c plain-corpus%)
-               (hash/c symbol?
-                       symbol?
-                       #:immutable #t))]
+               checksum-table/c)]
           [make-corpus-mixin
            (let ([corpus-mixin/c (make-mixin-contract plain-corpus%)]
                  [initialize-this/c (->m (instance-set/c tei-document?)
@@ -34,6 +33,10 @@
                                      [initialize-this
                                       initialize-this/c])))))]))]
           ))
+
+(define/final-prop checksum-table/c
+  (hash/c symbol? symbol?
+          #:immutable #t))
 
 (define-member-name on-initialize (generate-member-key))
 

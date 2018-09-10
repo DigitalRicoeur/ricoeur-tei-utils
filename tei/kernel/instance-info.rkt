@@ -22,10 +22,6 @@
          instance-publication-original?
          instance-language
          instance-book/article
-         (rename-out
-          [immutable-instance-set? instance-set?])
-         instance-set/c
-         in-instance-set
          (contract-out
           [instance-get-resp-string
            (-> instance-info? symbol? string?)]
@@ -35,13 +31,6 @@
           [prop:instance-info
            (struct-type-property/c
             (-> any/c plain-instance-info?))]
-          [rename make-immutable-instance-set
-                  instance-set
-                  (->* {}
-                       {(stream/c instance-info?)}
-                       instance-set?)]
-          [instance-set*
-           (-> instance-info? ... instance-set?)]
           [instance-info-mixin 
            (and/c mixin-contract
                   (-> instance-info-mixin-arg/c
@@ -139,49 +128,7 @@
                        this-publ-date
                        (any->boolean publication-original?)
                        lang
-                       book/article)) 
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(define-custom-set-types instance-set
-  #:elem? instance-info?
-  (λ (a b)
-    (eq? (instance-title/symbol a)
-         (instance-title/symbol b)))
-  (λ (this)
-    (eq-hash-code
-     (instance-title/symbol this))))
-
-(define (instance-set* . args)
-  (make-immutable-instance-set args))
-
-(define/subexpression-pos-prop instance-set/c
-  (let ([immutable-instance-set?
-         (flat-named-contract 'instance-set?
-                              immutable-instance-set?)])
-    (case-lambda
-      [() immutable-instance-set?]
-      [(elem/c)
-       (let ([elem/c (coerce-chaperone-contract 'instance-set/c elem/c)])
-         (rename-contract
-          (and/c immutable-instance-set?
-                 (set/c elem/c #:kind 'immutable))
-          (build-compound-type-name 'instance-set/c elem/c)))])))
-
-(define (check-instance-set v)
-  (unless (immutable-instance-set? v)
-    (raise-argument-error 'in-instance-set "instance-set?" v))
-  v)
-
-(define (in-instance-set/first-class v)
-  (in-immutable-set (check-instance-set v)))
-
-(define-sequence-syntax in-instance-set
-  (λ () #'in-instance-set/first-class)
-  (syntax-parser
-    [[(elem:id) (_ v:expr)]
-     #'[(elem) (in-immutable-set (check-instance-set v))]]))
+                       book/article))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

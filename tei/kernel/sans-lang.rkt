@@ -11,6 +11,7 @@
 
 (require-provide "base-structs.rkt"
                  "instance-info.rkt"
+                 "instance-set.rkt"
                  "interfaces.rkt"
                  "xmllint.rkt"
                  "xexpr/plain-contracts.rkt"
