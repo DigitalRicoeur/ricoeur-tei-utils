@@ -9,7 +9,10 @@ ECHO either for the first time or after upgrading to a new Racket version.
 ECHO If the repository is already installed, you will see an error message.
 ECHO Press enter to begin.
 PAUSE
+ECHO ON
 cd ..
+cd
 "C:\Program Files\Racket\raco.exe" pkg install --auto --name ricoeur-tei-utils
+ECHO OFF
 ECHO Press enter to close this window.
 PAUSE
