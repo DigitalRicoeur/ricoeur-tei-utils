@@ -9,10 +9,10 @@ to assist in preparing and validating TEI XML documents.
 All of these require the library @racketmodname[ricoeur/tei],
 which should be installed as described under
 @secref["Installing___Updating_This_Library"
-        #:doc '(lib "ricoeur/tei/scribblings/tei-utils/tei-utils.scrbl")]
-in @other-doc['(lib "ricoeur/tei/scribblings/tei-utils/tei-utils.scrbl")].
+        #:doc '(lib "ricoeur/tei/scribblings/tei-utils/ricoeur-tei-utils.scrbl")]
+in @other-doc['(lib "ricoeur/tei/scribblings/tei-utils/ricoeur-tei-utils.scrbl")].
 
-All of our command-line tools will accept the flags
+All of our command-line tools accept the flags
 @DFlag{help} or @Flag{h} to print usage information.
 
 
@@ -36,17 +36,6 @@ documents are valid in terms of the DTD.
 
 
 
-@section{encode-xml-entities}
-
-The command-line tool @exec{encode-xml-entities} should be run on
-plain text files before adding any XML markup.
-It replaces the reserved characters @litchar{<} and @litchar{&}
-with the corresponding XML entities as described under
-@secref["Prerequisites"] above.
-Run it with the flag @DFlag{help} or @Flag{h} for usage information.
-
-
-
 @section{@exec{raco tei}}
 
 The @exec{raco tei} command extends @exec{raco} with some further
@@ -59,7 +48,7 @@ in the @tt{PATH} under most circumstances.
   @item{@exec{raco tei validate-directory} validates all of
   the XML files in some directory, enforcing both the DTD
   (when @exec{xmllint} is available) and the additional requirements
-  specified in @other-doc['(lib "ricoeur/tei/scribblings/guidelines/guidelines.scrbl")].
+  specified in this document.
   It does not give warnings about potential subtle mistakes,
   so ``TEI Lint'' should generally be preferred.
 
@@ -95,12 +84,22 @@ in the @tt{PATH} under most circumstances.
 
 
 
+@section{encode-xml-entities}
+
+The command-line tool @exec{encode-xml-entities} should be run on
+plain text files before adding any XML markup.
+It replaces the reserved characters @litchar{<} and @litchar{&}
+with the corresponding XML entities as described under
+@secref["Prerequisites"] above.
+Run it with the flag @DFlag{help} or @Flag{h} for usage information.
+
+
+
 @section{tei-guess-paragraphs}
 
 The @exec{tei-guess-paragraphs} command-line tool
 replaces a TEI XML file with an equivalent in which paragraph
-breaks have been guessed using the method 
-@(xmethod guess-paragraphs<%> guess-paragraphs).
+breaks have been guessed using @racket[tei-document-guess-paragraphs].
 Run it with the flag @DFlag{help} or @Flag{h} for usage information.
 
 When @exec{xmllint} is available, the output will be prettyprinted.
@@ -113,3 +112,4 @@ to be improved than to commit such semantically meaningless output.
 
 ``TEI Lint'' includes the same functionality as this tool, but
 with better output checking, so it should generally be preferred.
+
