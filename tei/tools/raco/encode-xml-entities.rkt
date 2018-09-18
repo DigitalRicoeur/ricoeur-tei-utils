@@ -3,14 +3,21 @@
 
 (require xml
          racket/cmdline
-         racket/file
-         )
+         racket/file)
+
+(provide encode-xml-entities-command)
 
 (module+ main
+  (encode-xml-entities-command))
+
+(define (encode-xml-entities-command [argv (current-command-line-arguments)])
   (command-line
+   #:program "raco ricoeur/tei encode-xml-entities"
+   #:argv argv
    #:usage-help
-   "for each path in <paths>, replaces the characters & and <"
-   "with the corresponsing XML entities, overwriting the original file"
+   "(Deprecated in favor of \"TEI Lint\".)"
+   "For each path in <paths>, replaces the characters & and <"
+   "  with the corresponsing XML entities, overwriting the original file."
    #:args paths
    (for ([pth (in-list paths)]
          #:unless (and (path-string? pth)

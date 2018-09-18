@@ -7,22 +7,20 @@
   (require (only-in ricoeur/tei/kernel
                     xml-path?)
            racket/lazy-require
-           adjutor
-           )
+           adjutor)
   (lazy-require [racket/system (system*)])
   (provide directory-clean-filenames
            git-mv
            git
            )
   (define git
-    (let ([git (find-executable-path "git")])
-      (unless git
-        (log-warning "\"git\" executable not found"))
-      git))
-  (define (git-mv from to)
+    (find-executable-path "git"))
+  (unless git
+    (log-warning "\"git\" executable not found"))
+  (define git-mv
     (if git
-        (system* git #"mv" from to)
-        (rename-file-or-directory from to)))
+        (λ (from to) (system* git #"mv" from to))
+        rename-file-or-directory))
   (define (directory-clean-filenames [dir (current-directory)]
                                      #:mv [mv rename-file-or-directory]
                                      #:box:ok? [box:ok? (box #t)])
@@ -47,11 +45,15 @@
                                       (string-foldcase
                                        (bytes->string/utf-8 bs)))
                                      (bytes-append #"autocleaned_" bs)))])))))
+      (define target-exists?
+        (file-exists? new-pth))
       (cond
-        [(and (file-exists? new-pth)
-              ;; needed for case-insensitive HFS
-              (not (= (file-or-directory-identity orig-pth)
-                      (file-or-directory-identity new-pth))))
+        [(and target-exists?
+              (= (file-or-directory-identity orig-pth)
+                 (file-or-directory-identity new-pth)))
+         ;; needed for case-insensitive HFS
+         (void)]
+        [target-exists?
          (set-box! box:ok? #f)
          (eprintf "WARNING: ~a\n  path: ~e\n  target: ~e\n"
                   "skipping path where target already exists"
@@ -70,14 +72,14 @@
     (define box:ok?
       (box #t))
     (command-line
-     #:program "raco tei directory-clean-filenames"
+     #:program "raco ricoeur/tei directory-clean-filenames"
      #:argv argv
      #:usage-help
      "For any XML files in <dir>, which defaults to the current directory,"
      "  and recursive subdirectories, renames files as needed to ensure that"
      "  every name starts with a lowercase letter and that there are no spaces"
      "  in the names."
-     "This works around a bug in ricoeur/TEI/xmllint."
+     "This works around a bug in ricoeur/tei (or perhaps xmllint)."
      #:once-each
      [("--git" "-g")
       "Move files using \"git mv\" (when available)"
@@ -97,8 +99,8 @@
           [git-mv (-> path? path? any)]
           [directory-clean-filenames
            (->* {(and/c path? directory-exists?)}
-                                          {#:mv (-> path? path? any)}
-                                          any)]
+                {#:mv (-> path? path? any)}
+                any)]
           [directory-clean-filenames-command
            (->* {}
                 {(or/c list? vector?)})]

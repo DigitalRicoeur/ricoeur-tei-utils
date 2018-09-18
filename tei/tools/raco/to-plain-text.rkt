@@ -11,7 +11,7 @@
 
 (define (to-plain-text-command [argv (current-command-line-arguments)])
   (command-line
-   #:program "raco tei to-plain-text"
+   #:program "raco ricoeur/tei to-plain-text"
    #:argv argv
    #:usage-help "Writes the given TEI XML file to STDOUT as plain text"
    #:args (TEI-XML-path)

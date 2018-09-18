@@ -7,11 +7,11 @@
 
 (define (validate-directory-command [argv (current-command-line-arguments)])
   (command-line
-   #:program "raco tei to-plain-text"
+   #:program "raco ricoeur/tei to-plain-text"
    #:argv argv
    #:usage-help
    "Validates TEI XML files in <dir>, which defaults to"
-   "  the current directory, and recursive subdirectories."
+   "  the current directory, and <dir>'s recursive subdirectories."
    "Checks both the DTD (if xmllint is available) and"
    "  Digital-Ricoeur-specific requirements."
    #:args ([dir (current-directory)])

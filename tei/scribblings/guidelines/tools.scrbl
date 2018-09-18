@@ -36,16 +36,16 @@ documents are valid in terms of the DTD.
 
 
 
-@section{@exec{raco tei}}
+@section{@exec{raco ricoeur/tei}}
 
-The @exec{raco tei} command extends @exec{raco} with some further
+The @exec{raco ricoeur/tei} command extends @exec{raco} with some further
 subcommands for processing TEI documents.
-These are primarily intended to be used via @exec{make}
+Most of these commands are primarily intended to be used via @exec{make}
 in the @tt{texts} repository.
 They are included as @exec{raco} subcommands to ensure they are
 in the @tt{PATH} under most circumstances.
 @itemlist[
-  @item{@exec{raco tei validate-directory} validates all of
+ @item{@exec{raco ricoeur/tei validate-directory} validates all of
   the XML files in some directory, enforcing both the DTD
   (when @exec{xmllint} is available) and the additional requirements
   specified in this document.
@@ -55,8 +55,8 @@ in the @tt{PATH} under most circumstances.
   Running @exec{make validate} in the root directory of the @tt{texts}
   repository validates the contents of the @tt{TEI} directory
   of that repository.
-  }
- @item{@exec{raco tei directory-clean-filenames} renames all XML files in
+ }
+ @item{@exec{raco ricoeur/tei directory-clean-filenames} renames all XML files in
   some directory (or the current directory, if none is provided)
   as needed to ensure that all start with a lower-case letter and that
   none have contain spaces.
@@ -71,7 +71,7 @@ in the @tt{PATH} under most circumstances.
   (or perhaps in @exec{xmllint} itself) sometimes causes files
   that do not conform to these naming requirements to fail validation.
  }
- @item{@exec{raco tei to-plain-text} writes a
+ @item{@exec{raco ricoeur/tei to-plain-text} writes a
   TEI XML file to STDOUT as plain text.
   It is primarily intended to be used by invoking @exec{make}
   (or @exec{make all}) in the @tt{texts} repository,
@@ -80,36 +80,34 @@ in the @tt{PATH} under most circumstances.
   every TEI XML file in the @tt{TEI} directory.
   If for some reason you want to use it directly,
   run @exec{raco tei-to-plain-text -h} for usage information.
+ }
+ @item{@exec{raco ricoeur/tei encode-xml-entities} should be
+  run on plain text files that are going to be converted to
+  TEI XML documents manually: it @bold{must not} be run
+  on files that will be converted using ``TEI Lint''.
+  The command must be run before adding any XML markup.
+  It replaces the reserved characters @litchar{<} and @litchar{&}
+  with the corresponding XML entities.
+  Run it with the flag @DFlag{help} or @Flag{h} for usage information.
+ }
+ @item{@exec{raco ricoeur/tei guess-paragraphs} is a more limited
+  substitute for functionality included in ``TEI Lint'': under most
+  circumstances, ``TEI Lint'' should be preferred.
+
+  The command
+  replaces a TEI XML file with an equivalent in which paragraph
+  breaks have been guessed using @racket[tei-document-guess-paragraphs].
+  Run it with the flag @DFlag{help} or @Flag{h} for usage information.
+
+  When @exec{xmllint} is available, the output will be prettyprinted.
+
+  Please always check the output of this tool: it operates on
+  a best-effort basis. If, for example, you notice that it has simply
+  replaced each ``annonymous block'' with one long paragraph, it
+  would be better to revert your change and wait for this tool
+  to be improved than to commit such semantically meaningless output.
+
+  ``TEI Lint'' includes the same functionality as this tool, but
+  with better output checking, so it should generally be preferred.
   }]
-
-
-
-@section{encode-xml-entities}
-
-The command-line tool @exec{encode-xml-entities} should be run on
-plain text files before adding any XML markup.
-It replaces the reserved characters @litchar{<} and @litchar{&}
-with the corresponding XML entities as described under
-@secref["Prerequisites"] above.
-Run it with the flag @DFlag{help} or @Flag{h} for usage information.
-
-
-
-@section{tei-guess-paragraphs}
-
-The @exec{tei-guess-paragraphs} command-line tool
-replaces a TEI XML file with an equivalent in which paragraph
-breaks have been guessed using @racket[tei-document-guess-paragraphs].
-Run it with the flag @DFlag{help} or @Flag{h} for usage information.
-
-When @exec{xmllint} is available, the output will be prettyprinted.
-
-Please always check the output of this tool: it operates on
-a best-effort basis. If, for example, you notice that it has simply
-replaced each ``annonymous block'' with one long paragraph, it
-would be better to revert your change and wait for this tool
-to be improved than to commit such semantically meaningless output.
-
-``TEI Lint'' includes the same functionality as this tool, but
-with better output checking, so it should generally be preferred.
 
