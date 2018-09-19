@@ -77,3 +77,32 @@ which provides a DrRacket plugin that cooperates with the
 @racket[TODO] macro.
 
 
+
+
+
+@section{Status of This Library}
+
+For those not affiliated with Digital @Ricoeur, this library is available
+as free software under the GNU Affero GPL.
+However, there are some caveats:
+@itemlist[
+ #:style 'ordered
+ @item{This library is @bold{not stable}.
+  Digital @Ricoeur is under ongoing, iterative development.
+  While we have worked to design this library so that small iterations
+  will necesitate only small changes in our tools that rely on it,
+  we will not hesitate to make breaking changes when our requirements
+  change: indeed, we actively plan to do so.
+ }
+ @item{Many parts of this library have embedded assumptions that
+  are very specific to the needs of our project.
+  For example, our TEI XML documents are required to have an
+  @tag{author} element with an @attr{xml:id} of @racket["ricoeur"].
+  }]
+
+Despite the above, we are very eager to collaborate with others!
+If there is some functionality from @racketmodname[ricoeur/tei]
+that you are interested in using, we encourage you to get in touch.
+We would be delighted to work together on factoring out reusable
+components.
+

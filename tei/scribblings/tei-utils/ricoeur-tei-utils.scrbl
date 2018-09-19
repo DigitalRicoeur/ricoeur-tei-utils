@@ -39,6 +39,12 @@ as well as
 and @racket[comment?], @racket[p-i?], @racket[valid-char?],
 and @racket[cdata?] from @racketmodname[xml].
 
+@margin-note{
+ Not part of Digital @|Ricoeur|? Welcome!
+ You probably want to read about the
+ @secref["Status_of_This_Library"] before going much further.
+}
+
 @(table-of-contents)
 
 @include-section["installing.scrbl"] @; Installing
