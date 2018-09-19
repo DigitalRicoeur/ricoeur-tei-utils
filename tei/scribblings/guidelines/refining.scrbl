@@ -10,13 +10,6 @@ document (which is described in @secref["Getting_Started"]).
 They are loosely organized by the order
 in which an encoder would likely want to perform them.
 
-@section{Encoding Page Numbers}
-
-The beginning of every new page (including the first page) must be marked by
-a @tag{pb} element. Unless the page is not assigned a number in the scanned
-original, the element should include the @attr{n} attribute to denote the
-page number (perhaps as a Roman numeral).
-
 @section{Front- and Back-matter}
 
 The minimal template described in @secref["Getting_Started"] initially

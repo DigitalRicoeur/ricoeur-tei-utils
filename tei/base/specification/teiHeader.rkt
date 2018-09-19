@@ -27,6 +27,15 @@
                                 date?
                                 date)))
 
+ƒ(define (lib-tech . args)
+   (TODO/void lib-tech: avoid duplicating in for-guidelines.rkt)
+   (TODO/void lang issue)
+   ;; Un-commenting the following causes a use-before-definition error
+   ;; with a lifted variable (possibly related to the contract on tech)
+   ;; for reasons I don't understand. It would seem to be a bug in the #lang.
+   ;; (apply tech #:doc '(lib "ricoeur/tei/scribblings/tei-utils/ricoeur-tei-utils.scrbl") args)
+   args)
+
 ƒdefine-elements-together[
  ([teiHeader
    #:required-order (fileDesc profileDesc)
@@ -83,7 +92,7 @@
    [(define (profileDesc-textClass this)
       (car (tei-get-body/elements-only this)))]])]{
 
- The ƒtag{teiHeader} element contains (in order) one
+ The ƒtag{teiHeader} element contains exactly (in order) one
  ƒtag{fileDesc} element followed by one
  ƒtag{profileDesc} element.
 
@@ -160,13 +169,16 @@
    #:prose ƒ[]{
 
  The ƒtag{titleStmt} contains
- one or more ƒtag{title} elements,
+ one ƒtag{title} element,
  one or more ƒtag{author} elements, and
  zero or more ƒtag{editor} elements.
- These may be intermixed freely any order, though the order of repeated
- elements indicates first author vs. second author,
- main title vs. subtitle, etc.
+ These may be intermixed freely in any order.
 
+ As a special case, there must always be an ƒtag{author} element
+ representing Paul Ricœur, which should be exactly as follows:
+ ƒ(nested #:style 'inset
+          ƒlitchar{<author xml:id="ricoeur">Paul Ricoeur</author>})
+ 
  ƒ(define-element title
     #:inset? #t
     #:contains-text
@@ -193,7 +205,8 @@
     #:attr-contracts ([xml:id any/c])
     #:predicate tei-author?
     #:prose ƒ[]{
-  The ƒtag{author} element contains free-form text and may have
+  The ƒtag{author} element contains free-form text
+  (the author's name) and may have
   an optional ƒattr{xml:id} attribute. As a special case,
   the ID ƒracket["ricoeur"] is reserved for use with Paul Ricœur across all
   documents. ƒTODO/void[author: not empty]
@@ -210,13 +223,13 @@
     #:predicate tei-editor?
     #:prose ƒ[]{
 
-  The ƒtag{editor} element contains free-form text and
-  has optional ƒattr{role} and ƒattr{xml:id} attributes.
+  The ƒtag{editor} element contains free-form text (the editor's name)
+  and has optional ƒattr{role} and ƒattr{xml:id} attributes.
   If the ƒattr{role} attribute is present,
   its value must be either ƒracket["editor"], ƒracket["translator"],
   ƒracket["compiler"], or ƒracket["preface"] (to indicate the author of
   a preface). Ommiting the ƒattr{role} attribute is equivalent to a value
-  of ƒracket["editor"]. ƒTODO/void[author: not empty]
+  of ƒracket["editor"]. ƒTODO/void[editor: not empty]
 
   ƒmargin-note{If a type of editor arises that does not
    fit neatly into these categories, we should decide on a standard
@@ -343,11 +356,33 @@
  The ƒtag{sourceDesc} element must contain exactly one
  ƒtag{bibl} element.
 
- The ƒtag{bibl} element contains free-form text and
- one or two ƒtag{date} elements: either one with
- a ƒattr{subtype} attribute of ƒracket["thisIsOriginal"]
- or both one with a ƒattr{subtype} attribute of ƒracket["this"]
- and one with a ƒattr{subtype} attribute of ƒracket["original"].
+ The ƒtag{bibl} element contains free-form text,
+ which provides a citation to the source from which
+ the digitized document was created, and either
+ one or two ƒtag{date} elements mark up the parts of that text
+ which refer to the publication date(s):
+ ƒitemlist[
+ ƒitem{If the digitized document is based on the first
+   ƒlib-tech{instance} to be published in any language,
+   there must be one ƒtag{date} element with a ƒattr{subtype}
+   of ƒracket["thisIsOriginal"] marking that date.
+  }
+ ƒitem{Otherwise, there must be two ƒtag{date} elements:
+   one with a ƒattr{subtype} of ƒracket["this"] marking the
+   publication date of the specific ƒlib-tech{instance} from
+   which the digitized document was prepared,
+   and one with a ƒattr{subtype} of ƒracket["original"] giving
+   the first publication date in any language.
+   }]
+
+ For compilations of articles, the ƒracket["thisIsOriginal"]
+ or ƒracket["original"] ƒtag{date} refers to the first 
+ publication of the collection as a whole.
+ 
+ In either case, make sure that the textual content of the
+ ƒtag{bibl} element as a whole is understandable if
+ displayed without the tags, as it will be shown in that format
+ to end-users.
 
  The ƒtag{date} element contains free-form text
  representing the human-readable publication date.
@@ -362,6 +397,20 @@
    or ƒracket["YYYY"], where the month
    and day, if present, must allways be two digits
    (e.g. ƒtt{01} for January).}]
+
+ Examples:
+ ƒ(itemlist
+   ƒitem{ƒtt{ƒlitchar{<bibl>}Fallible Man. Introduction by C.A. Kelbley.
+   Chicago: Henry Regnery,
+   ƒlitchar{<date type="publication" subtype="this" when="1965">}1965ƒlitchar{</date>},
+   xxix-224 p. (Paper: Gateway Editions).
+   Revised edition in 1986.
+   First published in French in
+   ƒlitchar{<date type="publication" subtype="original" when="1960">}1960@litchar{</date>}.@litchar{</bibl>}}}
+   ƒitem{ƒtt{ƒlitchar{<bibl>}Can Fictional Narratives be true? 
+   Analecta Hus­serliana Vol. XIV
+   (ƒlitchar{<date type="publication" subtype="thisIsOriginal" when="1983">}1983ƒlitchar{</date>})
+   3-19.ƒlitchar{</bibl>}}})
 }
 
 

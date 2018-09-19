@@ -23,5 +23,6 @@
   @elem[#:style (style #f (list (link-resource DR-TEI_doc.html)))]{DR-TEI_doc.html})
 
 (define (lib-tech . args)
-  (apply tech #:doc '(lib "ricoeur/tei/scribblings/tei-utils/tei-utils.scrbl") args))
+  (TODO/void lib-tech: avoid duplicating in teiHeader.rkt)
+  (apply tech #:doc '(lib "ricoeur/tei/scribblings/tei-utils/ricoeur-tei-utils.scrbl") args))
 

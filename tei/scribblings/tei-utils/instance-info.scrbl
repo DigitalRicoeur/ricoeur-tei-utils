@@ -128,9 +128,9 @@ That transition will likely result in changes to this interface.
 }
 
 @defproc[(instance-language [info instance-info?])
-         (or/c 'en 'fr)]{
+         (or/c 'en 'fr 'de)]{
  Identifies the primary language of the @tech{instance}.
- English and French are currently supported.
+ English, French, and German are currently supported.
 }
 
 @defproc[(instance-book/article [info instance-info?])
@@ -333,7 +333,7 @@ That transition will likely result in changes to this interface.
 
  @defmethod[#:mode public-final
             (get-language)
-            (or/c 'en 'fr)]{
+            (or/c 'en 'fr 'de)]{
   Like @racket[(instance-language #,(this-obj))].
  }
 

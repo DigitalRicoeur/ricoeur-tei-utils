@@ -48,7 +48,7 @@
                [0-1 back])
    #:required-order (front body back)
    #:attr-contracts
-   ([xml:lang (or/c "en" "fr")])
+   ([xml:lang (or/c "en" "fr" "de")])
    #:required-attrs (xml:lang)
    #:predicate tei-text-element?
    #:constructor [
@@ -63,8 +63,8 @@
   and a ƒtag{back} element,
   but the ƒtag{front} and ƒtag{back} elements are optional.
   It must have a ƒattr{xml:lang} attribute specifying the
-  primary language of the document: ƒracket["en"] for English or
-  ƒracket["fr"] for French.
+  primary language of the document: ƒracket["en"] for English;
+  ƒracket["fr"] for French; or ƒracket["de"] for German.
 
   ƒdefine-elements-together[
  #:inset? #t

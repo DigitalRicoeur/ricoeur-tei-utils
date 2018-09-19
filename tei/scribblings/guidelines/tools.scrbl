@@ -19,20 +19,32 @@ All of our command-line tools accept the flags
 
 @section{TEI Lint}
 
-Most comprehensively, the GUI program ``TEI Lint'' is a ``linter'' for
-TEI XML documents:
-it both checks the validity of the prepared documents (using @exec{xmllint}
+Our primary tool is the GUI program ``TEI Lint,''
+which combines several related features.
+
+As the name suggests, ``TEI Lint'' is a ``linter'' for TEI XML documents.
+It checks the validity of the prepared documents (using @exec{xmllint}
 from @tt{libxml2} when available) both in terms of the DTD and
-with respect to our more stringent project-specific requirements
-and also alerts the user to issues
+with respect to our more stringent project-specific requirements.
+It also alerts the user to issues
 with the documents that, while not making them invalid,
-are indicative of potential subtle mistakes.
+are indicative of potential subtle mistakes or
+high-priority encoding steps that have not yet been completed.
+For some of these steps, such as inferring paragraph breaks,
+``TEI Lint'' includes the ability to edit the documents automatically
+with minimal human guidance.
 
 Using ``TEI Lint'' is the most important reason to have @exec{xmllint}
 installed: without it, ``TEI Lint'' can check that the documents
 are well-formed XML and meet the project-specific requirements
 expressed in Racket code, but can't actually check that the 
 documents are valid in terms of the DTD.
+
+In addition to serving as a linter, ``TEI Lint'' includes a simple,
+fully graphical interface for converting a plain text file to
+an initial TEI XML document.
+This functionality is described in more detail above,
+under @secref["Getting_Started"].
 
 
 
@@ -44,6 +56,8 @@ Most of these commands are primarily intended to be used via @exec{make}
 in the @tt{texts} repository.
 They are included as @exec{raco} subcommands to ensure they are
 in the @tt{PATH} under most circumstances.
+@margin-note{For more information about @exec{raco}, see
+ @other-doc['(lib "scribblings/raco/raco.scrbl")].}
 @itemlist[
  @item{@exec{raco ricoeur/tei validate-directory} validates all of
   the XML files in some directory, enforcing both the DTD

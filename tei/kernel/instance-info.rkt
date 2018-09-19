@@ -51,7 +51,7 @@
                  #:orig-publication-date date?
                  #:publication-date date?
                  #:publication-original? any/c
-                 #:language (or/c 'en 'fr)
+                 #:language (or/c 'en 'fr 'de)
                  #:book/article (or/c 'book 'article)
                  plain-instance-info?)]
             )))

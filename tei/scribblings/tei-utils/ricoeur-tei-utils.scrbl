@@ -2,7 +2,8 @@
 
 @title[#:version tei-utils-version]{Digital Ricœur TEI Library}
 @author[(author+email @elem{Philip M@superscript{c}Grath}
-                      "philip@philipmcgrath.com")]
+                      "philip@philipmcgrath.com"
+                      #:obfuscate? #t)]
 @defmodule[#:multi (ricoeur/tei ricoeur/tei/base)]
 
 
