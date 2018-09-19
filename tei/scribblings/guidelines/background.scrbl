@@ -70,9 +70,9 @@ and a @tag{date} element, which marks part of the citation
 as specifying a publication date.
 
 @margin-note{Readers will notice the close relationship between
-@tech{elements}, the abstract, logical entities, and @tech{tags},
-the notations in XML's @tech{concrete syntax} that mark them.
-In practice, ``element'' and ``tag'' are often used synonymously.}
+ @tech{elements}, the abstract, logical entities, and @tech{tags},
+ the notations in XML's @tech{concrete syntax} that mark them.
+ In practice, ``element'' and ``tag'' are often used synonymously.}
 
 In addition to its contents, an @tech{element} may have
 @deftech{attributes}, which provide additional machine-readable
@@ -88,8 +88,11 @@ of @deftech{entities}. In XML's @tech{concrete syntax}, the
 characters @litchar{&} and @litchar{<} have special meaning, and 
 therefore are not allowed in textual data. They must be 
 replaced with the corresponding XML @tech{entities} 
-@litchar{&amp;} and @litchar{&lt;}, respectively, as discused
-under @secref["Prerequisites"] below. No attempt is made here
+@litchar{&amp;} and @litchar{&lt;}, respectively.
+(For Digital Ricœur, this is done automatically by ``TEI Lint''
+or, if prepairing a document manually, one of our command-line tools:
+see @secref["Getting_Started"] for more details.)
+No attempt is made here
 to explain the other, more advanced uses of @tech{entities} in XML.
 
 XML is specifically an ``extensible'' markup language because,
