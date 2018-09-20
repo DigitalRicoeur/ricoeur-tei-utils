@@ -32,6 +32,7 @@ of @guidelines-secref["TEI_Lint"].
 }}
 
 @definterface[directory-frame<%> (frame%)]{
+ The interface of @deftech{directory frames}.
  @defmethod[(open-additional) any]{
 
  }
@@ -70,10 +71,10 @@ of @guidelines-secref["TEI_Lint"].
 }}
 
 @defclass[error-proto-frame% object% (proto-frame<%>)]{
-(class/c
-            (init [path path-string?]
-                  [dir-frame dir-frame/false/c]
-                  [val (or/c exn:fail? string?)]))
+ (class/c
+ (init [path path-string?]
+ [dir-frame dir-frame/false/c]
+ [val (or/c exn:fail? string?)]))
 
 }
 
@@ -83,32 +84,32 @@ tei-document-proto-frame%/c
 document-frame-component?
 
 [document-frame-component
-           (-> (-> tei-document?
-                   (values lint-status/c
-                           initialize-proc/c))
-               document-frame-component?)]
-          [document-frame-component/ok
-           (-> (-> tei-document? initialize-proc/c)
-               document-frame-component?)]
-          [constant-document-frame-component
-           (-> initialize-proc/c
-               document-frame-component?)]
-          [document-frame-component-append
-           (-> document-frame-component? ...
-               document-frame-component?)]
-          [document-frame-component-run
-           (-> document-frame-component?
-               tei-document?
-               (values lint-status/c
-                       initialize-proc/c))]
+(-> (-> tei-document?
+(values lint-status/c
+initialize-proc/c))
+document-frame-component?)]
+[document-frame-component/ok
+(-> (-> tei-document? initialize-proc/c)
+document-frame-component?)]
+[constant-document-frame-component
+(-> initialize-proc/c
+document-frame-component?)]
+[document-frame-component-append
+(-> document-frame-component? ...
+document-frame-component?)]
+[document-frame-component-run
+(-> document-frame-component?
+tei-document?
+(values lint-status/c
+initialize-proc/c))]
 
 @subsection{Menu Bars}
 [menu-bar:file%
-           (class/c
-            (init [dir-frame dir-frame/false/c]))]
-          [menu-bar:file+edit%
-           (class/c
-            (init [dir-frame dir-frame/false/c]))]
+(class/c
+(init [dir-frame dir-frame/false/c]))]
+[menu-bar:file+edit%
+(class/c
+(init [dir-frame dir-frame/false/c]))]
 
 @section{More}
 

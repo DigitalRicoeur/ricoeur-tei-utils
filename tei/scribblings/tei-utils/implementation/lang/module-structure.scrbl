@@ -185,6 +185,20 @@ an implicit @racket[doc] submodule
   contexts, macros that expand to @racket[begin-for-runtime/derived]
   cannot easily use more general methods to expand to something
   other than @void-const at the @tech{documentation-time} phase.
- }}
+}}
+
+
+@section{Runtime Submodules}
+@(declare-exporting ricoeur/tei/kernel/lang/specification-lang)
+@deftogether[
+ (@defform[(module+ id form ...)]
+   @defform*[((module* id module-path form ...)
+              (module* id #f form ...))])]{
+ Like the versions from @racketmodname[racket/base],
+ but wrapped so that submodules created with @racket[module+]
+ or @racket[module*] with @racket[#f] instead of a @racket[module-path]
+ use the @racket[#%module-begin] from @racketmodname[racket/base],
+ rather than the version from @(hash-lang-kernel).
+}
 
 

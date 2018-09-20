@@ -10,7 +10,9 @@
          )
 
 (require-provide (provide-only "../../for-manual.rkt")
-                 (for-label ricoeur/tei/kernel/lang/specification-lang
+                 (for-label (except-in ricoeur/tei/kernel/lang/specification-lang
+                                       #%module-begin)
+                            (only-in racket/base #%module-begin)
                             (submod ricoeur/tei/kernel private)
                             (submod ricoeur/tei/kernel doc)
                             scribble/base
