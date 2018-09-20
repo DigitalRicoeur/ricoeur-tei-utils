@@ -24,7 +24,7 @@ from Racket's @racketmodname[xml] library
 (see the grammar documented under @racket[xexpr?]).
 
 The @racketmodname[ricoeur/tei] library provides all of the bindings
-documented in this manual (except where otherwise noted).
+documented in this manual, except where otherwise noted.
 The @racketmodname[ricoeur/tei/base] library provides most of
 @racketmodname[ricoeur/tei], but omits some derived functionality
 to achieve a slightly faster startup time, making it particularly
