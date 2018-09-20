@@ -5,15 +5,15 @@
                      ))
           
 
-The rain in spain stays ƒbegin-for-spec[12 #"43"]{
+The rain in spain stays ƒbegin-for-runtime[12 #"43"]{
  on the plain.
 }
 
-ƒ(begin-for-spec
+ƒ(begin-for-runtime
    (define x 41))
 
 ƒ(begin "12345"
-        (begin-for-spec
+        (begin-for-runtime
           (add1 x)))
 
 

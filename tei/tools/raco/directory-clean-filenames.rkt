@@ -103,7 +103,8 @@
                 any)]
           [directory-clean-filenames-command
            (->* {}
-                {(or/c list? vector?)})]
+                {(or/c list? vector?)}
+                any)]
           ))
 
 
