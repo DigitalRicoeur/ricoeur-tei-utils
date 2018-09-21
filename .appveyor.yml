@@ -1,6 +1,6 @@
 image:
-- Visual Studio 2015
 - Ubuntu1604
+- Visual Studio 2015
 
 environment:
   matrix:
@@ -33,7 +33,7 @@ for:
     install:
       - curl -o C:\racket.tar.gz --location %WINDOWS_TAR%
       - mkdir C:\racket
-      - bash -c "tar -xzvf $(cygpath -u 'C:\racket.tar.gz') -C $(cygpath -u 'C:\racket') --strip-components 1"
+      - bash -c "tar -xzf $(cygpath -u 'C:\racket.tar.gz') -C $(cygpath -u 'C:\racket') --strip-components 1"
       - echo "Minimal Racket: Installing packages for raco test..."
       - C:\racket\raco.exe pkg install --auto -i rackunit-lib compiler-lib
     build_script:
