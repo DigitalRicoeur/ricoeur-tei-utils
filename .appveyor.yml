@@ -32,7 +32,7 @@ for:
         - image: Visual Studio 2015
     install:
       - curl -o C:\racket.tgz --location %WINDOWS_TAR%
-      - 7z x C:\racket.tgz
+      - ps: 7z x -so C:\racket.tgz | 7z x -si -ttar -o"C:\"
       - echo "Minimal Racket: Installing packages for raco test..."
       - C:\racket\bin\raco.exe pkg install --auto -i rackunit-lib compiler-lib
     build_script:
