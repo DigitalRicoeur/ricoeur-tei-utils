@@ -1,0 +1,38 @@
+image:
+- Ubuntu1604
+- Visual Studio 2015
+
+environment:
+  matrix:
+    - RACKET_VERSION: 7.0
+    - RACKET_VERSION: HEAD
+
+for:
+  -
+    matrix:
+      only:
+        - image: Ubuntu1604
+    environment:
+      RACKET_DIR: ~/racket
+    install:
+      - sh: git clone https://github.com/greghendershott/travis-racket.git
+      - sh: cat travis-racket/install-racket.sh | bash # pipe to bash not sh!
+      - sh: export PATH="${RACKET_DIR}/bin:${PATH}"
+    build_script:
+      - sh: raco pkg install --deps search-auto --name ricoeur-tei-utils
+    test_script:
+      - sh: raco test -x -p ricoeur-tei-utils
+      - sh: raco setup --check-pkg-deps --pkgs ricoeur-tei-utils
+
+  -
+    matrix:
+      only:
+        - image: Visual Studio 2015
+    install:
+      - cmd: echo Windows install is a noop.
+    build_script:
+      - cmd: echo Windows build_script is a noop.
+    test_script:
+      - cmd: echo Windows test_script is a noop.
+
+
