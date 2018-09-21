@@ -19,6 +19,8 @@ for:
       - sh: cat travis-racket/install-racket.sh | bash # pipe to bash not sh!
       - sh: export PATH="${RACKET_DIR}/bin:${PATH}"
     build_script:
+      - sh: echo $RACKET_DIR
+      - sh: echo $PATH
       - sh: raco pkg install --deps search-auto --name ricoeur-tei-utils
     test_script:
       - sh: raco test -x -p ricoeur-tei-utils
