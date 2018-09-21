@@ -13,15 +13,12 @@ for:
       only:
         - image: Ubuntu1604
     environment:
-      RACKET_DIR: ~/racket
+      RACKET_DIR: ~/../racket
     install:
       - git clone https://github.com/greghendershott/travis-racket.git
       - cat travis-racket/install-racket.sh | bash # pipe to bash not sh!
       - export PATH="${RACKET_DIR}/bin:${PATH}"
     build_script:
-      - echo "$RACKET_DIR"
-      - echo "$PATH"
-      - ls "${RACKET_DIR}/bin"
       - '"${RACKET_DIR}/bin/raco" pkg install --auto --name ricoeur-tei-utils'
     test_script:
       - '"${RACKET_DIR}/bin/raco" test -x -p ricoeur-tei-utils'
