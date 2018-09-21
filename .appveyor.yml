@@ -1,6 +1,6 @@
 image:
-- Ubuntu1604
 - Visual Studio 2015
+- Ubuntu1604
 
 environment:
   matrix:
