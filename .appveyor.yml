@@ -22,10 +22,10 @@ for:
       - sh: echo "$RACKET_DIR"
       - sh: echo "$PATH"
       - sh: ls "${RACKET_DIR}/bin"
-      - sh: raco pkg install --deps search-auto --name ricoeur-tei-utils
+      - sh: "${RACKET_DIR}/bin/raco" pkg install --auto --name ricoeur-tei-utils
     test_script:
-      - sh: raco test -x -p ricoeur-tei-utils
-      - sh: raco setup --check-pkg-deps --pkgs ricoeur-tei-utils
+      - sh: "${RACKET_DIR}/bin/raco" test -x -p ricoeur-tei-utils
+      - sh: "${RACKET_DIR}/bin/raco" setup --check-pkg-deps --pkgs ricoeur-tei-utils
 
   -
     matrix:
