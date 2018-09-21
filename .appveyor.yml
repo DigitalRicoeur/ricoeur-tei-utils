@@ -34,7 +34,7 @@ for:
       - curl -o C:\racket.tar.gz --location %WINDOWS_TAR%
       #- 7z x -so C:\racket.tar.gz | 7z x -si -ttar -o"C:\"
       - mkdir C:\racket
-      - tar -xzvf C:\racket.tar.gz -C C:\racket --strip-components 1
+      - tar -xzvf /cygdrive/c/racket.tar.gz -C /cygdrive/c/racket --strip-components 1
       - echo "Minimal Racket: Installing packages for raco test..."
       - C:\racket\raco.exe pkg install --auto -i rackunit-lib compiler-lib
     build_script:
