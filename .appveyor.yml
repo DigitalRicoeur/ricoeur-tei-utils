@@ -34,11 +34,11 @@ for:
       - curl -o C:\racket.tgz --location %WINDOWS_TAR%
       - ps: 7z x -so C:\racket.tgz | 7z x -si -ttar -o"C:\"
       - echo "Minimal Racket: Installing packages for raco test..."
-      - C:\racket\bin\raco.exe pkg install --auto -i rackunit-lib compiler-lib
+      - C:\racket\raco.exe pkg install --auto -i rackunit-lib compiler-lib
     build_script:
-      - C:\racket\bin\raco.exe pkg install --auto --name ricoeur-tei-utils
+      - C:\racket\raco.exe pkg install --auto --name ricoeur-tei-utils
     test_script:
-      - C:\racket\bin\raco.exe test -x -p ricoeur-tei-utils
-      - C:\racket\bin\raco.exe setup --check-pkg-deps ricoeur
+      - C:\racket\raco.exe test -x -p ricoeur-tei-utils
+      - C:\racket\raco.exe setup --check-pkg-deps ricoeur
 
 
