@@ -13,7 +13,7 @@ for:
       only:
         - image: Ubuntu1604
     environment:
-      RACKET_DIR: ~/../racket
+      RACKET_DIR: /home/appveyor/racket
     install:
       - pwd
       - echo ~
@@ -23,6 +23,7 @@ for:
       - export PATH="${RACKET_DIR}/bin:${PATH}"
       - popd
     build_script:
+      - pwd
       - '"${RACKET_DIR}/bin/raco" pkg install --auto --name ricoeur-tei-utils'
     test_script:
       - '"${RACKET_DIR}/bin/raco" test -x -p ricoeur-tei-utils'
