@@ -5,9 +5,9 @@ image:
 environment:
   matrix:
     - RACKET_VERSION: 7.0
-      WIDOWS_TAR: https://download.racket-lang.org/releases/7.0/installers/racket-minimal-7.0-x86_64-win32.tgz
+      WINDOWS_TAR: https://download.racket-lang.org/releases/7.0/installers/racket-minimal-7.0-x86_64-win32.tgz
     - RACKET_VERSION: HEAD
-      WIDOWS_TAR: https://www.cs.utah.edu/plt/snapshots/current/installers/min-racket-current-x86_64-win32.tgz
+      WINDOWS_TAR: https://www.cs.utah.edu/plt/snapshots/current/installers/min-racket-current-x86_64-win32.tgz
 
 for:
   -
@@ -31,7 +31,7 @@ for:
       only:
         - image: Visual Studio 2015
     install:
-      - curl -o C:\racket.tgz %WIDOWS_TAR%
+      - curl -o C:\racket.tgz --location %WINDOWS_TAR%
       - 7z x C:\racket.tgz
       - echo "Minimal Racket: Installing packages for raco test..."
       - C:\racket\bin\raco.exe pkg install --auto -i rackunit-lib compiler-lib
