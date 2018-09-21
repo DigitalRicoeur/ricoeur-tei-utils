@@ -15,6 +15,8 @@ for:
     environment:
       RACKET_DIR: ~/../racket
     install:
+      - pwd
+      - echo $HOME
       - git clone https://github.com/greghendershott/travis-racket.git
       - cat travis-racket/install-racket.sh | bash # pipe to bash not sh!
       - export PATH="${RACKET_DIR}/bin:${PATH}"
