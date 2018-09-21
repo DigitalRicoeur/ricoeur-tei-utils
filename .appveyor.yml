@@ -17,15 +17,10 @@ for:
     environment:
       RACKET_DIR: /home/appveyor/racket
     install:
-      - pwd
-      - echo ~
-      - pushd ~
       - git clone https://github.com/greghendershott/travis-racket.git
       - cat travis-racket/install-racket.sh | bash # pipe to bash not sh!
       - export PATH="${RACKET_DIR}/bin:${PATH}"
-      - popd
     build_script:
-      - pwd
       - '"${RACKET_DIR}/bin/raco" pkg install --auto --name ricoeur-tei-utils'
     test_script:
       - '"${RACKET_DIR}/bin/raco" test -x -p ricoeur-tei-utils'
