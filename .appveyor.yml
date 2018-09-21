@@ -5,7 +5,9 @@ image:
 environment:
   matrix:
     - RACKET_VERSION: 7.0
+      WIDOWS_TAR: https://download.racket-lang.org/releases/7.0/installers/racket-minimal-7.0-x86_64-win32.tgz
     - RACKET_VERSION: HEAD
+      WIDOWS_TAR: https://www.cs.utah.edu/plt/snapshots/current/installers/min-racket-current-x86_64-win32.tgz
 
 for:
   -
@@ -34,10 +36,14 @@ for:
       only:
         - image: Visual Studio 2015
     install:
-      - cmd: echo Windows install is a noop.
+      - curl -o C:\racket.tgz %WIDOWS_TAR%
+      - 7z x C:\racket.tgz
+      - echo "Minimal Racket: Installing packages for raco test..."
+      - C:\racket\bin\raco.exe pkg install --auto -i rackunit-lib compiler-lib
     build_script:
-      - cmd: echo Windows build_script is a noop.
+      - C:\racket\bin\raco.exe pkg install --auto --name ricoeur-tei-utils
     test_script:
-      - cmd: echo Windows test_script is a noop.
+      - C:\racket\bin\raco.exe test -x -p ricoeur-tei-utils
+      - C:\racket\bin\raco.exe setup --check-pkg-deps ricoeur
 
 
