@@ -127,10 +127,20 @@ That transition will likely result in changes to this interface.
  original, so the inverse does not hold.
 }
 
-@defproc[(instance-language [info instance-info?])
-         (or/c 'en 'fr 'de)]{
+@deftogether[
+ (@defproc[(instance-language [info instance-info?])
+           language-symbol/c]
+   @defthing[language-symbol/c flat-contract?
+             #:value (or/c 'en 'fr 'de)])]{
  Identifies the primary language of the @tech{instance}.
  English, French, and German are currently supported.
+
+ The contract @racket[language-symbol/c] recognizes
+ symbols that identify one of the supported languages.
+ The symbols are chosen from the IANA
+ @link["https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry"]{
+  Language Subtag Registry}, as specified by
+ @link["https://tools.ietf.org/html/bcp47"]{BCP 47}.
 }
 
 @defproc[(instance-book/article [info instance-info?])

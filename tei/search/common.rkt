@@ -7,6 +7,7 @@
          racket/list
          racket/string
          racket/promise
+         racket/set
          data/order
          syntax/parse/define
          ricoeur/tei/base
@@ -23,6 +24,7 @@
            (submod "..")))
 
 (provide term/c
+         search-languages/c
          searchable-document-set?
          document-search-results?
          search-result?
@@ -48,6 +50,7 @@
            (->* {searchable-document-set?
                  term/c}
                 {#:ricoeur-only? any/c
+                 #:languages search-languages/c
                  #:book/article (or/c 'any 'book 'article)
                  #:exact? any/c}
                 (instance-set/c document-search-results?))]
@@ -85,6 +88,11 @@
                  document-search-results?)]
             )))
 
+
+(TODO/void add string-not-blank/c and
+           string-immutable-not-blank/c #:
+           use them in various places
+           e.g. base-segment-body)
 
 (define/final-prop term/c
   ;; n.b. \S only matches ASCII
@@ -153,6 +161,8 @@
     (check-true (regexp-match? exact-apple-px "$apPle1"))
     (check-false (regexp-match? exact-apple-px "appleé"))))
 
+(define/final-prop search-languages/c
+  (or/c 'any (listof language-symbol/c)))
                                                        
 ;                                                          
 ;                                   ;;;;     ;;            
@@ -252,9 +262,15 @@
     [do-term-search
      (->m normalized-term?
           #:ricoeur-only? any/c
+          #:languages (set/c language-symbol/c #:cmp 'eq #:kind 'immutable)
           #:book/article (or/c 'any 'book 'article)
           #:exact? any/c
           (instance-set/c document-search-results?))]))
+
+(TODO/void searchable-document-set-do-term-search
+           #: consider adding a singleton the-search-default-arg
+           to avoid copying default values to all the higher-level
+           wrapper functions)
 
 (define (searchable-document-set? it)
   (infix: it is-a? searchable-document-set<%>))
@@ -266,12 +282,14 @@
 (define (send-do-term-search sds
                              norm-term
                              #:ricoeur-only? ricoeur-only?
+                             #:languages st:lang
                              #:book/article book/article
                              #:exact? exact?)
   (send-generic sds
                 •do-term-search
                 norm-term
                 #:ricoeur-only? ricoeur-only?
+                #:languages st:lang
                 #:book/article book/article
                 #:exact? exact?))
 
@@ -279,6 +297,7 @@
          sds
          term
          #:ricoeur-only? [ricoeur-only? #t]
+         #:languages [raw-languages 'any]
          #:book/article [book/article 'any]
          #:exact? [exact? #f])
   (TODO/void searchable-document-set-do-term-search
@@ -286,6 +305,12 @@
   (send-do-term-search sds
                        (normalized-term term)
                        #:ricoeur-only? ricoeur-only?
+                       #:languages
+                       (case raw-languages
+                         [(any)
+                          (seteq 'en 'fr 'de)]
+                         [else
+                          (list->seteq raw-languages)])
                        #:book/article book/article
                        #:exact? exact?))
 
@@ -451,11 +476,13 @@
          (eager:initialize-search-backend search-backend docs)))
       (define/public (do-term-search norm-term
                                      #:ricoeur-only? r?
+                                     #:languages st:lang
                                      #:book/article b/a
                                      #:exact? e?)
         (send-do-term-search (force promise:s-d-s)
                              norm-term
                              #:ricoeur-only? r?
+                             #:languages st:lang
                              #:book/article b/a
                              #:exact? e?)))))
 

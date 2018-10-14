@@ -38,13 +38,14 @@ including everything necessary to implement new kinds of
  
  @defmethod[(do-term-search [norm-term normalized-term?]
                             [#:ricoeur-only? ricoeur-only? any/c]
+                            [#:languages languages (set/c language-symbol/c #:cmp 'eq #:kind 'immutable)]
                             [#:book/article book/article (or/c 'any 'book 'article)]
                             [#:exact? exact? any/c])
             (instance-set/c document-search-results?)]{
   The method used to implement @racket[searchable-document-set-do-term-search].
 
-  There are two major differences between
-  @method[searchable-document-set<%> do-term-search] and any of
+  There are a few notable differences between
+  @method[searchable-document-set<%> do-term-search] and all of
   the higher-level search functions or methods:
   @itemlist[
  #:style 'ordered
@@ -66,6 +67,17 @@ including everything necessary to implement new kinds of
     when constructing a @tech{normalized term} value,
     and it can guarantee that it will always have the
     chance to do so.
+   }
+ @item{The @racket[languages] argument is normalized:
+    rather than being passed as a @racket[search-languages/c]
+    value, which is designed for the convienience of clients,
+    it is given as an immutable set of @racket[language-symbol/c]
+    symbols.
+    This allows @racket[searchable-document-set-do-term-search]
+    to take sole responsibility for handling @racket['any]
+    and lists with duplicate symbols,
+    rather than placing that burden on every class that implements
+    @racket[searchable-document-set<%>].
     }]}}
  
 @deftogether[
@@ -260,19 +272,19 @@ including everything necessary to implement new kinds of
 }
 
 @subsection{Basic @racket[search^] Units}
-@subsubsection{Noop Search Backend}
+@subsubsection[#:style '(hidden toc-hidden)]{Noop Search Backend}
 @defmodule[ricoeur/tei/search/noop]
 @defthing[noop@
           (unit/c (import)
                   (export search^))]
 
-@subsubsection{Regexp Search Backend}
+@subsubsection[#:style '(hidden toc-hidden)]{Regexp Search Backend}
 @defmodule[ricoeur/tei/search/regexp]
 @defthing[regexp@
           (unit/c (import)
                   (export search^))]
 
-@subsubsection{PostgreSQL Search Backend}
+@subsubsection[#:style '(hidden toc-hidden)]{PostgreSQL Search Backend}
 @defmodule[ricoeur/tei/search/postgresql]
 @defthing[postgresql@
           (unit/c (import)

@@ -20,21 +20,41 @@
 (require-provide "segments/location-stack.rkt"
                  "segments/meta.rkt")
 
-(provide (contract-out
+(provide (rename-out [base-segment* base-segment])
+         (contract-out
           [tei-document-segments
            (-> tei-document? (listof base-segment?))]
-          [struct base-segment
-            ([meta segment-meta?]
-             [body (and/c string-immutable/c
-                          #px"\\S")])
-            #:omit-constructor]
           ))
 
-(struct base-segment (meta body)
-  #:transparent
-  #:property prop:segment
-  (λ (this)
-    (base-segment-meta this)))
+(module base-struct racket/base
+  (require ricoeur/tei/kernel
+           "segments/meta.rkt"
+           racket/contract)
+  (provide (contract-out
+            [struct base-segment
+              ([meta segment-meta?]
+               [body (and/c string-immutable/c
+                            #px"[^\\s]")]
+               [instance-info plain-instance-info?])]))
+  (struct base-segment (meta body instance-info)
+    #:transparent
+    #:property prop:segment
+    (λ (this)
+      (base-segment-meta this))
+    #:property prop:instance-info
+    (λ (this)
+      (base-segment-instance-info this))))
+(require 'base-struct)
+
+(provide (recontract-out base-segment?)
+         (recontract-out base-segment-meta)
+         (recontract-out base-segment-body)
+         (recontract-out base-segment-instance-info))
+
+(define-match-expander base-segment*
+  (syntax-parser
+    [(_ meta:expr body:expr (~optional inst-info:expr))
+     #'(base-segment meta body (~? inst-info _))]))
 
 (define cache
   (make-weak-hasheq))
@@ -51,7 +71,8 @@
 ;; prepare-segments
 ;; The outer function which sets everything up for a TEI<%> document
 (define (prepare-segments doc)
-  (parameterize ([current-make-segment-meta
+  (parameterize ([current-instance-info (get-plain-instance-info doc)]
+                 [current-make-segment-meta
                   (tei-document->make-segment-meta doc)])
     (for/fold/define ([segs null]
                       [i 0]
@@ -91,6 +112,9 @@
 
 (define current-resp
   (make-parameter 'ricoeur))
+
+(define current-instance-info
+  (make-parameter '|current-instance-info: not initialized|))
 
 ;                                  
 ;                                  
@@ -422,7 +446,8 @@
              #:page page
              #:resp (current-resp)
              #:location (current-location-stack))
-            body)
+            body
+            (current-instance-info))
            segs)]))
 
 

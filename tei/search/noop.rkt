@@ -16,6 +16,7 @@
          (super-new)
          (define/public-final (do-term-search t
                                               #:ricoeur-only? r
+                                              #:languages st:lang
                                               #:book/article b
                                               #:exact? e)
            (instance-set)))))

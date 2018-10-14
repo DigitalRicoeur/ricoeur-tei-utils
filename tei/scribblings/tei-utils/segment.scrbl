@@ -54,8 +54,8 @@ It also defines an extensible interface for working with @tech{segment metadata}
  representations, and these can support the @tech{segment} interface
  using @racket[prop:segment].
  
- This library defines two built-in kinds of @tech{segments}—@racket[base-segment]
- structs and @tech{segment metadata} values—along with a core function
+ This library defines two built-in kinds of @tech{segments}---@tech{base segments}
+ and @tech{segment metadata} values---along with a core function
  for dividing a @tech{TEI document} into @tech{segments}, @racket[tei-document-segments].
  A different part of this library uses the @tech{segment} interface
  to support location and context information for @tech{search result} values,
@@ -67,17 +67,32 @@ It also defines an extensible interface for working with @tech{segment metadata}
 @deftogether[
  (@defproc[(tei-document-segments [doc tei-document?])
            (listof base-segment?)]
-   @defstruct*[base-segment ([meta segment-meta?]
-                             [body (and/c string-immutable/c #px"[^\\s]")])
-               #:omit-constructor])]{
+   @defpredicate[base-segment?]
+   @defform[#:kind "match expander"
+            (base-segment meta-pat body-pat maybe-info-pat)
+            #:grammar
+            ([maybe-info-pat code:blank plain-instance-info-pat])]
+   @defproc[(base-segment-meta [seg base-segment?])
+            segment-meta?]
+   @defproc[(base-segment-body [seg base-segment?])
+            (and/c string-immutable/c
+                   #px"[^\\s]")]
+   @defproc[(base-segment-instance-info [seg base-segment?])
+            plain-instance-info?])]{
  The function @racket[tei-document-segments] splits a @tech{TEI document}
- @racket[doc] into a list of @tech{segments}:
- specifically, instances of the @racket[base-segment] structure type.
-
+ @racket[doc] into a list of @tech{segments}.
+ Specifically, it produces @deftech{base segment} values,
+ which are recognized by the @racket[base-segment?] predicate
+ and the @racket[base-segment] pattern for @racket[match].
  The result of @racket[tei-document-segments] is weakly cached to reduce
  the cost of repeated calls.
+
+ A @tech{base segment} can be used with the @tech{instance info}
+ interface to access bibliographic information about the
+ @tech{instance} represented by the @tech{TEI document} from which
+ it was created.
  
- In addition to metadata, a @racket[base-segment] value also contains the
+ In addition to metadata, a @tech{base segment} also contains the
  full textual data of the @tech{segment}, but this is not a requirement:
  most other kinds of @tech{segment} values will likely not wish to do so.
 }
@@ -115,6 +130,7 @@ It also defines an extensible interface for working with @tech{segment metadata}
 @defform[#:kind "match expander"
          (segment kw-pat ...)
          #:grammar [(kw-pat (code:line #:title/symbol title/symbol-pat)
+                            (code:line #:checksum checksum-pat)
                             (code:line #:counter counter-pat)
                             (code:line #:resp-string resp-string-pat)
                             (code:line #:page-spec page-spec-pat)
@@ -187,10 +203,14 @@ It also defines an extensible interface for working with @tech{segment metadata}
  content of the returned strings is unspecified).
 }
 
-@defproc[(segment-title/symbol [seg segment?])
-         symbol?]{
- Returns the same symbol that would have been returned by
- @racket[instance-title/symbol] applied to the source @tech{TEI document}
+@deftogether[
+(@defproc[(segment-title/symbol [seg segment?])
+         symbol?]
+  @defproc[(segment-document-checksum [seg segment?])
+         symbol?])]{
+ Functions that return the same symbols that would have been returned by
+ @racket[instance-title/symbol] or @racket[tei-document-checksum],
+ respectively, applied to the source @tech{TEI document}
  of the @tech{segment} @racket[seg].
 }
 

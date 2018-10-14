@@ -37,6 +37,7 @@
           [term-search
            (->* {term/c}
                 {#:ricoeur-only? any/c
+                 #:languages (or/c 'any (listof language-symbol/c))
                  #:book/article (or/c 'any 'book 'article)
                  #:exact? any/c}
                 (instance-set/c document-search-results?))]
@@ -103,11 +104,13 @@
 
 (define (term-search term
                      #:ricoeur-only? [ricoeur-only? #t]
+                     #:languages [langs 'any]
                      #:book/article [book/article 'any]
                      #:exact? [exact? #f])
   (corpus-do-term-search (current-corpus)
                          term
                          #:ricoeur-only? ricoeur-only?
+                         #:languages langs
                          #:book/article book/article
                          #:exact? exact?))
 

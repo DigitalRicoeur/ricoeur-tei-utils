@@ -2,7 +2,7 @@
 
 (define collection "ricoeur")
 (define pkg-desc "TEI utilities for Digital Ricoeur")
-(define version "0.5.2")
+(define version "0.5.3")
 (define pkg-authors '(philip))
 
 ;; Executables to build are listed in "tei/tools/info.rkt".
@@ -19,6 +19,7 @@
                "scribble-lib"
                "data-lib"
                "db-lib"
+               ("sql" #:version "1.2")
                "draw-lib"
                "icns"
                "parser-tools-lib"

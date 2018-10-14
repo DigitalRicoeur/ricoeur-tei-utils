@@ -70,14 +70,27 @@ library can be used independently.
 @deftogether[
  (@defproc[(term-search [term term/c]
                         [#:ricoeur-only? ricoeur-only? any/c #t]
+                        [#:languages languages search-languages/c 'any]
                         [#:book/article book/article (or/c 'any 'book 'article) 'any]
                         [#:exact? exact? any/c #f])
            (instance-set/c document-search-results?)]
    @defthing[term/c flat-contract?
-             #:value (and/c string-immutable/c #px"[^\\s]")])]{
+             #:value (and/c string-immutable/c #px"[^\\s]")]
+   @defthing[search-languages/c flat-contract?
+             #:value (or/c 'any (listof language-symbol/c))])]{
  Searches for @racket[term], an immutable string containing at least one non-whitespace
  character, in the @tech{TEI documents} encapsulated by @racket[(current-corpus)].
 
+ If @racket[languages] is a list of symbols,
+ results will only be returned from TEI documents for which
+ @racket[instance-language] would have produced one of the
+ symbols in the @racket[languages] list.
+ Otherwise, if @racket[languages] is @racket['any] (the default),
+ documents in all languages will be searched.
+ Use @racket['any] rather than listing all currently-supported
+ languages so that, when support for additional languages is added
+ to this library, they will be included automatically.
+ 
  If @racket[book/article] is @racket['book] or @racket['article],
  only results from TEI documents that would have returned the
  same symbol from @racket[instance-book/article] will be returned.
@@ -109,6 +122,7 @@ library can be used independently.
    @defproc[(corpus-do-term-search [corpus (is-a?/c corpus%)]
                                    [term term/c]
                                    [#:ricoeur-only? ricoeur-only? any/c #t]
+                                   [#:languages languages search-languages/c 'any]
                                    [#:book/article book/article (or/c 'any 'book 'article) 'any]
                                    [#:exact? exact? any/c #f])
             (instance-set/c document-search-results?)])]{
@@ -156,6 +170,7 @@ library can be used independently.
  @defmethod[#:mode public-final
             (term-search [term term/c]
                          [#:ricoeur-only? ricoeur-only? any/c #t]
+                         [#:languages languages search-languages/c 'any]
                          [#:book/article book/article (or/c 'any 'book 'article) 'any]
                          [#:exact? exact? any/c #f])
             (instance-set/c document-search-results?)]{
@@ -439,6 +454,7 @@ library can be used independently.
           [searchable-document-set searchable-document-set?]
           [term term/c]
           [#:ricoeur-only? ricoeur-only? any/c #t]
+          [#:languages languages search-languages/c 'any]
           [#:book/article book/article (or/c 'any 'book 'article) 'any]
           [#:exact? exact? any/c #f])
          (instance-set/c document-search-results?)]{

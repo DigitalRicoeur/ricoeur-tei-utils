@@ -25,6 +25,8 @@
           ;;;;
           [segment-title/symbol
            (-> segment? symbol?)]
+          [segment-document-checksum
+           (-> segment? symbol?)]
           [segment-counter
            (-> segment? natural-number/c)]
           [segment-resp-string
@@ -79,6 +81,8 @@
   (syntax-parser
     [(_ (~alt (~optional (~seq #:title/symbol title/symbol)
                          #:defaults ([title/symbol #'_]))
+              (~optional (~seq #:checksum checksum)
+                         #:defaults ([checksum #'_]))
               (~optional (~seq #:counter counter)
                          #:defaults ([counter #'_]))
               (~optional (~seq #:resp-string resp-string)
@@ -90,7 +94,7 @@
         ...)
      #:with meta-pat
      #'(segment-meta title/symbol
-                     _
+                     checksum
                      counter
                      _
                      resp-string
@@ -125,6 +129,7 @@
 
 (define-segment/meta-proc
   [segment-title/symbol segment-meta-title/symbol]
+  [segment-document-checksum segment-meta-checksum]
   [segment-counter segment-meta-counter]
   [segment-resp-string segment-meta-resp-string]
   [segment-page-spec segment-meta-page-spec]
@@ -168,4 +173,3 @@
 
 
               
-             

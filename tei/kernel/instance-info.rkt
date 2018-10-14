@@ -22,6 +22,7 @@
          instance-publication-original?
          instance-language
          instance-book/article
+         language-symbol/c
          (contract-out
           [instance-get-resp-string
            (-> instance-info? symbol? string?)]
@@ -51,10 +52,13 @@
                  #:orig-publication-date date?
                  #:publication-date date?
                  #:publication-original? any/c
-                 #:language (or/c 'en 'fr 'de)
+                 #:language language-symbol/c
                  #:book/article (or/c 'book 'article)
                  plain-instance-info?)]
             )))
+
+(define/final-prop language-symbol/c
+  (or/c 'en 'fr 'de))
 
 (define-values {prop:instance-info instance-info? get-get-plain}
   (make-struct-type-property 'prop:instance-info))

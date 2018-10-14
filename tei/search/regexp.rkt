@@ -5,6 +5,7 @@
          racket/unit
          racket/list
          racket/string
+         racket/set
          "common.rkt"
          (submod "common.rkt" private)
          ricoeur/tei/base
@@ -25,7 +26,7 @@
     (super-new)
     (init [docs (instance-set)])
     (define s-docs:all
-      (for/list ([doc (in-instance-set docs)])
+      (for/instance-set ([doc (in-instance-set docs)])
         (new searchable-document% [doc doc])))
     (define-values {s-docs:book s-docs:article}
       (partition (λ (it) (eq? 'book (instance-book/article it)))
@@ -33,25 +34,29 @@
     ;;;;;;;;;;
     (define/public-final (do-term-search norm-term
                                          #:ricoeur-only? ricoeur-only?
+                                         #:languages st:lang
                                          #:book/article book/article
                                          #:exact? exact?)
       (def
+        [book&article? (eq? 'any book/article)]
         [term-len
          (string-length (normalized-term-string norm-term))]
         [excerpt-px
          (normalized-term->excerpt-pregexp norm-term exact?)])
-      (instance-set
-       (filter-map
-        (λ (s-doc)
-          (send s-doc
-                do-term-search/doc
-                term-len
-                excerpt-px
-                ricoeur-only?))
-        (case book/article
-          [(any) s-docs:all]
-          [(book) s-docs:book]
-          [(article) s-docs:article]))))
+      (for/instance-set ([doc (in-instance-set s-docs:all)]
+                         #:when (or book&article?
+                                    (eq? book/article
+                                         (instance-book/article doc)))
+                         #:when (set-member? st:lang
+                                             (instance-language doc))
+                         [dsr/false (in-value
+                                     (send doc
+                                           do-term-search/doc
+                                           term-len
+                                           excerpt-px
+                                           ricoeur-only?))]
+                         #:when dsr/false)
+        dsr/false))
     #|END class regexp-searchable-document-set%|#))
 
 
