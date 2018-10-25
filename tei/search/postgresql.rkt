@@ -8,6 +8,8 @@
          racket/promise
          racket/set
          racket/list
+         racket/sequence
+         syntax/parse/define
          db/base
          sql
          "common.rkt"
@@ -32,6 +34,8 @@
 ;; - optimization to re-use numbered query parameter
 ;; - add #:default for create-table
 ;;    - complication: no query parameters in CREATE TABLE, it seems
+
+(TODO/void support logging)
 
 (define-unit/search^ postgresql@
   (import)
@@ -512,29 +516,55 @@
      (for ([{lang segs}
             (in-immutable-hash
              (build-to-insert db docs #:empty-db? fresh-db?))])
+       ;; not for* w/ in-value b/c need to call create-indeces
+       ;; at the end of each lang
        (define tSegments (lang->tSegments-id-ast lang))
        (define search-config (lang->search-config-ast lang))
-       (for (;[segs (in-slice 1000 segs)]
-             [base-seg (in-list segs)])
-         (match-define (base-segment meta body)
-           base-seg)
+       (for ([segs (in-slice 1000 segs)])
          (query-exec
           db
-          (insert
-           #:into (Name:AST ,tSegments)
-           #:set[segDocumentTitle ,(instance-title base-seg)]
-           [segSerializedMeta ,(serialize-to-string meta)]
-           [segBody ,body]
-           ;; giving language as unquote parameter throws
-           ;;   sql-statement: unsupported type; typeid: 3734
-           [segTSV (to_tsvector (ScalarExpr:AST ,search-config)
-                                ,body)]
-           [segIsByRicoeur ,(segment-by-ricoeur? meta)]
-           [segDocumentIsBook ,(eq? (instance-book/article base-seg)
-                                    'book)]
-           [segDocumentHash ,(symbol->immutable-string
-                              (segment-document-checksum meta))])))
+          (for/insert-statement
+              (#:into (Name:AST ,tSegments)
+               [base-seg (in-list segs)])
+            (match-define (base-segment meta body)
+              base-seg)
+            #:set
+            [segDocumentTitle ,(instance-title base-seg)]
+            [segSerializedMeta ,(serialize-to-string meta)]
+            [segBody ,body]
+            ;; giving language as unquote parameter throws
+            ;;   sql-statement: unsupported type; typeid: 3734
+            [segTSV (to_tsvector (ScalarExpr:AST ,search-config)
+                                 ,body)]
+            [segIsByRicoeur ,(segment-by-ricoeur? meta)]
+            [segDocumentIsBook ,(eq? (instance-book/article base-seg)
+                                     'book)]
+            [segDocumentHash ,(symbol->immutable-string
+                               (segment-document-checksum meta))])))
        ;; After all segs inserted for this lang:
        (create-indeces db (lang->index-names lang))))))
+
+
+(define-syntax-parser for/insert-statement 
+  [(_ (#:into name-ast-form
+       for-clause ...)
+      body-or-break ...
+      #:set
+      [column-ident-form
+       scalar-expr-form] ...)
+   #`(insert
+      #:into name-ast-form
+      #:columns column-ident-form ...
+      #:from
+      (TableExpr:AST
+       ,(make-values*-table-expr-ast
+         (for/fold/derived #,this-syntax
+           ([so-far '()])
+           (for-clause ...)
+           body-or-break ...
+           (cons (list (scalar-expr-qq scalar-expr-form)
+                       ...)
+                 so-far)))))])
+
 
 

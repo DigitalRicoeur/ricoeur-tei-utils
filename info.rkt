@@ -19,7 +19,7 @@
                "scribble-lib"
                "data-lib"
                "db-lib"
-               ("sql" #:version "1.2")
+               ("sql" #:version "1.3")
                "draw-lib"
                "icns"
                "parser-tools-lib"
