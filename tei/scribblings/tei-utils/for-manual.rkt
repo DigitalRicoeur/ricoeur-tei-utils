@@ -10,6 +10,7 @@
 (require-provide (provide-only (submod ricoeur/tei/kernel doc))
                  scribble/core
                  scribble/example
+                 scribble/html-properties
                  syntax/parse/define
                  (for-syntax racket/base
                              syntax/parse
@@ -35,6 +36,7 @@
          defpredicate
          submodlink
          make-tei-eval
+         style:scale-down-to-fit
          (contract-out
           [tag
            (-> (or/c symbol? string?) element?)]
@@ -85,4 +87,13 @@
                        racket/class
                        racket/unit)))
 
+(define style:scale-down-to-fit
+  (style "RicoeurScaleToFit"
+         (list (css-addition
+                (string->bytes/utf-8 @~a{
+ .RicoeurScaleToFit {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  }})))))
 

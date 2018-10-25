@@ -3,7 +3,9 @@
 @title{Installing & Updating This Library}
 
 @(require "for-manual.rkt"
-          )
+          racket/runtime-path)
+
+@(define min-racket-version "7.0")
 
 @margin-note{Installing this library will also install
  the tools documented under
@@ -11,10 +13,10 @@
             
 To use this library, you must install the Racket programming
 language and runtime system for your platform from
-@url["https://racket-lang.org"].
-Racket version 7.0 or later is currently required.
+@url["https://download.racket-lang.org"].
+Racket version @min-racket-version or later is currently required.
 You should @italic{not} use the version
-of Racket from your OS's package manager,
+of Racket from your operating system's package manager,
 as it will generally not be up-to-date.
 @margin-note{
  @italic{For advanced users:}
@@ -27,6 +29,42 @@ as it will generally not be up-to-date.
  However, neither of these approaches are recommended.
 }
 
+After you have installed Racket, you then must install this
+library as a Racket package.
+For most users, we recommend the following simple method
+that doesn't require knowing about Git or the command line.
+For more advanced users and those wishing to contribute to the
+development of this library, an alternative process is given under
+@secref["advanced-install"].
+
+@(define-runtime-path pkg-manager-install.png
+   "pkg-manager-install.png")
+@(define-runtime-path pkg-manager-update.png
+   "pkg-manager-update.png")
+
+@itemlist[
+ #:style 'ordered
+ @item{Open the program DrRacket, which you installed as part of
+  the Racket distribution.}
+ @item{Choose @menuitem["File" "Package Manager…"], which will open
+  a new window labeled @onscreen{Package Manager}.}
+ @item{In the field labeled @onscreen{Package Source}, enter the
+  exact text @onscreen{ricoeur-tei-utils}.
+  Press the @onscreen{Install} button.
+  @image[pkg-manager-install.png
+         #:style style:scale-down-to-fit]{
+   Screenshot with @onscreen{Install} button}}
+ @item{Later, to install updated versions of this library,
+  repeat the above steps.
+  Instead of an @onscreen{Install} button, there will be an
+  @onscreen{Update} button, which will download and install any updates.
+  @image[pkg-manager-update.png
+         #:style style:scale-down-to-fit]{
+   Screenshot with @onscreen{Update} button}}
+ ]
+
+@section[#:tag "advanced-install"]{Additional Installation Details}
+
 While it is not strictly required, some features of this library
 are implemented using the utility @exec{xmllint} from @tt{libxml2}.
 This is included by default with Mac OS and is available via
@@ -36,46 +74,46 @@ dependency through the Racket package system.
 @margin-note{Specifically, binaries are provided for platforms where
  @racket[(matching-platform? "win32\\x86_64")] returns @racket[#t].}
 
-To install this library, you must first obtain a copy of the source
-code by cloning its git repository from
-@url["https://bitbucket.org/digitalricoeur/tei-utils"].
-You then must install it as a Racket package.
-Two methods are provided to streamline this process:
-@(itemlist
-  @item{@bold{Using @tt{make}}:
- On platforms which provide the utility @tt{make},
- this package can be installed by running
- @exec{make install} from the directory into which you have cloned
- the repository.
-
- Later, you can install updated versions of the repository simply
- by running @exec{make}, which also handles pulling updates from
- the server for you. More substantial changes may occasionally
- require you to reinstall the package by running
- @exec{make reinstall}.
-}
-  @item{@bold{Windows batch files}:
- For Windows users, batch files are included in the
- @filepath{windows-setup} directory of this repository.
- The details are explained in @filepath{windows-setup/README.md}.
-
- These files are still somewhat experimental.
- Please report any problems.
- })
-
 To use the command-line utilities bundled with this library,
 you should also configure your @envvar{PATH} environment variable
 so that the @exec{racket} and @exec{raco} programs can be run.
-For example, on Mac OS, you could add a
-line like the following to @filepath{~/.bash_profile}:
-@verbatim[#:indent 2]{export PATH="/Applications/Racket v7.0/bin":$PATH}
+For example, on Mac OS, you could run the following command:
+@verbatim[#:indent 2]{sudo echo "/Applications/Racket v@|min-racket-version|/bin" > /etc/paths.d/racket}
 
-If you are developing (as oposed to merely using) this library,
-you may also wish to install the Racket package
-@hyperlink["https://pkgs.racket-lang.org/package/todo-list"]{todo-list},
-which provides a DrRacket plugin that cooperates with the
-@racket[TODO] macro.
+If you plan to develop (as opposed to merely use) this library,
+you probably do not want to follow the GUI installation instructions.
+Instead, start by cloning the Git repository for this library from
+@url["https://bitbucket.org/digitalricoeur/tei-utils"].
+You can then link your local clone as a Racket package to take advantage
+of the support described under @secref["git-workflow" #:doc '(lib "pkg/scribblings/pkg.scrbl")]
+in @other-doc['(lib "pkg/scribblings/pkg.scrbl")].
+As a convienience, the repository includes a makefile which
+provides @tt{make} targets for most common tasks:
+@itemlist[
+ @item{@exec{make install}: Installs the package. This is needed only
+  when you install a new version of Racket.}
+ @item{@exec{make update}: Checks for updates to the package and tries
+  to install them, which may involve updating this package's dependencies.
+  ``Updates'' are changes to the package source listed
+  in the Racket package catalog: currently, that is the ``master'' branch
+  of the canonical Git repository.
+  Updates are pulled with the equivalent of @exec{git pull --ff-only}
+  so they won't overwrite any local changes.}
+ @item{@exec{make setup}: Builds compiled files, executables, documentation,
+  @etc for this library, as needed.
+  Unlike @exec{make update}, @exec{make setup} doesn't look for upstream
+  updates: use @exec{make setup} when you want to explicitly build your
+  local changes.}
+ ]
 
+@;{
+ @; This is currently a build-dep.
+ If you are developing (as oposed to merely using) this library,
+ you may also wish to install the Racket package
+ @hyperlink["https://pkgs.racket-lang.org/package/todo-list"]{todo-list},
+ which provides a DrRacket plugin that cooperates with the
+ @racket[TODO] macro.
+}
 
 
 
