@@ -1,6 +1,8 @@
 #lang ricoeur/tei/kernel
 
-ƒ[#:spec teiHeader-spec]
+ƒ[#:spec teiHeader-spec
+  #:extends titleStmt-spec sourceDesc-spec textClass-spec
+  #:with-local local-spec]
 
 ƒtitle{The ƒtt{teiHeader} Element}
 
@@ -19,6 +21,12 @@
             tH-publication-original?
             tH-book/article))
  (require (submod ricoeur/tei/kernel private)
+          (rename-in "titleStmt.rkt" [spec titleStmt-spec])
+          (submod "titleStmt.rkt" private-to-teiHeader)
+          (submod "sourceDesc.rkt" private-to-teiHeader)
+          (rename-in "sourceDesc.rkt" [spec sourceDesc-spec])
+          (submod "textClass.rkt" private-to-teiHeader)
+          (rename-in "textClass.rkt" [spec textClass-spec])
           xml/path)
  ]
 
@@ -26,15 +34,6 @@
                      (except-in racket
                                 date?
                                 date)))
-
-ƒ(define (lib-tech . args)
-   (TODO/void lib-tech: avoid duplicating in for-guidelines.rkt)
-   (TODO/void lang issue)
-   ;; Un-commenting the following causes a use-before-definition error
-   ;; with a lifted variable (possibly related to the contract on tech)
-   ;; for reasons I don't understand. It would seem to be a bug in the #lang.
-   ;; (apply tech #:doc '(lib "ricoeur/tei/scribblings/tei-utils/ricoeur-tei-utils.scrbl") args)
-   args)
 
 ƒdefine-elements-together[
  ([teiHeader
@@ -106,153 +105,11 @@
 }
 
 
-ƒ;{                                                                          
- ;                                                                          
- ;    ;;        ;     ;;     ;;;;              ;;     ;;              ;;    
- ;    ;;        ;;    ;;       ;;             ;  ;    ;;              ;;    
- ;  ;;;;;;;  ;;;;;  ;;;;;;;    ;;      ;;;   ;;     ;;;;;;; ; ;; ;; ;;;;;;; 
- ;    ;;        ;;    ;;       ;;    ;;   ;   ;;      ;;    ;; ;; ;   ;;    
- ;    ;;        ;;    ;;       ;;    ;    ;     ;     ;;    ;; ;; ;;  ;;    
- ;    ;;        ;;    ;;       ;;   ;;;;;;;;     ;    ;;    ;; ;; ;;  ;;    
- ;    ;;        ;;    ;;       ;;    ;           ;;   ;;    ;; ;; ;;  ;;    
- ;     ;        ;;     ;        ;    ;;   ;  ;   ;     ;    ;; ;; ;;   ;    
- ;      ;;;     ;;      ;;;      ;;    ;;;    ;;;       ;;; ;; ;; ;;    ;;; 
- ;                                                                          
-}                                                                         
-
-ƒsection{The Title Statement}
-ƒ(define-element titleStmt
-   #:children ([1 title]
-               [1+ author]
-               [0+ editor])
-   #:extra-check
-   (λ (val maybe-blame neg-party)
-     (or (member "ricoeur"
-                 (se-path*/list `(author #:xml:id)
-                                val))
-         (and maybe-blame
-              (raise-blame-error
-               maybe-blame #:missing-party neg-party
-               val
-               '(expected: "~a"
-                           given: "~e")
-               "an author element with xml:id=\"ricoeur\""
-               val))))
-   #:predicate tei-titleStmt?
-   #:constructor [
- #:body/elements-only body/elements-only
- (define (child->plain-text child)
-   (string-normalize-spaces
-    (string-trim
-     (non-element-body->plain-text
-      (tei-element-get-body child)))))
- (define/field #:infer title
-   (string->immutable-string
-    (child->plain-text
-     (findf tei-title? body/elements-only))))
- (define/field [resp-table
-                #:check (hash/c	symbol? (and/c string? immutable?)
-                                #:immutable #t)
-                #:accessor titleStmt-resp-table]
-   (for*/hasheq ([child (in-list body/elements-only)]
-                 #:when (or (tei-author? child)
-                            (tei-editor? child))
-                 [maybe-id-str
-                  (in-value (attributes-ref
-                             (tei-element-get-attributes child)
-                             'xml:id))]
-                 #:when maybe-id-str)
-     (values (string->symbol maybe-id-str)
-             (string->immutable-string
-              (child->plain-text child)))))
- #|END constructor|#]
-   #:prose ƒ[]{
-
- The ƒtag{titleStmt} contains
- one ƒtag{title} element,
- one or more ƒtag{author} elements, and
- zero or more ƒtag{editor} elements.
- These may be intermixed freely in any order.
-
- As a special case, there must always be an ƒtag{author} element
- representing Paul Ricœur, which should be exactly as follows:
- ƒ(nested #:style 'inset
-          ƒlitchar{<author xml:id="ricoeur">Paul Ricoeur</author>})
- 
- ƒ(define-element title
-    #:inset? #t
-    #:contains-text
-    #:extra-check
-    (λ (val maybe-blame neg-party)
-      (or (regexp-match? #px"[^\\s]"
-                         (non-element-body->plain-text (get-body val)))
-          (and maybe-blame
-               (raise-blame-error
-                maybe-blame #:missing-party neg-party
-                val
-                '("title element may not be empty"
-                  given: "~e")
-                val))))
-    #:predicate tei-title?
-    #:prose ƒ{
-  The ƒtag{title} element contains free-form text.
-  It must not be empty.
-  })
-
- ƒ(define-element author
-    #:inset? #t
-    #:contains-text
-    #:attr-contracts ([xml:id any/c])
-    #:predicate tei-author?
-    #:prose ƒ[]{
-  The ƒtag{author} element contains free-form text
-  (the author's name) and may have
-  an optional ƒattr{xml:id} attribute. As a special case,
-  the ID ƒracket["ricoeur"] is reserved for use with Paul Ricœur across all
-  documents. ƒTODO/void[author: not empty]
-  })
-                 
- ƒ(define-element editor
-    #:inset? #t
-    #:contains-text
-    #:attr-contracts ([role (or/c "editor"
-                                  "translator"
-                                  "compiler"
-                                  "preface")]
-                      [xml:id (not/c "ricoeur")])
-    #:predicate tei-editor?
-    #:prose ƒ[]{
-
-  The ƒtag{editor} element contains free-form text (the editor's name)
-  and has optional ƒattr{role} and ƒattr{xml:id} attributes.
-  If the ƒattr{role} attribute is present,
-  its value must be either ƒracket["editor"], ƒracket["translator"],
-  ƒracket["compiler"], or ƒracket["preface"] (to indicate the author of
-  a preface). Ommiting the ƒattr{role} attribute is equivalent to a value
-  of ƒracket["editor"]. ƒTODO/void[editor: not empty]
-
-  ƒmargin-note{If a type of editor arises that does not
-   fit neatly into these categories, we should decide on a standard
-   value for the ƒtt{role} attribute and amend this document.}
-
-  }) 
- })
 
 
-ƒ;{                                                                                          
- ;                   ;;      ;;;;       ;                     ;;        ;                   
- ;                   ;;        ;;       ;;                    ;;        ;;                  
- ;   ; ;;    ;;  ;;  ;;;;      ;;    ;;;;;      ;;;    ;;   ;;;;;;;  ;;;;;    ;;;    ;; ;   
- ;   ;;  ;   ;;  ;;  ;;  ;     ;;       ;;    ;;   ;  ;  ;    ;;        ;;   ;   ;   ;;; ;  
- ;   ;;  ;   ;;  ;;  ;;  ;     ;;       ;;    ;          ;;   ;;        ;;   ;   ;   ;;  ;; 
- ;   ;;  ;;  ;;  ;;  ;;  ;;    ;;       ;;   ;;        ;;;;   ;;        ;;  ;;   ;;  ;;  ;; 
- ;   ;;  ;   ;;  ;;  ;;  ;     ;;       ;;    ;       ;  ;;   ;;        ;;   ;   ;   ;;  ;; 
- ;   ;;  ;    ; ;;;  ;;  ;      ;       ;;    ;;   ; ;;  ;;    ;        ;;   ;   ;   ;;  ;; 
- ;   ;;;;      ; ;;  ; ;;        ;;     ;;      ;;;   ;;; ;     ;;;     ;;    ;;;    ;;  ;; 
- ;   ;;                                                                                     
- ;   ;;                                                                                     
- ;   ;;                                                                                     
-}                                                                                          
+
+ƒinclude-section[(submod "titleStmt.rkt" doc)]
+                                                                                         
 
 ƒsection{The Publication Statement}
 ƒdefine-elements-together[
@@ -279,270 +136,6 @@
 }
 
 
-ƒ;{                                                                                  
- ;                                                   ;;;;                           
- ;                                                   ;;  ;;                         
- ;     ;;     ;;;    ;;  ;;  ;; ;;;     ;;;    ;;;   ;;   ;    ;;;     ;;       ;;; 
- ;   ;;  ;   ;   ;   ;;  ;;  ;;;      ;;   ; ;;   ;  ;;   ;  ;;   ;  ;;  ;    ;;   ;
- ;    ;      ;   ;   ;;  ;;  ;;       ;      ;    ;  ;;   ;; ;    ;   ;       ;     
- ;     ;;   ;;   ;;  ;;  ;;  ;;      ;;     ;;;;;;;; ;;   ; ;;;;;;;;   ;;    ;;     
- ;       ;;  ;   ;   ;;  ;;  ;;       ;      ;       ;;   ;  ;           ;;   ;     
- ;   ;   ;   ;   ;    ; ;;;  ;;       ;;   ; ;;   ;  ;;  ;;  ;;   ;  ;   ;    ;;   ;
- ;    ;;;     ;;;      ; ;;  ;;         ;;;    ;;;   ;;;;      ;;;    ;;;       ;;; 
- ;                                                                                  
-}                                                                                
-
-ƒsection{The Source Description}
-ƒdefine-elements-together[
- ([sourceDesc
-   #:children ([1 bibl])
-   #:constructor
-   [#:body/elements-only body/elements-only
-    (match-define (list bibl)
-      body/elements-only)
-    (define/field [citation #:accessor sourceDesc-citation]
-      (string->immutable-string
-       (string-normalize-spaces
-        (element-or-xexpr->plain-text bibl))))
-    (define-values/fields #:infer (orig-publ-date
-                                   this-publ-date
-                                   this-is-orig?)
-      (match (for/list ([c (in-list (tei-element-get-body bibl))]
-                        #:when (tei-date-element? c))
-               (cons (date-when c) (date-subtype c)))
-        [(list (cons d 'thisIsOriginal))
-         (values d d 'thisIsOriginal)]
-        [(or (list (cons this 'this) (cons original 'original))
-             (list (cons original 'original) (cons this 'this)))
-         (values original this #f)]))
-    #|END sourceDesc|#]]
-  [bibl
-   #:contains-text
-   #:children ([1+ date])
-   #:extra-check
-   (λ (val maybe-blame neg-party)
-     (match (for/list ([c (in-list (get-body val))]
-                       #:when (and (list? c)
-                                   (eq? 'date (car c))))
-              (cadr (assq 'subtype (get-attributes c))))
-       [(or (list-no-order "this" "original")
-            (list "thisIsOriginal"))
-        #t]
-       [bad-subtypes
-        (and maybe-blame
-             (raise-blame-error 
-              maybe-blame #:missing-party neg-party
-              val
-              '("invalid combination of date element subtypes inside bibl element"
-                expected: "'(\"this\" \"original\") '(\"original\" \"this\") or '(\"thisIsOriginal\")"
-                given: "~e"
-                "\n  bibl element...:\n   ~e")
-              bad-subtypes
-              val))]))]
-  [date
-   #:contains-text
-   #:attr-contracts ([when #px"^(\\d\\d\\d\\d)(-\\d\\d)?(-\\d\\d)?$"]
-                     [type "publication"]
-                     [subtype (or/c "this" "original" "thisIsOriginal")])
-   #:required-attrs (when type subtype)
-   #:predicate tei-date-element?
-   #:constructor 
-   [#:attributes attrs
-    (define-fields
-      #:infer
-      [subtype (string->symbol (attributes-ref attrs 'subtype))]
-      [when (iso8601->date (attributes-ref attrs 'when))]
-      #|END bibl|#)]])]{
- The ƒtag{sourceDesc} element must contain exactly one
- ƒtag{bibl} element.
-
- The ƒtag{bibl} element contains free-form text,
- which provides a citation to the source from which
- the digitized document was created, and either
- one or two ƒtag{date} elements mark up the parts of that text
- which refer to the publication date(s):
- ƒitemlist[
- ƒitem{If the digitized document is based on the first
-   ƒlib-tech{instance} to be published in any language,
-   there must be one ƒtag{date} element with a ƒattr{subtype}
-   of ƒracket["thisIsOriginal"] marking that date.
-  }
- ƒitem{Otherwise, there must be two ƒtag{date} elements:
-   one with a ƒattr{subtype} of ƒracket["this"] marking the
-   publication date of the specific ƒlib-tech{instance} from
-   which the digitized document was prepared,
-   and one with a ƒattr{subtype} of ƒracket["original"] giving
-   the first publication date in any language.
-   }]
-
- For compilations of articles, the ƒracket["thisIsOriginal"]
- or ƒracket["original"] ƒtag{date} refers to the first 
- publication of the collection as a whole.
- 
- In either case, make sure that the textual content of the
- ƒtag{bibl} element as a whole is understandable if
- displayed without the tags, as it will be shown in that format
- to end-users.
-
- The ƒtag{date} element contains free-form text
- representing the human-readable publication date.
- It must have:
- ƒitemlist[
- ƒitem{a ƒattr{type} attribute with a value of ƒracket["publication"];}
- ƒitem{a ƒattr{subtype} attribute with a value of ƒracket["this"],
-   ƒracket["original"], or ƒracket["thisIsOriginal"]; and}
- ƒitem{a ƒattr{when} attribute giving the
-   date in machine-readable format, which must be a subset of
-   the format required by TEI: ƒracket["YYYY-MM-DD"], ƒracket["YYYY-MM"],
-   or ƒracket["YYYY"], where the month
-   and day, if present, must allways be two digits
-   (e.g. ƒtt{01} for January).}]
-
- Examples:
- ƒ(itemlist
-   ƒitem{ƒtt{ƒlitchar{<bibl>}Fallible Man. Introduction by C.A. Kelbley.
-   Chicago: Henry Regnery,
-   ƒlitchar{<date type="publication" subtype="this" when="1965">}1965ƒlitchar{</date>},
-   xxix-224 p. (Paper: Gateway Editions).
-   Revised edition in 1986.
-   First published in French in
-   ƒlitchar{<date type="publication" subtype="original" when="1960">}1960@litchar{</date>}.@litchar{</bibl>}}}
-   ƒitem{ƒtt{ƒlitchar{<bibl>}Can Fictional Narratives be true? 
-   Analecta Hus­serliana Vol. XIV
-   (ƒlitchar{<date type="publication" subtype="thisIsOriginal" when="1983">}1983ƒlitchar{</date>})
-   3-19.ƒlitchar{</bibl>}}})
-}
-
-
-ƒ;{                                                                          
- ;                                                                          
- ;    ;;                      ;;       ;;;   ;;;;                           
- ;    ;;                      ;;      ;   ;    ;;                           
- ;  ;;;;;;;    ;;;  ;;   ;; ;;;;;;;  ;         ;;      ;;      ;;      ;;   
- ;    ;;     ;;   ;   ;  ;    ;;     ;         ;;     ;  ;   ;;  ;   ;;  ;  
- ;    ;;     ;    ;   ; ;     ;;    ;;         ;;        ;;   ;       ;     
- ;    ;;    ;;;;;;;;   ;      ;;     ;         ;;      ;;;;    ;;      ;;   
- ;    ;;     ;        ; ;     ;;     ;         ;;     ;  ;;      ;;      ;; 
- ;     ;     ;;   ;  ;   ;     ;      ;   ;     ;    ;;  ;;  ;   ;   ;   ;  
- ;      ;;;    ;;;  ;;   ;;     ;;;    ;;;       ;;   ;;; ;   ;;;     ;;;   
- ;                                                                          
-}                                                                          
-
-ƒsection{The Text Classification}
-ƒ(define-element textClass
-   #:children ([1 catRef]
-               [1 keywords])
-   #:predicate textClass?
-   #:constructor
-   [#:body/elements-only body/elements-only
-    (field guess-paragraphs-status #:infer)
-    (match-define
-      (list-no-order (? tei-keywords?
-                        (app keywords-guess-paragraphs-status
-                             guess-paragraphs-status))
-                     (? catRef? catRef))
-      body/elements-only)
-    (define/field #:infer book/article
-      (case (attributes-ref (tei-element-get-attributes catRef)
-                            'target)
-        [("https://schema.digitalricoeur.org/taxonomy/type#article")
-         'article]
-        [("https://schema.digitalricoeur.org/taxonomy/type#book")
-         'book]))]
-   #:prose ƒ[]{
-                            
- The ƒtag{textClass} element must contain
- one ƒtag{catRef} element and one ƒtag{keywords} element.
-
- ƒ(define-element catRef
-    #:inset? #t
-    #:attr-contracts
-    ([scheme "https://schema.digitalricoeur.org/taxonomy/type"]
-     [target (or/c "https://schema.digitalricoeur.org/taxonomy/type#article"
-                   "https://schema.digitalricoeur.org/taxonomy/type#book")])
-    #:required-attrs (scheme target)
-    #:predicate catRef?
-    #:prose ƒ{
-  The ƒtag{catRef} element contains nothing.
-  It has two attributes, ƒattr{scheme} and ƒattr{target},
-  both of which are required.
-  This element encodes whether
-  the document is a book or an article.
-  The ƒattr{scheme} attribute must have the value
-  ƒracket["https://schema.digitalricoeur.org/taxonomy/type"].
-  The value for the ƒattr{target} attribute must be either:
-  ƒitemlist[
- ƒitem{ƒracket["https://schema.digitalricoeur.org/taxonomy/type#article"],
-    if the document is an article; or
-   }
- ƒitem{ƒracket["https://schema.digitalricoeur.org/taxonomy/type#book"],
-    if the document is a book.
-    }]
-  })
-
- ƒdefine-elements-together[
- #:inset? #t
- ([keywords
-   #:attr-contracts
-   ([scheme "https://schema.digitalricoeur.org/tools/tei-guess-paragraphs"])
-   #:required-attrs (scheme)
-   #:children ([1 term])
-   #:predicate tei-keywords?
-   #:constructor
-   [#:body/elements-only body/elements-only
-    (field guess-paragraphs-status #:infer)
-    (match-define (list (app term-guess-paragraphs-status
-                             guess-paragraphs-status))
-      body/elements-only)
-    #|END keywords|#]]
-  [term
-   #:contains-text
-   #:extra-check
-   (λ (val maybe-blame neg-party)
-     (define body-string
-       (non-element-body->plain-text
-        (get-body val)))
-     (case body-string
-       [("todo" "line-breaks" "blank-lines" "done" "skip")
-        #t]
-       [else
-        (and maybe-blame
-             (raise-blame-error
-              maybe-blame #:missing-party neg-party
-              val
-              '("invalid contents of term element"
-                expected: "(list/c (or/c \"todo\" \"line-breaks\" \"blank-lines\" \"done\" \"skip\"))"
-                given: "~e"
-                "\n  term element...:\n   ~e")
-              body-string
-              val))]))
-   #:constructor
-   [#:body body
-    (define body-string
-      (non-element-body->plain-text body))
-    (define/field #:infer guess-paragraphs-status
-      (case body-string
-        [("todo") 'todo]
-        [("line-breaks") 'line-breaks]
-        [("blank-lines") 'blank-lines]
-        [("done") 'done]
-        [("skip") 'skip]))
-    #|END term|#]])]{
-  The ƒtag{keywords} element is currently used to encode flags
-  for the ƒtt{guess-paragraphs} tool.
-  It must have a ƒattr{scheme} attribute with a value of
-  ƒracket["https://schema.digitalricoeur.org/tools/tei-guess-paragraphs"].
-  The ƒtag{keywords} element must contain exactly one ƒtag{term} element.
-
-  The ƒtag{term} element contains immediate text, but its
-  contents must conform to the vocabulary prescribed by the ƒattr{scheme}
-  attribute of its parent ƒtag{keywords} element.
-  Currently, its contents must be exactly one of the following:
-  ƒlitchar{todo}; ƒlitchar{line-breaks}; ƒlitchar{blank-lines}; ƒlitchar{done};
-  or ƒlitchar{skip}.
-  Only the ƒlitchar{todo} value should be entered manually.
- }                                 
- })
-
-
+ƒinclude-section[(submod "sourceDesc.rkt" doc)]
+ƒinclude-section[(submod "textClass.rkt" doc)]
 

@@ -13,6 +13,7 @@
          (for-syntax racket/base
                      racket/list
                      racket/sequence
+                     racket/bool
                      syntax/parse
                      syntax/flatten-begin
                      syntax/strip-context
@@ -40,6 +41,7 @@
           [module-begin #%module-begin]
           ))
 
+(TODO/void spec declaration: give good errors without "#:with-local")
 
 (begin-for-syntax
   (define-syntax-class whitespace-str
@@ -52,15 +54,18 @@
   (define-syntax-class spec-name-declaration
     #:description "spec name declaration"
     #:attributes {name to-extend}
-    (pattern [#:spec name:id]
-             #:with to-extend #'())
-    (pattern [#:spec name:id
-              (~alt (~once (~seq #:with-local local-name:id)
-                           #:name "local name declaration")
-                    (~once (~seq #:extends e:id ...+)
-                           #:name "#:extends declaration"))
+    #:no-delimit-cut
+    (pattern [#:spec ~! name:id
+              (~alt (~optional (~seq #:with-local local-name:id)
+                               #:name "local name declaration")
+                    (~optional (~seq #:extends e:id ...+)
+                               #:name "#:extends declaration"))
               ...]
-             #:with to-extend #'(local-name [e ...]))))
+             #:cut
+             #:fail-when (xor (attribute local-name)
+                              (attribute e))
+             "expected either both #:extends and #:with-local, or neither"
+             #:with to-extend #'((~? (~@ local-name [e ...]))))))
 
 (define-syntax shifting-module-begin
   (make-module-begin #:doc-lang 'ricoeur/tei/kernel/lang/doc-lang
