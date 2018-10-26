@@ -1,5 +1,4 @@
 image:
-- Ubuntu1604
 - Visual Studio 2015
 
 environment:
@@ -9,39 +8,14 @@ environment:
     - RACKET_VERSION: HEAD
       WINDOWS_TAR: https://www.cs.utah.edu/plt/snapshots/current/installers/min-racket-current-x86_64-win32.tgz
 
-for:
-  -
-    matrix:
-      only:
-        - image: Ubuntu1604
-    environment:
-      RACKET_DIR: /home/appveyor/racket
-    install:
-      - "export DISPLAY=:99.0" # mbutterick says needed for `racket/gui`
-      - "sh -e /etc/init.d/xvfb start" # mbutterick says needed for `racket/gui`
-      - git clone https://github.com/greghendershott/travis-racket.git
-      - cat travis-racket/install-racket.sh | bash # pipe to bash not sh!
-      - export PATH="${RACKET_DIR}/bin:${PATH}"
-    build_script:
-      - '"${RACKET_DIR}/bin/raco" pkg install --auto --name ricoeur-tei-utils'
-    test_script:
-      - '"${RACKET_DIR}/bin/raco" test -x -p ricoeur-tei-utils'
-      - '"${RACKET_DIR}/bin/raco" setup --check-pkg-deps ricoeur'
-
-  -
-    matrix:
-      only:
-        - image: Visual Studio 2015
-    install:
-      - curl -o C:\racket.tar.gz --location %WINDOWS_TAR%
-      - mkdir C:\racket
-      - bash -c "tar -xzf $(cygpath -u 'C:\racket.tar.gz') -C $(cygpath -u 'C:\racket') --strip-components 1"
-      - echo "Minimal Racket: Installing packages for raco test..."
-      - C:\racket\raco.exe pkg install --auto -i rackunit-lib compiler-lib
-    build_script:
-      - C:\racket\raco.exe pkg install --auto --name ricoeur-tei-utils
-    test_script:
-      - C:\racket\raco.exe test -x -p ricoeur-tei-utils
-      - C:\racket\raco.exe setup --check-pkg-deps ricoeur
-
-
+install:
+  - curl -o C:\racket.tar.gz --location %WINDOWS_TAR%
+  - mkdir C:\racket
+  - bash -c "tar -xzf $(cygpath -u 'C:\racket.tar.gz') -C $(cygpath -u 'C:\racket') --strip-components 1"
+  - echo "Minimal Racket: Installing packages for raco test..."
+  - C:\racket\raco.exe pkg install --auto -i rackunit-lib compiler-lib
+build_script:
+  - C:\racket\raco.exe pkg install --auto --name ricoeur-tei-utils
+test_script:
+  - C:\racket\raco.exe test -x -p ricoeur-tei-utils
+  - C:\racket\raco.exe setup --check-pkg-deps ricoeur
