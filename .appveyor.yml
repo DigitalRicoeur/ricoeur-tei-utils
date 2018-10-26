@@ -17,6 +17,8 @@ for:
     environment:
       RACKET_DIR: /home/appveyor/racket
     install:
+      - "export DISPLAY=:99.0" # mbutterick says needed for `racket/gui`
+      - "sh -e /etc/init.d/xvfb start" # mbutterick says needed for `racket/gui`
       - git clone https://github.com/greghendershott/travis-racket.git
       - cat travis-racket/install-racket.sh | bash # pipe to bash not sh!
       - export PATH="${RACKET_DIR}/bin:${PATH}"

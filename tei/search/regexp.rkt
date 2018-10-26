@@ -28,9 +28,6 @@
     (define s-docs:all
       (for/instance-set ([doc (in-instance-set docs)])
         (new searchable-document% [doc doc])))
-    (define-values {s-docs:book s-docs:article}
-      (partition (λ (it) (eq? 'book (instance-book/article it)))
-                 s-docs:all))
     ;;;;;;;;;;
     (define/public-final (do-term-search norm-term
                                          #:ricoeur-only? ricoeur-only?

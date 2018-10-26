@@ -12,6 +12,10 @@
 (require-provide "search/common.rkt"
                  )
 
+(module+ test
+  (require rackunit
+           (submod "..")))
+
 (provide noop-searchable-document-set
          search-backend/c
          postgresql-data-source/c
@@ -30,8 +34,10 @@
 (define-values/invoke-unit/infer search@)
 
 (module+ test
-  search-backend/c
-  (searchable-document-set-do-term-search
-   (initialize-search-backend 'regexp (instance-set))
-   "apple"))
+  (check-pred contract? search-backend/c)
+  (check-equal?
+   (searchable-document-set-do-term-search
+    (initialize-search-backend 'regexp (instance-set))
+    "apple")
+   (instance-set)))
 
