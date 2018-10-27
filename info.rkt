@@ -2,14 +2,14 @@
 
 (define collection "ricoeur")
 (define pkg-desc "TEI utilities for Digital Ricoeur")
-(define version "0.5.3")
+(define version "0.5.4")
 (define pkg-authors '(philip))
 
 ;; Executables to build are listed in "tei/tools/info.rkt".
 ;; Documentation to build is listed in "tei/info.rkt".
 
 ;; Dependencies:
-(define deps '(("base" #:version "7.0")
+(define deps '(("base" #:version "7.1")
                ("adjutor" #:version "0.2.5")
                "functional-lib"
                "roman-numeral"

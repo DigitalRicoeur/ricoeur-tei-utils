@@ -3,8 +3,8 @@ image:
 
 environment:
   matrix:
-    - RACKET_VERSION: 7.0
-      WINDOWS_TAR: https://download.racket-lang.org/releases/7.0/installers/racket-minimal-7.0-x86_64-win32.tgz
+    - RACKET_VERSION: 7.1
+      WINDOWS_TAR: https://download.racket-lang.org/releases/7.1/installers/racket-minimal-7.1-x86_64-win32.tgz
     - RACKET_VERSION: HEAD
       WINDOWS_TAR: https://www.cs.utah.edu/plt/snapshots/current/installers/min-racket-current-x86_64-win32.tgz
 
