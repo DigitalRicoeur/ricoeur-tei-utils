@@ -9,7 +9,7 @@ all:
 .PHONY: install
 THIS_DIR = $(dir $(abspath $(firstword $(MAKEFILE_LIST))))
 INSTALL = raco pkg install -i --auto \
-	--lookup --catalog https://pkgs.racket-lang.org \
+	--catalog https://pkgs.racket-lang.org \
 	--name $(PKGNAME) --clone $(THIS_DIR) $(PKGNAME)
 install:
 	$(INSTALL)
