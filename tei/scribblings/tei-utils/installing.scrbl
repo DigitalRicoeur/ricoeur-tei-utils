@@ -5,7 +5,7 @@
 @(require "for-manual.rkt"
           racket/runtime-path)
 
-@(define min-racket-version "7.0")
+@(define min-racket-version "7.1")
 
 @margin-note{Installing this library will also install
  the tools documented under
