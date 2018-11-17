@@ -39,7 +39,7 @@ before_install:
 - export PATH="${RACKET_DIR}/bin:${PATH}" #install-racket.sh can't set for us
 
 install:
- - raco pkg install --auto --name ricoeur-tei-utils
+ - raco pkg install -j 2 --auto --name ricoeur-tei-utils
 
 before_script:
 
