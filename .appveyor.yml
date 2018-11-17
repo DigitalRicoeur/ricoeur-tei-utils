@@ -7,6 +7,8 @@ environment:
       WINDOWS_TAR: https://download.racket-lang.org/releases/7.1/installers/racket-minimal-7.1-x86_64-win32.tgz
     - RACKET_VERSION: HEAD
       WINDOWS_TAR: https://www.cs.utah.edu/plt/snapshots/current/installers/min-racket-current-x86_64-win32.tgz
+    - RACKET_VERSION: HEADCS
+      WINDOWS_TAR: https://www.cs.utah.edu/plt/snapshots/current/installers/min-racket-current-x86_64-win32-cs.tgz
 
 install:
   - curl -o C:\racket.tar.gz --location %WINDOWS_TAR%
