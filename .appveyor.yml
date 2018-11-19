@@ -4,18 +4,15 @@ image:
 environment:
   matrix:
     - RACKET_VERSION: 7.1
-      WINDOWS_TAR: https://download.racket-lang.org/releases/7.1/installers/racket-minimal-7.1-x86_64-win32.tgz
+      SRC: http://mirror.racket-lang.org/installers/7.1/racket-7.1-x86_64-win32.exe
     - RACKET_VERSION: HEAD
-      WINDOWS_TAR: https://www.cs.utah.edu/plt/snapshots/current/installers/min-racket-current-x86_64-win32.tgz
+      SRC: https://www.cs.utah.edu/plt/snapshots/current/installers/racket-current-x86_64-win32.exe
     - RACKET_VERSION: HEADCS
-      WINDOWS_TAR: https://www.cs.utah.edu/plt/snapshots/current/installers/min-racket-current-x86_64-win32-cs.tgz
+      SRC: https://www.cs.utah.edu/plt/snapshots/current/installers/racket-current-x86_64-win32-cs.exe
 
 install:
-  - curl -o C:\racket.tar.gz --location %WINDOWS_TAR%
-  - mkdir C:\racket
-  - bash -c "tar -xzf $(cygpath -u 'C:\racket.tar.gz') -C $(cygpath -u 'C:\racket') --strip-components 1"
-  - echo "Minimal Racket: Installing packages for raco test..."
-  - C:\racket\raco.exe pkg install --auto -i rackunit-lib compiler-lib
+  - curl -o C:\install-racket.exe --location %SRC%
+  - C:\install-racket.exe /S /D=C:\racket
 build_script:
   - C:\racket\raco.exe pkg install --auto --name ricoeur-tei-utils
 test_script:
