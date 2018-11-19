@@ -8,7 +8,7 @@ environment:
     - RACKET_VERSION: HEADCS
 
 install:
-  - bash download-racket.sh "$(cygpath -u 'C:\install-racket.exe')"
+  - ps: bash download-racket.sh (cygpath -u "C:\install-racket.exe")
   - C:\install-racket.exe /S /D=C:\racket
   - |
     IF "%RACKET_MINIMAL%"=="1" (
