@@ -2,21 +2,18 @@ image:
 - Visual Studio 2015
 
 environment:
+  CYGPATH: cygpath -u
   matrix:
     - RACKET_VERSION: 7.1
     - RACKET_VERSION: HEAD
     - RACKET_VERSION: HEADCS
 
 install:
-  - |
-    bash -c "$(cygpath -u './download-racket.sh') \
-     $(cygpath -u 'C:\install-racket.exe')"
+  - bash download-racket.sh C:\install-racket.exe
   - C:\install-racket.exe /S /D=C:\racket
-  - |
-    IF "%RACKET_MINIMAL%"=="1" (
-      ECHO "Minimal Racket: Installing packages for raco test..."
-      C:\racket\raco.exe pkg install --auto -i rackunit-lib compiler-lib
-      )
+  - >
+    IF "%RACKET_MINIMAL%"=="1"
+    C:\racket\raco.exe pkg install --auto -i rackunit-lib compiler-lib
 build_script:
   - C:\racket\raco.exe pkg install --auto --name ricoeur-tei-utils
 test_script:

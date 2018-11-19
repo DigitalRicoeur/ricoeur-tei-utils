@@ -8,12 +8,17 @@
 # By default, it writes to "./install-racket.exe".
 # If the "DRY_RUN" environment variable is set, 
 #   it doesn't actually download anything.
-# Nothing in this script depends on Windows or CygWin.
+# Nothing in this script depends on Windows or CygWin,
+#   except that if the CYGPATH environment variable is set,
+#   the program it names is used to transform the
+#   destination path.
 
 set -e
 
-# Optionally give 
 INSTALLER="${1:-./install-racket.exe}"
+if [ -n "$DRY_RUN" ]; then
+    INSTALLER="$("$CYGPATH" "$INSTALLER")"
+fi
 
 
 if [[ "$RACKET_MINIMAL" = "1" ]]; then
