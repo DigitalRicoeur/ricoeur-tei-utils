@@ -4,15 +4,17 @@ image:
 environment:
   matrix:
     - RACKET_VERSION: 7.1
-      SRC: http://mirror.racket-lang.org/installers/7.1/racket-7.1-x86_64-win32.exe
     - RACKET_VERSION: HEAD
-      SRC: https://www.cs.utah.edu/plt/snapshots/current/installers/racket-current-x86_64-win32.exe
     - RACKET_VERSION: HEADCS
-      SRC: https://www.cs.utah.edu/plt/snapshots/current/installers/racket-current-x86_64-win32-cs.exe
 
 install:
-  - curl -o C:\install-racket.exe --location %SRC%
+  - bash download-racket.sh "$(cygpath -u 'C:\install-racket.exe')"
   - C:\install-racket.exe /S /D=C:\racket
+  - |
+    IF "%RACKET_MINIMAL%"=="1" (
+      ECHO "Minimal Racket: Installing packages for raco test..."
+      C:\racket\raco.exe pkg install --auto -i rackunit-lib compiler-lib
+      )
 build_script:
   - C:\racket\raco.exe pkg install --auto --name ricoeur-tei-utils
 test_script:
