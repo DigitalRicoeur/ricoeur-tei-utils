@@ -19,7 +19,7 @@
            (->* {(is-a?/c corpus<%>) 
                  term/c}
                 {#:ricoeur-only? any/c
-                 #:languages (or/c 'any (listof language-symbol/c))
+                 #:languages search-languages/c
                  #:book/article (or/c 'any 'book 'article)
                  #:exact? any/c}
                 (instance-set/c document-search-results?))]
@@ -35,7 +35,7 @@
       (interface {(class->interface plain-corpus%)}
         [term-search (->*m {term/c}
                            {#:ricoeur-only? any/c
-                            #:languages (or/c 'any (listof language-symbol/c))
+                            #:languages search-languages/c
                             #:book/article (or/c 'any 'book 'article)
                             #:exact? any/c}
                            (instance-set/c document-search-results?))]

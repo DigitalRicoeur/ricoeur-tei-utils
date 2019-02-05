@@ -162,7 +162,7 @@
     (check-false (regexp-match? exact-apple-px "appleé"))))
 
 (define/final-prop search-languages/c
-  (or/c 'any (listof language-symbol/c)))
+  (or/c 'any language-symbol/c (listof language-symbol/c)))
                                                        
 ;                                                          
 ;                                   ;;;;     ;;            
@@ -306,11 +306,13 @@
                        (normalized-term term)
                        #:ricoeur-only? ricoeur-only?
                        #:languages
-                       (case raw-languages
-                         [(any)
+                       (match raw-languages
+                         ['any
                           (seteq 'en 'fr 'de)]
+                         [(? list?)
+                          (list->seteq raw-languages)]
                          [else
-                          (list->seteq raw-languages)])
+                          (seteq raw-languages)])
                        #:book/article book/article
                        #:exact? exact?))
 
