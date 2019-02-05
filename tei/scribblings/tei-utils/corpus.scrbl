@@ -77,7 +77,7 @@ library can be used independently.
    @defthing[term/c flat-contract?
              #:value (and/c string-immutable/c #px"[^\\s]")]
    @defthing[search-languages/c flat-contract?
-             #:value (or/c 'any (listof language-symbol/c))])]{
+             #:value (or/c 'any language-symbol/c (listof language-symbol/c))])]{
  Searches for @racket[term], an immutable string containing at least one non-whitespace
  character, in the @tech{TEI documents} encapsulated by @racket[(current-corpus)].
 
@@ -85,6 +85,8 @@ library can be used independently.
  results will only be returned from TEI documents for which
  @racket[instance-language] would have produced one of the
  symbols in the @racket[languages] list.
+ If it is a single symbol satisfying @racket[language-symbol/c],
+ it is treated like @racket[(list languages)].
  Otherwise, if @racket[languages] is @racket['any] (the default),
  documents in all languages will be searched.
  Use @racket['any] rather than listing all currently-supported
