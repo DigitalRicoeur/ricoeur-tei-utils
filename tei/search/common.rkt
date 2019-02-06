@@ -4,7 +4,6 @@
          racket/class
          racket/match
          racket/unit
-         racket/list
          racket/string
          racket/promise
          racket/set
@@ -16,8 +15,7 @@
                      racket/syntax
                      racket/match
                      racket/list
-                     racket/unit-exptime
-                     ))
+                     racket/unit-exptime))
 
 (module+ test
   (require rackunit
@@ -28,6 +26,7 @@
          searchable-document-set?
          document-search-results?
          search-result?
+         lazy+eager-search-backend/c ;; mostly for docs
          (rename-out
           [match:document-search-results document-search-results]
           [match:search-result search-result])
@@ -60,7 +59,6 @@
   (provide normalized-term?
            searchable-document-set<%>
            search^
-           define-unit/search^
            define-compound-search-unit
            define-lazy-search-unit
            (contract-out
@@ -328,45 +326,34 @@
 ;    ; ;;;  ;;  ;;     ;;     ;    
 ;     ; ;;  ;;  ;;     ;;      ;;; 
 ;                                  
- 
+
+;; workaround for https://github.com/racket/racket/issues/2459
+(define cache:initialize-search-backend/c
+  (make-weak-hasheq))
+(define (make:initialize-search-backend/c search-backend/c)
+  (cond
+    [(hash-ref cache:initialize-search-backend/c search-backend/c #f)]
+    [else
+     (define rslt
+       (-> search-backend/c
+           (instance-set/c tei-document?)
+           searchable-document-set?))
+     (hash-set! cache:initialize-search-backend/c search-backend/c rslt)
+     ;; (eprintf "make:initialize-search-backend/c: new for ~e\n" search-backend/c)
+     rslt]))
 
 (define-signature search^
-  {initialize-search-backend/c
-   initialize-search-backend ;; to avoid bug; see define-unit/search^
-   (contracted
-    [search-backend/c contract?]
-    #|[initialize-search-backend
-     initialize-search-backend/c]|#)
+  {(contracted
+    [search-backend/c contract?])
    (define-values-for-export
      {initialize-search-backend/c}
-     (-> search-backend/c
-         (instance-set/c tei-document?)
-         searchable-document-set?))})
-
-(define (contract->predicate c)
-  (if (flat-contract? c)
-      (flat-contract-predicate c)
-      (contract-first-order c)))
-
-
-(define-syntax-parser define-unit/search^
-  ;; Use this instead of define-unit etc. as a
-  ;; workaround for bug https://github.com/racket/racket/issues/1652
-  #:literals {import export search^}
-  [(_ name:id
-      (import import-spec ...)
-      (export (~alt (~once (~and the-search^ search^))
-                    (~and export-spec (~not search^)))
-              ...)
-      body ...)
-   #`(define-unit/contract name
-       (import import-spec ...)
-       (export (the-search^ #,(datum->syntax
-                               #'the-search^
-                               '[initialize-search-backend
-                                 initialize-search-backend/c]))
-               export-spec ...)
-       body ...)])
+     (make:initialize-search-backend/c search-backend/c))
+   initialize-search-backend/c
+   (contracted
+    [initialize-search-backend
+     ;; workaround for https://github.com/racket/racket/issues/2459
+     (make:initialize-search-backend/c search-backend/c)])
+   })
 
 (define-for-syntax (unit-exporting-sig? unit-id wanted-sig-id)
   (with-handlers ([exn:fail:syntax? (λ (e) #f)])
@@ -382,8 +369,7 @@
         (and sig-id
              (or (free-identifier=? wanted-sig-id sig-id)
                  (match/values
-                     (signature-members sig-id
-                                        #'unit-exporting-sig?)
+                     (signature-members sig-id #'unit-exporting-sig?)
                    [{sig-id _ _ _}
                     (loop sig-id)])))))))
 
@@ -392,8 +378,7 @@
     #:description "search^ unit id"
     #:attributes {@ tag link-id predicate contract initialize/c initialize}
     (pattern @:id
-             #:fail-unless (unit-exporting-sig? #'@
-                                                #'search^)
+             #:fail-unless (unit-exporting-sig? #'@ #'search^)
              "expected a search^ unit id from define-unit"
              #:with (tag link-id predicate contract initialize/c initialize)
              (generate-temporaries
@@ -406,17 +391,22 @@
                      initialize))))))
 
 
+(define (contract->predicate c)
+  (if (flat-contract? c)
+      (flat-contract-predicate c)
+      (contract-first-order c)))
+
 (define-syntax-parser define-compound-search-unit 
   [(_ final-search@:id member:search-unit-id ...+)
    #`(begin
-       (define-unit combining-search@ ;define-unit/search^
+       (define-unit combining-search@
          ;; see https://github.com/racket/racket/issues/2196
          (import (tag member.tag
                       (rename search^
                               [member.contract
                                search-backend/c]
                               [member.initialize/c
-                               initialize-search-backend/c]
+                                 initialize-search-backend/c]
                               [member.initialize
                                initialize-search-backend]))
                  ...)
@@ -443,23 +433,25 @@
                 combining-search@
                 (tag member.tag member.link-id) ...])))])
 
+(define-simple-macro (define-search-unit-binding static@:id dynamic@:expr)
+  (define-unit-binding static@
+    dynamic@
+    (import)
+    (export search^)))
 
-(define-syntax-parser define-lazy-search-unit
-  [(_ lazy@:id eager@:search-unit-id)
-   #'(define-compound-unit/infer lazy@ 
-       (import)
-       (export combined)
-       (link [([eager : search^]) eager@]
-             [([combined : search^])
-              lazy+eager-search@ eager]))])
-
-(define-unit/search^ lazy+eager-search@
+(define-signature lazy-search^ extends search^ ())
+(define/final-prop (lazy+eager-search-backend/c inner/c)
+  (let ([inner/c (coerce-contract 'lazy+eager-search-backend/c inner/c)])
+    (rename-contract
+     (or/c inner/c (list/c 'eager inner/c))
+     (build-compound-type-name 'lazy+eager-search-backend/c inner/c))))
+    
+(define-unit lazy+eager-search@
   (import (prefix eager: search^))
-  (export search^)
+  (export lazy-search^)
   (init-depend search^)
   (define search-backend/c
-    (or/c eager:search-backend/c
-          (list/c 'eager eager:search-backend/c)))
+    (lazy+eager-search-backend/c eager:search-backend/c))
   (define (initialize-search-backend raw-backend docs)
     (match raw-backend
       [(list 'eager backend)
@@ -488,3 +480,17 @@
                              #:book/article b/a
                              #:exact? e?)))))
 
+
+(define (lazy-search-unit eager*@)
+  (define-search-unit-binding eager@ eager*@)
+  (compound-unit/infer
+   (import)
+   (export combined)
+   (link [([eager : search^]) eager@]
+         [([combined : lazy-search^])
+          lazy+eager-search@ eager])))
+
+(define-syntax-parser define-lazy-search-unit
+  [(_ lazy@:id eager@:search-unit-id)
+   #'(define-search-unit-binding lazy@
+       (lazy-search-unit eager@))])

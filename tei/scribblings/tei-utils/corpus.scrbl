@@ -191,17 +191,22 @@ library can be used independently.
  and @method[corpus% term-search] always returns @racket[(instance-set)].
 }
 
-@defthing[search-backend/c contract?
-          #:value (let ([base/c (or/c 'noop 'regexp (postgresql-data-source/c))])
-                    (or/c base/c
-                          (list/c 'eager base/c)))]{
- A contract recognizing @deftech{search backends}.
+@deftogether[
+ (@defthing[search-backend/c contract?
+            #:value (lazy+eager-search-backend/c
+                     (or/c 'noop 'regexp (postgresql-data-source/c)))]
+   @defproc[(lazy+eager-search-backend/c [base/c contract])
+            contract?
+            #:value (or/c base/c (list/c 'eager base/c))])]{
+ The contract @racket[search-backend/c]
+ recognizes @deftech{search backends}.
 
  A @tech{search backend} specifies both the underlying
  search implementation to be used for functions like
  @racket[term-search] and the strategy by which the implementation
- should be initialized, either by a @tech{corpus object}
- or by a direct use of @racket[initialize-search-backend].
+ should be initialized.
+ The actual initialization is handled either by a @tech{corpus object}
+ or by direct use of @racket[initialize-search-backend].
 
  If the @tech{search backend} is a list beginning with @racket['eager],
  the search implementation is initialized synchronously,

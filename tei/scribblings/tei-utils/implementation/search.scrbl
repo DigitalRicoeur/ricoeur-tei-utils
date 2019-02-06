@@ -147,9 +147,6 @@ including everything necessary to implement new kinds of
 
 @section{Implementing Search Backend Types}
 
-@(define signature-contract-bug
-   @link["https://github.com/racket/racket/issues/1652"]{bug})
-
 @;subsection{@racket[search^] Signature}
 @defsignature[search^ ()]{
  @signature-desc{
@@ -161,26 +158,18 @@ including everything necessary to implement new kinds of
   unit which binds @racket[search-backend/c] and
   @racket[initialize-search-backend]
   via @racket[define-values/invoke-unit/infer].
-
-  @bold{Important Note!!} Due to a @signature-contract-bug in
-  @racketmodname[racket/unit], units that export @racket[search^]
-  should currently be defined @bold{only} using
-  @racket[define-unit/search^].
-  @bold{Do not} use @racket[define-unit], @racket[unit-from-context],
-  or any other means of creating a unit.
  }
  @defthing[search-backend/c contract?]{
   A @racket[search^] unit should define @(sigelem search^ search-backend/c)
   as a contract recognizing the new type of @tech{search backend}
   value it wants to support.
 
-  Unlike the final, public @racket[search-backend/c], a @racket[search^] unit
-  implementation need not worry about a contract of the form
-  @racket[(or/c base/c (list/c 'eager base/c))]:
-  that support is added using @racket[define-lazy-search-unit].
-  A @tech{search backend} implementation need only provide
-  a basic contract and initialize it eagerly in
+  A @racket[search^] unit's @tech{search backend} implementation
+  need only provide a basic contract and initialize it eagerly in
   @(sigelem search^ initialize-search-backend).
+  The additional variants permitted by the final,
+  public @racket[search-backend/c] (see @racket[lazy+eager-search-backend/c])
+  are added using @racket[define-lazy-search-unit].
  }
  @defproc[(initialize-search-backend [backend #,(sigelem search^ search-backend/c)]
                                      [docs (instance-set/c tei-document?)])
@@ -213,29 +202,6 @@ including everything necessary to implement new kinds of
   @(sigelem search^ initialize-search-backend).
 }}
 
-@defform[#:literals {import export search^}
-         (define-unit/search^ unit-id
-           (import tagged-sig-spec ...)
-           (export tagged-sig-spec ...
-                   search^
-                   tagged-sig-spec ...)
-           init-depends-decl
-           unit-body-expr-or-defn
-           ...)]{
- Like @racket[define-unit], but works around a @signature-contract-bug 
- in @racketmodname[racket/unit] to enforce contracts when a unit exports
- the signature @racket[search^].
- For this reason, units exporting @racket[search^] @bold{must only}
- be created using @racket[define-unit/search^].
-
- The syntax of @racket[define-unit/search^] is exactly like
- @racket[define-unit] except that an identifier that is
- @racket[free-identifier=?] to @racket[search^] must appear
- in the @racket[export] clause.
- When the @signature-contract-bug is fixed, @racket[define-unit/search^]
- will simply be an alias for @racket[define-unit].
-}
-
 @;subsection{Using @racket[search^] Units}
 
 @defform[(define-compound-search-unit compound-search-unit-id
@@ -256,11 +222,11 @@ including everything necessary to implement new kinds of
            eager-search-unit-id)]{
  Defines @racket[lazy-search-unit-id] as a unit exporting
  the signature @racket[search^].
-
- If the inner @racket[eager-search-unit-id]'s implementation
- of @(sigelem search^ search-backend/c) accepted @racket[base/c],
- the new @racket[lazy-search-unit-id] will accept
- @racket[(or/c base/c (list/c 'eager base/c))].
+ The new @racket[lazy-search-unit-id] will define
+ @(sigelem search^ search-backend/c)
+ as @racket[(lazy+eager-search-backend/c base/c)],
+ where @racket[base/c] is the @(sigelem search^ search-backend/c)
+ implemented by @racket[eager-search-unit-id].
 
  In the @racket['eager] case, @racket[lazy-search-unit-id] will
  simply dispatch to @racket[eager-search-unit-id]'s implementation

@@ -6,11 +6,9 @@
          "search/noop.rkt"
          "search/regexp.rkt"
          "search/postgresql.rkt"
-         (submod "search/common.rkt" private)
-         )
+         (submod "search/common.rkt" private))
 
-(require-provide "search/common.rkt"
-                 )
+(require-provide "search/common.rkt")
 
 (module+ test
   (require rackunit

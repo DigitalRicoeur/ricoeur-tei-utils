@@ -26,6 +26,11 @@
   (provide (all-defined-out))
   (current-sql-dialect 'postgresql))
 
+(define-unit-from-context postgresql@ search^)
+
+(module+ test
+  (define-values/invoke-unit/infer postgresql@))
+
 ;; sql module:
 ;; - ident-qq is not a table-ref-ast? or a table-expr-ast?
 ;; - sql-ast->string
@@ -37,18 +42,13 @@
 
 (TODO/void support logging)
 
-(define-unit/search^ postgresql@
-  (import)
-  (export search^)
-  (define search-backend/c
-    (postgresql-data-source/c))
-  (define (initialize-search-backend dsn docs)
-    (new postgresql-searchable-document-set%
-         [dsn dsn]
-         [docs docs])))
+(define search-backend/c
+  (postgresql-data-source/c))
 
-(module+ test
-  (define-values/invoke-unit/infer postgresql@))
+(define (initialize-search-backend dsn docs)
+  (new postgresql-searchable-document-set%
+       [dsn dsn]
+       [docs docs]))
 
 (define postgresql-searchable-document-set%
   (class* object% {searchable-document-set<%>}
@@ -559,7 +559,7 @@
       (TableExpr:AST
        ,(make-values*-table-expr-ast
          (for/fold/derived #,this-syntax
-           ([so-far '()])
+                           ([so-far '()])
            (for-clause ...)
            body-or-break ...
            (cons (list (scalar-expr-qq scalar-expr-form)

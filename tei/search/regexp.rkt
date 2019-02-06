@@ -8,18 +8,20 @@
          racket/set
          "common.rkt"
          (submod "common.rkt" private)
-         ricoeur/tei/base
-         )
+         ricoeur/tei/base)
 
 (provide regexp@)
 
-(define-unit/search^ regexp@
-  (import)
-  (export search^)
-  (define search-backend/c
-    'regexp)
-  (define (initialize-search-backend _ docs)
-    (new regexp-searchable-document-set% [docs docs])))
+(define-unit-from-context regexp@ search^)
+
+(module+ test
+  (define-values/invoke-unit/infer regexp@))
+
+(define search-backend/c
+  'regexp)
+
+(define (initialize-search-backend _ docs)
+  (new regexp-searchable-document-set% [docs docs]))
 
 (define regexp-searchable-document-set%
   (class* object% {searchable-document-set<%>}

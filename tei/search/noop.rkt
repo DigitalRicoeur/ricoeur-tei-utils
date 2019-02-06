@@ -1,15 +1,17 @@
 #lang racket/base
 
-(require "common.rkt"
-         (submod "common.rkt" private)
+(require (submod "common.rkt" private)
          ricoeur/tei/base
          racket/class
-         racket/unit
-         )
+         racket/unit)
 
 (provide noop@
-         noop-searchable-document-set
-         )
+         noop-searchable-document-set)
+
+(define-unit-from-context noop@ search^)
+
+(module+ test
+  (define-values/invoke-unit/infer noop@))
 
 (define noop-searchable-document-set
   (new (class* object% {searchable-document-set<%>}
@@ -21,11 +23,8 @@
                                               #:exact? e)
            (instance-set)))))
 
-(define-unit/search^ noop@
-  (import)
-  (export search^)
-  (define search-backend/c
-    'noop)
-  (define (initialize-search-backend _ docs)
-    noop-searchable-document-set))
+(define search-backend/c
+  'noop)
 
+(define (initialize-search-backend _ docs)
+  noop-searchable-document-set)
