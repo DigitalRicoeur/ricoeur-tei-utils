@@ -1,13 +1,12 @@
 #lang at-exp racket
 
-(require scribble/manual
-         scribble/core
+(require scribble/core
+         (except-in scribble/manual title)
          syntax/parse/define
          (except-in "../../for-manual.rkt"
                     module+
                     module*
-                    #%module-begin)
-         )
+                    #%module-begin))
 
 (require-provide (provide-only "../../for-manual.rkt")
                  (for-label (except-in ricoeur/tei/kernel/lang/specification-lang
@@ -24,14 +23,12 @@
                                      define-elements-together
                                      begin-for-runtime
                                      begin-for-test
-                                     begin-for-runtime/derived
-                                     )))
+                                     begin-for-runtime/derived)))
                  
 
 (provide spec-lang-mod
          hash-lang-kernel
-         deftogether/indent
-         )
+         deftogether/indent)
 
 
 (define (spec-lang-mod)

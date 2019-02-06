@@ -26,17 +26,18 @@
                             xml
                             db
                             json
-                            setup/matching-platform
-                            ))
+                            setup/matching-platform))
 
 (provide guidelines-doc
          guidelines-secref
          Ricoeur
          tei-utils-version
+         min-racket-version
          defpredicate
          submodlink
          make-tei-eval
          style:scale-down-to-fit
+         (rename-out [tei-utils:title title])
          (contract-out
           [tag
            (-> (or/c symbol? string?) element?)]
@@ -57,15 +58,17 @@
 (define tag
   (make-other-doc-tag guidelines))
 
+(define info-ref
+  (get-info/full (pkg-directory "ricoeur-tei-utils")))
+
+(define min-racket-version
+  (cadr (memq '#:version (assoc "base" (info-ref 'deps)))))
 
 (define tei-utils-version
-  (let ([dir (pkg-directory "ricoeur-tei-utils")])
-    (or (and dir
-             (let ([ref (get-info/full dir)])
-               (and ref
-                    (ref 'version (λ () #f)))))
-        "")))
+  (info-ref 'version (λ () "")))
 
+(define tei-utils:title
+  (curry title #:version tei-utils-version))
 
 (define-syntax-parser defpredicate
   [(_ name:id v:id body:expr ...)

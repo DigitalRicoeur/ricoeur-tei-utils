@@ -1,14 +1,13 @@
 #lang scribble/manual
 
-@title[#:version tei-utils-version]{Digital Ricœur TEI Library}
+@title{Digital Ricœur TEI Library}
 @author[(author+email @elem{Philip M@superscript{c}Grath}
                       "philip@philipmcgrath.com"
                       #:obfuscate? #t)]
 @defmodule[#:multi (ricoeur/tei ricoeur/tei/base)]
 
 
-@(require "for-manual.rkt"
-          )
+@(require "for-manual.rkt")
 
 This manual documents a Racket library for
 working with Digital Ricœur's TEI XML documents.
