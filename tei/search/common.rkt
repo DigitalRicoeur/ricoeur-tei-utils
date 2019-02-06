@@ -110,15 +110,22 @@
   ;shown in excerpts
   18/100)
 
-(define (tei-document->excerpt-max-allow-chars doc)
-  (define doc-chars
-    (string-length
-     (string-normalize-spaces
-      (string-trim
-       (tei-document->plain-text
-        doc
-        #:include-header? #f)))))
-  (max (floor (* EXCERPT_RATIO doc-chars)) 1))
+(define* (tei-document->excerpt-max-allow-chars doc)
+  #:with [(define cache (make-weak-hasheq))]
+  (cond
+    [(hash-ref cache doc #f)]
+    [else
+     (define doc-chars
+       (string-length
+        (string-normalize-spaces
+         (string-trim
+          (tei-document->plain-text
+           doc
+           #:include-header? #f)))))
+     (define rslt
+       (max (floor (* EXCERPT_RATIO doc-chars)) 1))
+     (hash-set! cache doc rslt)
+     rslt]))
 
 ;; regexp-quote-normalized-term : normalized-term? #:exact? any/c
 ;;   -> string-immutable/c
@@ -406,7 +413,7 @@
                               [member.contract
                                search-backend/c]
                               [member.initialize/c
-                                 initialize-search-backend/c]
+                               initialize-search-backend/c]
                               [member.initialize
                                initialize-search-backend]))
                  ...)

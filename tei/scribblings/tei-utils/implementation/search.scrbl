@@ -24,8 +24,9 @@ including everything necessary to implement new kinds of
  This maximum applies per search query; it is defined 
  internally as a percentage of the total length of @racket[doc].
 
- Calling @racket[tei-document->excerpt-max-allow-chars] is
- expensive: avoid doing so more than once per @tech{TEI document}.
+ The result of @racket[tei-document->excerpt-max-allow-chars] is
+ cached to amortize the cost of calling it multiple
+ times on the same @tech{TEI document}.
 }
 
 @definterface[searchable-document-set<%> ()]{
