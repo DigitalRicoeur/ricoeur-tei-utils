@@ -18,7 +18,7 @@ The package is registered in the Racket package catalog at
 ## License ##
 
 This repository contains software and documentation developed for
-Digital Ricoeur (<https://www.digitalricoeur.org>).
+Digital Ricoeur (<https://digitalricoeur.org>).
 It is made available to the public under free and open-source licenses:
 
 -   Permission is granted to use, redistribute, and/or modify the software in
@@ -39,4 +39,3 @@ It is made available to the public under free and open-source licenses:
     License (CC BY-SA).
     To view a copy of this license, visit
     <https://creativecommons.org/licenses/by-sa/4.0/>.
-

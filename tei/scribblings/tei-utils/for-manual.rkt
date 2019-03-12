@@ -13,8 +13,7 @@
                  scribble/html-properties
                  syntax/parse/define
                  (for-syntax racket/base
-                             syntax/parse
-                             )
+                             syntax/parse)
                  (for-label (except-in racket
                                        tag
                                        field

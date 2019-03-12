@@ -47,6 +47,9 @@
      (rec (instance-set-hsh this)))
    (define hash-proc -hash-proc)
    (define hash2-proc -hash-proc)]
+  ;; see https://github.com/racket/racket/issues/2526
+  #:property prop:sequence
+  (λ (st) (unchecked:in-instance-set st))
   #:methods gen:set
   [;; Minimal methods:
    (define (set-member? st v)
