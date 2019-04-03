@@ -3,13 +3,11 @@
 (require racket/contract
          racket/match
          racket/string
-         adjutor
          xml
          "plain-contracts.rkt"
          "entity-utils.rkt"
-         "../pre-kernel-lib.rkt"
-         (submod "plain-contracts.rkt" private)
-         )
+         ricoeur/kernel/pre-kernel-lib
+         (submod "plain-contracts.rkt" private))
 
 (provide (contract-out
           [normalize-xexpr

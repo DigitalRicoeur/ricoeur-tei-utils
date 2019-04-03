@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require "kernel/sans-lang.rkt")
+(require ricoeur/kernel/pre-kernel-lib)
 
 ;; This module (and its submodules) re-export
 ;; everything from ricoeur/tei/kernel that
@@ -10,28 +10,25 @@
 
 ;; The exports from this module are truly public.
 
-(provide (all-from-out "kernel/sans-lang.rkt"))
+(require-provide "kernel/base-structs.rkt"
+                 "kernel/instance-info.rkt"
+                 "kernel/instance-set.rkt"
+                 "kernel/interfaces.rkt"
+                 "kernel/xmllint.rkt"
+                 "kernel/xexpr/plain-contracts.rkt"
+                 "kernel/xexpr/normalize.rkt"
+                 (provide-only ricoeur/kernel/pre-kernel-lib))
 
 (module+ private
   ;; The private submodule is for use only in
   ;; the implementation of ricoeur/tei/base.
   ;; It provides forms and functions to help make
-  ;; use of #lang ricoeur/tei/kernel.
-  (require-provide (submod "kernel/sans-lang.rkt" private)
-                   (submod "kernel/lang-exports.rkt" private)
-                   ))
+  ;; use of #lang ricoeur/tei/spec-lang.
+  (require-provide "kernel/xexpr/contract-utils.rkt"
+                   (submod "kernel/interfaces.rkt" private)))
 
 (module+ private-plain-instance-info
   ;; This submodule is for use only in the
   ;; implementation of the teiHeader struct.
-  (require-provide (submod "kernel/sans-lang.rkt"
-                           private-plain-instance-info)))
-
-(module+ doc
-  ;; The doc submodule provides things for Scribble
-  ;; use in the guidelines document to interoperate
-  ;; with sections implemented in #lang ricoeur/tei/kernel.
-  ;; It is not for runtime use.
-  (require-provide (submod "kernel/lang-exports.rkt" doc)
-                   ))
+  (require-provide (submod "kernel/instance-info.rkt" private)))
 

@@ -66,8 +66,7 @@
            racket/provide-syntax
            (submod "entity-utils.rkt" typed)
            (for-syntax racket/base
-                       syntax/parse
-                       ))
+                       syntax/parse))
 
   (require/typed
    xml
@@ -446,8 +445,7 @@
          racket/string
          xml
          "entity-utils.rkt"
-         "../pre-kernel-lib.rkt"
-         )
+         ricoeur/kernel/pre-kernel-lib)
 
 
 (define/final-prop raw-xexpr-element/c

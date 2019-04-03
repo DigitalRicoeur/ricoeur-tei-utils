@@ -7,7 +7,7 @@
          racket/file
          setup/matching-platform
          racket/runtime-path
-         "pre-kernel-lib.rkt"
+         ricoeur/kernel/pre-kernel-lib
          "schema.rkt"
          (for-syntax racket/base
                      setup/matching-platform

@@ -4,8 +4,7 @@
          racket/match
          adjutor
          "base-structs.rkt"
-         "pre-kernel-lib.rkt"
-         )
+         ricoeur/kernel/pre-kernel-lib)
 
 (module+ test
   (require rackunit

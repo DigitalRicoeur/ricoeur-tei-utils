@@ -2,8 +2,7 @@
 
 (require racket/contract
          (for-syntax syntax/parse
-                     racket/base
-                     ))
+                     racket/base))
 
 (provide entity-symbol/c
          entity-char/c

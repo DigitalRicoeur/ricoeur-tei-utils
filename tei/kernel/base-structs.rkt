@@ -4,12 +4,11 @@
          racket/match
          racket/string
          racket/struct
-         "pre-kernel-lib.rkt"
+         ricoeur/kernel/pre-kernel-lib
          "xexpr/plain-contracts.rkt"
          "xexpr/normalize.rkt"
          (for-syntax racket/base
-                     syntax/parse
-                     ))
+                     syntax/parse))
 
 (provide tei-element?
          elements-only-element?

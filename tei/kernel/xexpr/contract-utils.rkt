@@ -15,8 +15,7 @@
          adjutor
          "plain-contracts.rkt"
          (for-syntax racket/base
-                     syntax/parse
-                     ))
+                     syntax/parse))
 
 
 (provide get-attributes

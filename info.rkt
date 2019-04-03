@@ -11,6 +11,7 @@
 ;; Dependencies:
 (define deps '(("base" #:version "7.2")
                ("adjutor" #:version "0.2.5")
+               "ricoeur-kernel"
                "functional-lib"
                "roman-numeral"
                "gregor-lib"

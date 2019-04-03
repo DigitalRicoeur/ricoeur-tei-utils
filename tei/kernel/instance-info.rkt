@@ -5,10 +5,9 @@
          racket/set
          racket/stream
          racket/match
-         "pre-kernel-lib.rkt"
+         ricoeur/kernel/pre-kernel-lib
          (for-syntax racket/base
-                     syntax/parse
-                     ))
+                     syntax/parse))
 
 (provide instance-info?
          plain-instance-info?
