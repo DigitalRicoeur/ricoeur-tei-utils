@@ -2,6 +2,7 @@
 
 (require ricoeur/tei/kernel
          (submod ricoeur/tei/kernel private)
+         (submod ricoeur/tei/spec-lang private)
          racket/contract)
 
 (require-provide (except-out "specification/specification.rkt"

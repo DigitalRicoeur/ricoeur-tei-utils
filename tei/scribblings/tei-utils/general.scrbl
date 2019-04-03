@@ -5,7 +5,7 @@
                     ricoeur/tei
                     ;; ???
                     ;; to support ricoeur/tei/kernel/lang/specification-lang
-                    #:use-sources (ricoeur/tei/kernel/sans-lang))
+                    #:use-sources (ricoeur/tei/kernel))
 
 @(require "for-manual.rkt")
 

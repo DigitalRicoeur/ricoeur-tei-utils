@@ -9,16 +9,16 @@
                     #%module-begin))
 
 (require-provide (provide-only "../../for-manual.rkt")
-                 (for-label (except-in ricoeur/tei/kernel/lang/specification-lang
+                 (for-label (except-in ricoeur/tei/spec-lang/specification-lang
                                        #%module-begin)
                             (only-in racket/base #%module-begin)
                             (submod ricoeur/tei/kernel private)
-                            (submod ricoeur/tei/kernel doc)
+                            (submod ricoeur/tei/spec-lang doc)
                             scribble/base
                             (except-in scribble/manual
                                        link)
                             scribble/decode
-                            (only-in ricoeur/tei/kernel/lang/doc-lang
+                            (only-in ricoeur/tei/spec-lang/doc-lang
                                      define-element
                                      define-elements-together
                                      begin-for-runtime
@@ -33,7 +33,7 @@
 
 (define (spec-lang-mod)
   (racketmodlink ricoeur/tei/kernel/lang/specification-lang
-                 (racketmodfont "ricoeur/tei/kernel")))
+                 (racketmodfont "ricoeur/tei/spec-lang")))
 
 (define (hash-lang-kernel)
   @elem{@(hash-lang) @(spec-lang-mod)})

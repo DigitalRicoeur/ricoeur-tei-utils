@@ -1,4 +1,4 @@
-#lang ricoeur/tei/kernel
+#lang ricoeur/tei/spec-lang
 
 ƒtitle{The Text Classification}
 

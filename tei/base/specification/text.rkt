@@ -1,4 +1,4 @@
-#lang ricoeur/tei/kernel
+#lang ricoeur/tei/spec-lang
 
 ƒ[#:spec text-spec
   #:extends structural-elems-spec content-elems-spec

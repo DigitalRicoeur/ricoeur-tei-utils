@@ -1,23 +1,20 @@
 #lang at-exp racket/base
 
 (require adjutor
-         scribble/manual
-         )
+         scribble/manual)
 
 (require-provide (provide-only adjutor)
-                 (except-out (submod ricoeur/tei/kernel doc)
+                 (except-out (submod ricoeur/tei/spec-lang doc)
                              DR-TEI_doc.html)
                  scribble/core
                  scribble/html-properties
                  (for-label ricoeur/tei
                             (except-in racket
                                        date
-                                       date?)
-                            ))
+                                       date?)))
          
 (provide DR-TEI-link
-         lib-tech
-         )
+         lib-tech)
 
 (define DR-TEI-link
   @elem[#:style (style #f (list (link-resource DR-TEI_doc.html)))]{DR-TEI_doc.html})

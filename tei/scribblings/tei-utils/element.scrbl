@@ -5,10 +5,9 @@
                     ricoeur/tei)
 
 @(require "for-manual.rkt"
-          (for-label (only-in ricoeur/tei/kernel/lang/specification-lang
+          (for-label (only-in ricoeur/tei/spec-lang/specification-lang
                               declare-resp-field
-                              prop:element->plain-text)
-                     ))
+                              prop:element->plain-text)))
 
 This section documents the representations used by this library
 for individual TEI elements.

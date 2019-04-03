@@ -4,12 +4,12 @@
 @(declare-exporting ricoeur/tei/base
                     ricoeur/tei
                     ;; ?????
-                    #:use-sources (ricoeur/tei/kernel/sans-lang)
+                    #:use-sources (ricoeur/tei/kernel)
                     ;; to support ricoeur/tei/kernel/lang/specification-lang
                     )
 
 @(require "for-manual.rkt"
-          (for-label ricoeur/tei/kernel/sans-lang
+          (for-label ricoeur/tei/kernel
                      ))
 
 @defproc[(xml-path? [pth path-string?]) any/c]{

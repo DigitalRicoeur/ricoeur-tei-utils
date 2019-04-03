@@ -1,16 +1,15 @@
 #lang scribble/manual
 
 @title{Bibliographic Information}
-@;; ricoeur/tei/kernel/sans-lang
+@;; ricoeur/tei/kernel
 @;;   to support ricoeur/tei/kernel/lang/specification-lang
 @(declare-exporting ricoeur/tei/base
                     ricoeur/tei
-                    #:use-sources (ricoeur/tei/kernel/sans-lang)
+                    #:use-sources (ricoeur/tei/kernel)
                     )
 
 @(require "for-manual.rkt"
-          (for-label ricoeur/tei/kernel/sans-lang
-                     ))
+          (for-label ricoeur/tei/kernel))
 
 This section documents an API for accessing bibliographic
 information about @deftech{instances}.

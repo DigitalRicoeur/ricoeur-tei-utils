@@ -3,11 +3,11 @@
 (require scribble/manual
          setup/getinfo
          pkg/lib
-         (except-in (submod ricoeur/tei/kernel doc)
+         (except-in (submod ricoeur/tei/spec-lang doc)
                     DR-TEI_doc.html
                     tag))
 
-(require-provide (provide-only (submod ricoeur/tei/kernel doc))
+(require-provide (provide-only (submod ricoeur/tei/spec-lang doc))
                  scribble/core
                  scribble/example
                  scribble/html-properties

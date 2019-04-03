@@ -1,4 +1,4 @@
-#lang ricoeur/tei/kernel
+#lang ricoeur/tei/spec-lang
 
 ƒ[#:spec teiHeader-spec
   #:extends titleStmt-spec sourceDesc-spec textClass-spec
