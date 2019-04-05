@@ -9,6 +9,7 @@
          racket/stxparam
          racket/splicing
          (for-syntax racket/base
+                     "class-exptime.rkt"
                      syntax/transformer))
 
 (provide checksum-table/c
@@ -134,20 +135,53 @@
          "old-value..." (unbox bx)))))
 (require 'repr)
 
-(define-syntaxes [super-docs super-docs-evt]
-  (let ([f (λ (stx)
-             (raise-syntax-error
-              #f "only allowed inside a corpus-mixin expression" stx))])
-    (values f f)))
+(define-rename-transformer-parameter local-repr
+  (make-rename-transformer #'stxparam-false))
 
+(define-rename-transformer-parameter in-method?
+  (make-rename-transformer #'stxparam-false))
+  
+(define-syntax stxparam-false #f)
+
+(define-for-syntax (super-docs-error-message)
+  (if (syntax-parameter-value #'in-method?)
+      "not allowed in a method body;\n only permitted in initialization and field expressions"
+      "only allowed inside a corpus-mixin expression"))
+
+(define-syntax-parser super-docs-evt
+  [(_)
+   #|#:fail-unless (and (syntax-local-value #'local-repr)
+                      (not (syntax-local-value #'in-method?)))
+   (super-docs-error-message)|#
+   #'local-repr])
+
+(define-syntax-parser super-docs
+  [(_)
+   #|#:fail-unless (and (syntax-local-value #'local-repr)
+                      (not (syntax-local-value #'in-method?)))
+   (super-docs-error-message)|#
+   #'(do-super-docs-ref local-repr)])
+
+(define-syntax-parser wrap-super-docs-class-clauses
+  [(_ repr:id (class-clause:expr ...))
+   (local-expand-class-clauses
+    (syntax->list #'(class-clause ...))
+    #:wrap-method (λ (raw)
+                    #`(syntax-parameterize ([in-method? #t]) #,raw))
+    #:wrap-init
+    (λ (raw)
+      #`(letrec-syntaxes+values
+            ([{repr-renamer}
+              (make-rename-transformer #'repr-simple-binding)])
+          ([{repr-simple-binding} repr])
+          (syntax-parameterize ([local-repr
+                                 (make-rename-transformer #'repr-renamer)])
+            #,raw))))])
+  
 (define-syntax-parser corpus-mixin
-  #:track-literals
+  ;#:track-literals
   [(_ (~describe "\"from\" interfaces" [from<%>:expr ...])
       (~describe "\"to\" interfaces" [to<%>:expr ...])
-      (~describe "#:avoid-bug clause"
-                 [#:avoid-bug
-                  (~and src-super-docs (~literal super-docs))
-                  (~and src-super-docs-evt (~literal super-docs-evt))])
       (~describe "class clause" src-class-clause:expr)
       ...+)
    ;; this would be much nicer with a fix for any of
@@ -155,64 +189,13 @@
    ;;   - https://github.com/racket/racket/issues/1898
    ;;   - https://github.com/racket/racket/issues/2580
    ;;   - https://github.com/racket/racket/issues/2579
-   #`(let (;; this is so they don't get local-expanded
-           [src-super-docs 'tmp]
-           [src-super-docs-evt 'tmp])
-       (define-local-member-name repr external-super-docs external-super-docs-evt)
+   #`(let ()
+       (define-local-member-name repr/external)
        (mixin [plain-corpus<%> from<%> ...] [to<%> ...]
-         (field [repr (make-super-docs-repr)])
-         (init [(src-super-docs private-init)
-                (λ () (do-super-docs-ref repr))]
-               [(src-super-docs-evt external-super-docs-evt)
-                (λ () repr)])
+         (field [(repr repr/external) (make-super-docs-repr)])
          (define/augment (initialize docs)
            (super-docs-repr-post! repr docs)
            (inner (void) initialize docs))
-         src-class-clause ...
+         (wrap-super-docs-class-clauses
+          repr [src-class-clause ...])
          (set! repr #f)))])
-
-#|
-(define-syntax-parser super-docs
-  [(_)
-   #:fail-unless (syntax-local-value #'local-internal-name)
-   "only allowed inside a corpus-mixin expression"
-   #'(do-super-docs-ref local-internal-name)])
-
-(define-rename-transformer-parameter local-internal-name
-  (make-rename-transformer #'no-local-internal-name))
-
-(define-syntax no-local-internal-name #f)
-
-(define-syntax-parser corpus-mixin
-  [(_ (~describe "\"from\" interfaces" [from<%>:expr ...])
-      (~describe "\"to\" interfaces" [to<%>:expr ...])
-      (~describe "class clause" class-clause:expr)
-      ...+)
-   #'(let ()
-       (define-local-member-name private-field private-init)
-         (mixin [plain-corpus<%> from<%> ...] [to<%> ...]
-           ;; or, pass it to the superclass via splicing-parameterize ...
-           (field [private-field (box #f)])
-           (init [private-init
-                  ;; technically, a by-position arg could displace this :(
-                  private-field])
-           (define/augment (initialize docs)
-             (set-box! private-field docs)
-             (inner (void) initialize docs))
-           (splicing-syntax-parameterize ([local-internal-name
-                                           (make-rename-transformer
-                                            #'private-init)])
-             class-clause ...)
-           (set! private-field #f)))])
-|#
-#|
-(define (make-corpus-mixin initialize-this-method-key)
-  (define-member-name initialize-this initialize-this-method-key)
-  (mixin {(class->interface plain-corpus%)} {}
-    (super-new)
-    (inspect #f)
-    (abstract initialize-this)
-    (define/augment (on-initialize docs)
-      (initialize-this docs)
-      (inner (void) on-initialize docs))))
-|#
