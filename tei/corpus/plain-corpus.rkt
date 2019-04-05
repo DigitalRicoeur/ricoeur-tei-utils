@@ -14,6 +14,8 @@
 (provide checksum-table/c
          corpus-mixin
          super-docs
+         super-docs-evt
+         super-docs-evt?
          (contract-out
           [plain-corpus%
            (class/c (init [docs (instance-set/c tei-document?)]))]
@@ -94,30 +96,58 @@
 ;                                          
 ;                                          
 
-(define-syntax (super-docs stx)
-  (raise-syntax-error
-   #f "only allowed inside a corpus-mixin expression" stx))
+(module repr racket/base
+  (require racket/match)
+  (provide super-docs-evt?
+           make-super-docs-repr
+           do-super-docs-ref
+           super-docs-repr-post!)
+  (struct super-docs-evt (sema box [evt* #:auto #:mutable])
+    #:auto-value #f
+    #:property prop:evt
+    (λ (this)
+      (or (super-docs-evt-evt* this)
+          (let ([evt* (wrap-evt (semaphore-peek-evt
+                                 (super-docs-evt-sema this)
+                                 (λ (_) (unbox* (super-docs-evt-box this)))))])
+            (set-super-docs-evt-evt*! this evt*)
+            evt*))))
+  (define (make-super-docs-repr)
+    (super-docs-evt (make-semaphore) (box #f)))
+  (define (do-super-docs-ref it)
+    (or (unbox* (super-docs-evt-box it))
+        (raise (exn:fail:contract:variable
+                (string-append
+                 "super-docs: undefined;\n"
+                 " cannot access documents before super-class initialization")
+                (current-continuation-marks)
+                'super-docs))))
+  (define (super-docs-repr-post! it docs)
+    (match-define (super-docs-evt sema bx _) it)
+    (if (box-cas! bx #f docs)
+        (semaphore-post sema)
+        (raise-arguments-error
+         'super-docs-repr-post!
+         "already posted"
+         "super-docs-repr" it
+         "docs..." docs
+         "old-value..." (unbox bx)))))
+(require 'repr)
 
-(define-rename-transformer-parameter local-internal-name
-  (make-rename-transformer #'no-local-internal-name))
-
-(define-syntax no-local-internal-name #f)
-
-(define (do-super-docs-ref bx)
-  (or (unbox bx)
-      (raise (exn:fail:contract:variable
-              (string-append
-               "super-docs: undefined;\n"
-               " cannot access documents before super-class initialization")
-              (current-continuation-marks)
-              'super-docs))))
+(define-syntaxes [super-docs super-docs-evt]
+  (let ([f (λ (stx)
+             (raise-syntax-error
+              #f "only allowed inside a corpus-mixin expression" stx))])
+    (values f f)))
 
 (define-syntax-parser corpus-mixin
   #:track-literals
   [(_ (~describe "\"from\" interfaces" [from<%>:expr ...])
       (~describe "\"to\" interfaces" [to<%>:expr ...])
       (~describe "#:avoid-bug clause"
-                 [#:avoid-bug (~and src-super-docs (~literal super-docs))])
+                 [#:avoid-bug
+                  (~and src-super-docs (~literal super-docs))
+                  (~and src-super-docs-evt (~literal super-docs-evt))])
       (~describe "class clause" src-class-clause:expr)
       ...+)
    ;; this would be much nicer with a fix for any of
@@ -125,17 +155,21 @@
    ;;   - https://github.com/racket/racket/issues/1898
    ;;   - https://github.com/racket/racket/issues/2580
    ;;   - https://github.com/racket/racket/issues/2579
-   #`(let ([src-super-docs 'tmp]) ;; this is so it doesn't get local-expanded
-       (define-local-member-name private-field private-init)
+   #`(let (;; this is so they don't get local-expanded
+           [src-super-docs 'tmp]
+           [src-super-docs-evt 'tmp])
+       (define-local-member-name repr external-super-docs external-super-docs-evt)
        (mixin [plain-corpus<%> from<%> ...] [to<%> ...]
-         (field [private-field (box #f)])
+         (field [repr (make-super-docs-repr)])
          (init [(src-super-docs private-init)
-                (λ () (do-super-docs-ref private-field))])
+                (λ () (do-super-docs-ref repr))]
+               [(src-super-docs-evt external-super-docs-evt)
+                (λ () repr)])
          (define/augment (initialize docs)
-           (set-box! private-field docs)
+           (super-docs-repr-post! repr docs)
            (inner (void) initialize docs))
          src-class-clause ...
-         (set! private-field #f)))])
+         (set! repr #f)))])
 
 #|
 (define-syntax-parser super-docs
