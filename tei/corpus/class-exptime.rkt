@@ -1,91 +1,85 @@
 #lang racket/base
 
-(require syntax/parse
-         syntax/parse/lib/function-header
-         syntax/flatten-begin
-         syntax/id-set
-         syntax/define
-         racket/list
-         (for-template racket/base
-                       racket/class))
+(require racket/class
+         (for-syntax racket/base
+                     syntax/parse
+                     syntax/parse/lib/function-header
+                     syntax/flatten-begin
+                     syntax/id-set
+                     syntax/define
+                     racket/list))
 
-(provide local-expand-class-clauses)
+(provide (for-syntax local-expand-class-clauses))
 
-(define class-keywords
-  (syntax->list #'(inspect
-                   init init-field field
-                   inherit-field
-                   init-rest init-rest
-                   public pubment public-final
-                   override overment override-final
-                   augment augride augment-final
-                   private abstract
-                   inherit inherit/super inherit/inner
-                   rename-super rename-inner)))
+(begin-for-syntax
+  (define class-keywords
+    (syntax->list #'(inspect
+                     init init-field field
+                     inherit-field
+                     init-rest init-rest
+                     public pubment public-final
+                     override overment override-final
+                     augment augride augment-final
+                     private abstract
+                     inherit inherit/super inherit/inner
+                     rename-super rename-inner)))
 
-(define-literal-set class-keywords-literals #:for-template
-  (inspect
-   init init-field field
-   inherit-field
-   init-rest
-   public pubment public-final
-   override overment override-final
-   augment augride augment-final
-   private abstract
-   inherit inherit/super inherit/inner
-   rename-super rename-inner))
+  (define-literal-set class-keywords-literals
+    (inspect
+     init init-field field
+     inherit-field
+     init-rest
+     public pubment public-final
+     override overment override-final
+     augment augride augment-final
+     private abstract
+     inherit inherit/super inherit/inner
+     rename-super rename-inner))
 
-(define the-stop-list
-  (list* #'begin #'define-syntax #'define-syntaxes #'define #'define-values
-         class-keywords))
+  (define the-stop-list
+    (list* #'begin #'define-syntax #'define-syntaxes #'define #'define-values
+           class-keywords))
 
-(define-literal-set expanded-class-clause-literals #:for-template
-  #:literal-sets [class-keywords-literals]
-  (#'define-syntax define-syntaxes define define-values))
+  (define-literal-set expanded-class-clause-literals
+    #:literal-sets [class-keywords-literals]
+    (#'define-syntax define-syntaxes define define-values))
 
-(define-syntax-class define-1-value
-  #:attributes [name rhs]
-  #:description #f
-  #:literals [define define-values]
-  (pattern (define-values (name:id) rhs:expr))
-  (pattern (define name:id rhs:expr))
-  (pattern (define lhs:function-header body:expr ...)
-           #:do [(define-values [-name -rhs]
-                   (normalize-definition #'(define lhs body ...) #'λ #f #t))]
-           #:with name -name
-           #:with rhs -rhs))
+  (define-syntax-class define-1-value
+    #:attributes [name rhs]
+    #:description #f
+    #:literals [define define-values]
+    (pattern (define-values (name:id) rhs:expr))
+    (pattern (define name:id rhs:expr))
+    (pattern (define lhs:function-header body:expr ...)
+             #:do [(define-values [-name -rhs]
+                     (normalize-definition #'(define lhs body ...) #'λ #f #t))]
+             #:with name -name
+             #:with rhs -rhs))
 
-(define-syntax-class maybe-renamed
-  #:attributes [internal external]
-  (pattern external:id
-           #:with internal #'external)
-  (pattern [internal:id external:id]))
-#|
-(define-syntax-class (method-procedure [wrap values])
-  #:attributes parsed
-  #:literals [chaperone-procedure
-              lambda #%plain-lambda case-lambda let-values letrec-values]
-  (pattern ((~and lam (~or* lambda #%plain-lambda)) kw-formals body:expr ...)
-           #:with parsed #`(lam kw-formals #,(wrap #'(let () body ...))))
-  (pattern (case-lambda [formals body:expr ...+] ...)
-           #:with (rhs ...) (map wrap (syntax->list #'((let () body ...) ...)))
-           #:with parsed #'(case-lambda [formals rhs] ...)
-|#
-(define (local-expand-class-clauses raw*
-                                    #:wrap-init [wrap-init values]
-                                    #:wrap-method [wrap-method values])
+  (define-syntax-class maybe-renamed
+    #:attributes [internal external]
+    (pattern external:id
+             #:with internal #'external)
+    (pattern [internal:id external:id]))
+  #|END begin-for-syntax|#)
+
+(define-for-syntax (local-expand-class-clauses raw*
+                                               #:extra-stop-list [extra-stop-list values]
+                                               #:wrap-init [wrap-init values]
+                                               #:wrap-method [wrap-method values])
+  (define local-stop-list (append extra-stop-list the-stop-list))
   (define declared-method-names (mutable-bound-id-set))
   (define expanded-clauses
     (flatten
      (let local-expand-class-clauses ([raw* raw*])
        (for/list ([raw (in-list raw*)])
-         (syntax-parse (local-expand raw (syntax-local-context) the-stop-list)
+         (syntax-parse (local-expand raw (syntax-local-context) local-stop-list)
            ;#:track-literals
            #:literals [begin]
            #:literal-sets [expanded-class-clause-literals]
            [(begin clause:expr ...)
             (local-expand-class-clauses
-             (flatten-all-begins this-syntax))]
+             (syntax->list #'(clause ...)))]
            [((~or* public pubment public-final
                    override overment override-final
                    augment augride augment-final

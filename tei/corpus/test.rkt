@@ -1,22 +1,37 @@
 #lang racket
 
-(require ricoeur/tei/corpus/plain-corpus)
-#;
-(new ((corpus-mixin [] []
-        (super-new)
-        (println (super-docs))
-        (println (super-docs-evt)))
-      plain-corpus%))
+(require "plain-corpus.rkt"
+         syntax/macro-testing
+         rackunit)
 
-(new ((corpus-mixin [] []
-        ;(println (super-docs-evt))
-        (super-new))
-      plain-corpus%))
+(check-not-exn (λ () 
+                 (new ((corpus-mixin [] []
+                         (super-new)
+                         (void (super-docs))
+                         (void (super-docs-evt)))
+                       plain-corpus%)))
+               "all is good after super-new")
 
-(new ((corpus-mixin [] []
-        (println (super-docs))
-        (super-new))
-      plain-corpus%))
+(check-not-exn (λ () 
+                 (new ((corpus-mixin [] []
+                         (void (super-docs-evt))
+                         (super-new))
+                       plain-corpus%)))
+               "super-docs-evt ok before super-new")
 
-(corpus-mixin [] []
-  (define/public (bad) (super-docs)))
+(check-exn exn:fail:contract:variable?
+           (λ ()
+             (new ((corpus-mixin [] []
+                     (void (super-docs))
+                     (super-new))
+                   plain-corpus%)))
+           "super-docs banned before super-new")
+
+(check-exn #rx"^super-docs: not allowed in a method body"
+           (λ ()
+             (convert-syntax-error
+              (corpus-mixin [] []
+                (define/public (bad) (super-docs)))))
+           "super-docs banned in methods")
+
+

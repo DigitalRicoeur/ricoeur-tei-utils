@@ -7,9 +7,8 @@
          ricoeur/tei/base
          syntax/parse/define
          racket/stxparam
-         racket/splicing
+         "class-exptime.rkt"
          (for-syntax racket/base
-                     "class-exptime.rkt"
                      syntax/transformer))
 
 (provide checksum-table/c
@@ -135,13 +134,8 @@
          "old-value..." (unbox bx)))))
 (require 'repr)
 
-(define-rename-transformer-parameter local-repr
-  (make-rename-transformer #'stxparam-false))
-
-(define-rename-transformer-parameter in-method?
-  (make-rename-transformer #'stxparam-false))
-  
-(define-syntax stxparam-false #f)
+(define-syntax-parameter local-repr #f)
+(define-syntax-parameter in-method? #f)
 
 (define-for-syntax (super-docs-error-message)
   (if (syntax-parameter-value #'in-method?)
@@ -150,32 +144,30 @@
 
 (define-syntax-parser super-docs-evt
   [(_)
-   #|#:fail-unless (and (syntax-local-value #'local-repr)
-                      (not (syntax-local-value #'in-method?)))
-   (super-docs-error-message)|#
+   #:fail-unless (and (syntax-parameter-value #'local-repr)
+                      (not (syntax-parameter-value #'in-method?)))
+   (super-docs-error-message)
    #'local-repr])
 
 (define-syntax-parser super-docs
   [(_)
-   #|#:fail-unless (and (syntax-local-value #'local-repr)
-                      (not (syntax-local-value #'in-method?)))
-   (super-docs-error-message)|#
+   #:fail-unless (and (syntax-parameter-value #'local-repr)
+                      (not (syntax-parameter-value #'in-method?)))
+   (super-docs-error-message)
    #'(do-super-docs-ref local-repr)])
 
 (define-syntax-parser wrap-super-docs-class-clauses
   [(_ repr:id (class-clause:expr ...))
    (local-expand-class-clauses
     (syntax->list #'(class-clause ...))
+    #:extra-stop-list (list #'super-docs #'super-docs-evt)
     #:wrap-method (λ (raw)
                     #`(syntax-parameterize ([in-method? #t]) #,raw))
     #:wrap-init
     (λ (raw)
-      #`(letrec-syntaxes+values
-            ([{repr-renamer}
-              (make-rename-transformer #'repr-simple-binding)])
-          ([{repr-simple-binding} repr])
+      #`(let ([repr-simple-binding repr])
           (syntax-parameterize ([local-repr
-                                 (make-rename-transformer #'repr-renamer)])
+                                 (make-variable-like-transformer #'repr-simple-binding)])
             #,raw))))])
   
 (define-syntax-parser corpus-mixin
