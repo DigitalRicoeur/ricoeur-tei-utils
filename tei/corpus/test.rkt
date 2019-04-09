@@ -7,7 +7,7 @@
 (check-not-exn (λ () 
                  (new ((corpus-mixin [] []
                          (super-new)
-                         (void (super-docs))
+                         (super-docs)
                          (void (super-docs-evt)))
                        plain-corpus%)))
                "all is good after super-new")
@@ -34,4 +34,5 @@
                 (define/public (bad) (super-docs)))))
            "super-docs banned in methods")
 
-
+(corpus-mixin [] []
+  (define/public (ok) 1))

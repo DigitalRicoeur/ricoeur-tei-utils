@@ -171,7 +171,7 @@
             #,raw))))])
   
 (define-syntax-parser corpus-mixin
-  ;#:track-literals
+  #:track-literals
   [(_ (~describe "\"from\" interfaces" [from<%>:expr ...])
       (~describe "\"to\" interfaces" [to<%>:expr ...])
       (~describe "class clause" src-class-clause:expr)

@@ -35,7 +35,7 @@
      private abstract
      inherit inherit/super inherit/inner
      rename-super rename-inner))
-
+  
   (define the-stop-list
     (list* #'begin #'define-syntax #'define-syntaxes #'define #'define-values
            class-keywords))
@@ -71,15 +71,16 @@
   (define declared-method-names (mutable-bound-id-set))
   (define expanded-clauses
     (flatten
-     (let local-expand-class-clauses ([raw* raw*])
+     (let expand/record-method-names ([raw* raw*])
        (for/list ([raw (in-list raw*)])
          (syntax-parse (local-expand raw (syntax-local-context) local-stop-list)
-           ;#:track-literals
+           #:track-literals
            #:literals [begin]
            #:literal-sets [expanded-class-clause-literals]
            [(begin clause:expr ...)
-            (local-expand-class-clauses
-             (syntax->list #'(clause ...)))]
+            #`(begin
+                #,@(expand/record-method-names
+                    (syntax->list #'(clause ...))))]
            [((~or* public pubment public-final
                    override overment override-final
                    augment augride augment-final
@@ -95,27 +96,42 @@
     (pattern (~and parsed (~or* :id [(:id :id)])))
     (pattern [lhs:maybe-renamed raw:expr]
              #:with parsed #`[maybe-renamed #,(wrap-init #'raw)]))
-  #`(begin
-      #,@(for/list ([stx (in-list expanded-clauses)])
-           (syntax-parse stx
-             ;#:track-literals
-             [:define-1-value
-               #:with wrapped-rhs
-               (if (bound-id-set-member? declared-method-names #'name)
-                   (wrap-method #'rhs)
-                   (wrap-init #'rhs))
-               #'(define [name] wrapped-rhs)]
-             [(define-values [(~between name:id 2 +inf.0) ...] rhs:expr)
-              #`(define-values [name ...] #,(wrap-init #'rhs))]
-             [(init decl:init-decl ...)
-              #'(init decl.parsed ...)]
-             [(init-field decl:init-decl ...)
-              #'(init-field decl.parsed ...)]
-             [(field [lhs:maybe-renamed rhs:expr] ...)
-              #:with (wrapped-rhs ...) (map wrap-init (syntax->list #'(rhs ...)))
-              #'(field [lhs rhs] ...)]
-             [other:expr
-              (wrap-init #'other)]))))
+  (let wrap-expanded ([expanded-clauses expanded-clauses])
+    #`(begin
+        #,@(for/list ([stx (in-list expanded-clauses)])
+             (syntax-parse stx
+               #:track-literals
+               #:literals [begin]
+               #:literal-sets [expanded-class-clause-literals]
+               [(begin clause:expr ...)
+                (wrap-expanded (syntax->list #'(clause ...)))]
+               [:define-1-value
+                 #:with wrapped-rhs
+                 (if (bound-id-set-member? declared-method-names #'name)
+                     (wrap-method #'rhs)
+                     (wrap-init #'rhs))
+                 #'(define [name] wrapped-rhs)]
+               [(define-values [(~between name:id 2 +inf.0) ...] rhs:expr)
+                #`(define-values [name ...] #,(wrap-init #'rhs))]
+               [(init decl:init-decl ...)
+                #'(init decl.parsed ...)]
+               [(init-field decl:init-decl ...)
+                #'(init-field decl.parsed ...)]
+               [(field [lhs:maybe-renamed rhs:expr] ...)
+                #:with (wrapped-rhs ...) (map wrap-init (syntax->list #'(rhs ...)))
+                #'(field [lhs rhs] ...)]
+               [((~or* inspect inherit-field
+                       init-rest
+                       public pubment public-final
+                       override overment override-final
+                       augment augride augment-final
+                       private abstract
+                       inherit inherit/super inherit/inner
+                       rename-super rename-inner)
+                 . _)
+                this-syntax]
+               [other:expr
+                (wrap-init #'other)])))))
 
 
 
