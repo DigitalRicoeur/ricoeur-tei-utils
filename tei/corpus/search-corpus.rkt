@@ -4,8 +4,7 @@
          racket/class
          ricoeur/tei/base
          ricoeur/tei/search
-         "plain-corpus.rkt"
-         )
+         "plain-corpus.rkt")
 
 (provide corpus<%>
          (contract-out
@@ -26,37 +25,28 @@
           ))
 
 (define-values {corpus<%> corpus-search-mixin}
-  (let* ([initialize-search-method-key
-          (generate-member-key)]
-         [pre-mixin 
-          (make-corpus-mixin initialize-search-method-key)])
-    (define-member-name initialize-this initialize-search-method-key)
+  (let* ()
+    (define-local-member-name search-corpus-tag-method)
     (define corpus<%>
-      (interface {(class->interface plain-corpus%)}
-        [term-search (->*m {term/c}
-                           {#:ricoeur-only? any/c
+      (interface {plain-corpus<%>}
+        [term-search (->*m [term/c]
+                           [#:ricoeur-only? any/c
                             #:languages search-languages/c
                             #:book/article (or/c 'any 'book 'article)
-                            #:exact? any/c}
+                            #:exact? any/c]
                            (instance-set/c document-search-results?))]
-        initialize-this))
-    (define (corpus-search-mixin %)
-      (class* (pre-mixin %) {corpus<%>}
-        (init [(_search-backend search-backend) '(eager noop)])
-        (define search-backend _search-backend)
-        (define searchable-document-set #f)
+        search-corpus-tag-method))
+    (define corpus-search-mixin
+      (corpus-mixin [] [corpus<%>]
+        (init [search-backend '(eager noop)])
         (super-new)
-        (define/override-final (initialize-this docs)
-          (set! searchable-document-set
-                (initialize-search-backend search-backend docs)))
+        (define searchable-document-set
+          (initialize-search-backend #;search-backend (super-docs)))
         (define/public-final (term-search term
                                           #:ricoeur-only? [ricoeur-only? #t]
                                           #:languages [langs 'any]
                                           #:book/article [book/article 'any]
                                           #:exact? [exact? #f])
-          (unless searchable-document-set
-            (error '|method term-search of corpus-search-mixin|
-                   "attempt to use method before initialization"))
           (searchable-document-set-do-term-search
            searchable-document-set term
            #:ricoeur-only? ricoeur-only?

@@ -16,6 +16,7 @@
          super-docs
          super-docs-evt
          super-docs-evt?
+         plain-corpus<%>
          (contract-out
           [plain-corpus%
            (class/c (init [docs (instance-set/c tei-document?)]))]
@@ -143,6 +144,7 @@
       "only allowed inside a corpus-mixin expression"))
 
 (define-syntax-parser super-docs-evt
+  #:track-literals
   [(_)
    #:fail-unless (and (syntax-parameter-value #'local-repr)
                       (not (syntax-parameter-value #'in-method?)))
@@ -150,6 +152,7 @@
    #'local-repr])
 
 (define-syntax-parser super-docs
+  #:track-literals
   [(_)
    #:fail-unless (and (syntax-parameter-value #'local-repr)
                       (not (syntax-parameter-value #'in-method?)))
@@ -157,6 +160,7 @@
    #'(do-super-docs-ref local-repr)])
 
 (define-syntax-parser wrap-super-docs-class-clauses
+  #:track-literals
   [(_ repr:id (class-clause:expr ...))
    (local-expand-class-clauses
     (syntax->list #'(class-clause ...))
@@ -174,7 +178,7 @@
   #:track-literals
   [(_ (~describe "\"from\" interfaces" [from<%>:expr ...])
       (~describe "\"to\" interfaces" [to<%>:expr ...])
-      (~describe "class clause" src-class-clause:expr)
+      (~describe "class clause" class-clause:expr)
       ...+)
    ;; this would be much nicer with a fix for any of
    ;;   - https://github.com/racket/racket/issues/2578
@@ -189,5 +193,5 @@
            (super-docs-repr-post! repr docs)
            (inner (void) initialize docs))
          (wrap-super-docs-class-clauses
-          repr [src-class-clause ...])
+          repr [class-clause ...])
          (set! repr #f)))])

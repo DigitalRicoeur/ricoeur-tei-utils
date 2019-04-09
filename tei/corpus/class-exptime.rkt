@@ -95,7 +95,7 @@
     #:attributes [parsed]
     (pattern (~and parsed (~or* :id [(:id :id)])))
     (pattern [lhs:maybe-renamed raw:expr]
-             #:with parsed #`[maybe-renamed #,(wrap-init #'raw)]))
+             #:with parsed #`[lhs #,(wrap-init #'raw)]))
   (let wrap-expanded ([expanded-clauses expanded-clauses])
     #`(begin
         #,@(for/list ([stx (in-list expanded-clauses)])
