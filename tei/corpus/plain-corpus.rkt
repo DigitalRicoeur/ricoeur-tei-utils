@@ -159,14 +159,31 @@
    (super-docs-error-message)
    #'(do-super-docs-ref local-repr)])
 
+(begin-for-syntax
+  (define-syntax-class method-opt-formal
+    #:attributes {parsed}
+    (pattern parsed:id)
+    (pattern [n:id default:expr]
+             #:with parsed #'[n (syntax-parameterize ([in-method? #t]) default)])))
+
 (define-syntax-parser wrap-super-docs-class-clauses
   #:track-literals
   [(_ repr:id (class-clause:expr ...))
    (local-expand-class-clauses
     (syntax->list #'(class-clause ...))
     #:extra-stop-list (list #'super-docs #'super-docs-evt)
-    #:wrap-method (λ (raw)
-                    #`(syntax-parameterize ([in-method? #t]) #,raw))
+    #:wrap-method
+    (syntax-parser
+      #:literals {lambda}
+      [(lambda args:id body:expr ...)
+       #`(lambda args (syntax-parameterize ([in-method? #t]) body ...))]
+      [(lambda ((~seq (~optional kw:keyword) frml:method-opt-formal) ...)
+         body:expr ...)
+       #`(lambda ((~@ (~? kw) frml.parsed) ...)
+           (syntax-parameterize ([in-method? #t])
+             body ...))]
+      [other
+       #`(syntax-parameterize ([in-method? #t]) other)])
     #:wrap-init
     (λ (raw)
       #`(let ([repr-simple-binding repr])

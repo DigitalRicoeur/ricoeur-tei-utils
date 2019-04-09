@@ -110,7 +110,7 @@
                  (if (bound-id-set-member? declared-method-names #'name)
                      (wrap-method #'rhs)
                      (wrap-init #'rhs))
-                 #'(define [name] wrapped-rhs)]
+                 #'(define-values [name] wrapped-rhs)]
                [(define-values [(~between name:id 2 +inf.0) ...] rhs:expr)
                 #`(define-values [name ...] #,(wrap-init #'rhs))]
                [(init decl:init-decl ...)

@@ -2,20 +2,20 @@
 
 (require racket/contract
          racket/class
-         racket/match
-         racket/set
-         racket/promise
          ricoeur/tei/base
          ricoeur/tei/search
          "corpus/plain-corpus.rkt"
-         "corpus/search-corpus.rkt"
-         )
+         "corpus/search-corpus.rkt")
 
 (provide empty-corpus
          corpus-get-instance-info-set
          corpus-get-checksum-table
          corpus-do-term-search
-         make-corpus-mixin
+         corpus<%>
+         corpus-mixin
+         super-docs
+         super-docs-evt
+         super-docs-evt?
          checksum-table/c
          (contract-out
           [corpus%

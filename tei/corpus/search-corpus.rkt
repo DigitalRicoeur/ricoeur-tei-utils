@@ -41,7 +41,8 @@
         (init [search-backend '(eager noop)])
         (super-new)
         (define searchable-document-set
-          (initialize-search-backend #;search-backend (super-docs)))
+          (initialize-search-backend search-backend (super-docs)))
+        (define/public-final (search-corpus-tag-method) (void))
         (define/public-final (term-search term
                                           #:ricoeur-only? [ricoeur-only? #t]
                                           #:languages [langs 'any]
