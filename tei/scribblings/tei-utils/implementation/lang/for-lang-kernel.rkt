@@ -32,7 +32,7 @@
 
 
 (define (spec-lang-mod)
-  (racketmodlink ricoeur/tei/kernel/lang/specification-lang
+  (racketmodlink ricoeur/tei/spec-lang/specification-lang
                  (racketmodfont "ricoeur/tei/spec-lang")))
 
 (define (hash-lang-kernel)

@@ -295,55 +295,100 @@ library can be used independently.
 }
 
 @section{Deriving New Corpus Classes}
-@defproc[(make-corpus-mixin [key member-name-key?])
-         (let ()
-           (define-member-name initialize-this key)
-           (and/c (make-mixin-contract corpus%)
-                  (-> (class/c
-                       (absent initialize-this))
-                      (class/c
-                       (override
-                         [initialize-this
-                          (->m (instance-set/c tei-document?) any)])))))]{
- Clients of this library may want to extend the @tech{corpus object}
+@defform[(corpus-mixin [from<%> ...] [to<%> ...]
+           class-clause ...+)
+         #:contracts ([from<%> interface?]
+                      [to<%> interface?])]{
+ Clients of this library will want to extend the @tech{corpus object}
  system to support additional features by implementing
  new classes derived from @racket[corpus%].
- Many such extensions will need access to the full @tech{instance set}
- of @tech{TEI documents} to be encapsulated by the @tech{corpus object}
- for use during the initialization of their derived classes.
- However, @racket[corpus%] does not keep its @tech{TEI documents}
- reachable after its initialization, and derived classes are
- encouraged to follow this practice, as @tech{TEI document} values
- can be large.
+ There are two main points where derived classes will want to interpose
+ on @racket[corpus%]'s initialization:
+ @(itemlist #:style 'ordered
+            @item{A few classes, like @racket[directory-corpus%],
+  will want to supply an alternate means of constructing
+  the full @tech{instance set} of @tech{TEI documents}
+  to be encapsulated by the @tech{corpus object}.
+  This is easily done using standard features of the @racketmodname[racket/class]
+  object system, such as @racket[init] and @racket[super-new], to control the
+  initialization of the base class.
+ }
+            @item{More often, derived classes will want to use the complete
+  @tech{instance set} of @tech{TEI documents} to initialize some extended functionality:
+  for example, @racket[corpus%] itself extends a primitive, unexported class this way
+  to initialize a @tech{searchable document set}.
+  The @racketmodname[ricoeur/tei] library provides special support
+  for these kinds of extensions.
+  })
 
- The function @racket[make-corpus-mixin] gives clients of this
- library a hook to access the @tech{TEI documents} during
- initialization without making them reachable afterwords.
- It creates a helper mixin that adds an @racket[abstract]
- implementation of the method specified by @racket[key]
- (which would generally be created with @racket[(generate-member-key)])
- to its base class. The resulting mixin arranges with
- the implementation of @racket[corpus%] to have the new method
- called exactly once, during @racket[corpus%]'s initialization,
- with the full @tech{instance set} of @tech{TEI documents} as
- its argument.
+ A key design consideration is that @racket[corpus%] instance does
+ not keep its @tech{TEI documents} reachable after its initialization,
+ as @tech{TEI document} values can be rather large.
+ Derived classes are urged to follow this practice:
+ they should initialize whatever state they need for their extended functionality,
+ but they should allow the @tech{TEI documents} to be garbage-collected
+ as soon as possible.
+
+ Concretely, this means that @racket[corpus%] does not store
+ the @tech{instance set} of @tech{TEI documents}
+ in a @seclink["clfields" #:doc '(lib "scribblings/reference/reference.scrbl")]{field}
+ (neither public nor private), as objects' fields are reachable after initialization. 
+
+ The @racket[corpus-mixin] form is like @racket[mixin], but it cooperates
+ with the @racket[super-docs] and @racket[super-docs-evt] forms
+ to provide access to the @tech{instance set} of @tech{TEI documents} as
+ a ``virtual'' initialization variable.
+ (The @racket[corpus<%>] interface is implicitly included among
+ @racket[corpus-mixin]'s @racket[from<%>] interfaces.)
+
+ @defsubform[(super-docs)]{
+  Within a @racket[corpus-mixin] form, evaluates to the full @tech{instance set}
+  of @tech{TEI documents} to be encapsulated by the @tech{corpus object} as a
+  ``virtual'' @seclink["clinitvars" #:doc '(lib "scribblings/reference/reference.scrbl")]{
+   initialization variable}: using @racket[(super-docs)] anywhere that an
+  initialization variable is not allowed is a syntax error.
+  
+  The @tech{instance set} of @tech{TEI documents} is created by the @racket[corpus%]
+  constructor: evluating @racket[(super-docs)] before the superclass constructor
+  has been called (e.g. via @racket[super-new]) will raise an exception,
+  analagous to accessing an uninitialized field.
+ }
+ @defsubform[(super-docs-evt)]{
+  Within a @racket[corpus-mixin] form, similar to @racket[super-docs],
+  but produces a @tech[#:doc '(lib "scribblings/reference/reference.scrbl")]{
+   synchronizable event} which produces the @tech{instance set}
+  of @tech{TEI documents} as its @tech[#:doc '(lib "scribblings/reference/reference.scrbl")]{
+   synchronization result}.
+
+  Unlike @racket[(super-docs)], @racket[(super-docs-evt)] may be evaluated before
+  the superclass constuctor is called and may immediately be used with @racket[sync]
+  in a background thread (e.g. via @racket[delay/thread]).
+  The event will become @tech[#:doc '(lib "scribblings/reference/reference.scrbl")]{
+   ready for synchronization} when the @racket[corpus%] constructor is called.
+  Note that @racket[(begin (sync (super-docs-evt)) (super-new))] will block forever.
+
+  The events produced by @racket[(super-docs-evt)] can be recognzed by
+  the predicate @racket[super-docs-evt?] and satisfy the contract
+  @racket[(evt/c (instance-set/c tei-document?))].
+ }
 
  @examples[
  #:eval (make-tei-eval) #:once
- (define initialize-this-method-key (generate-member-key))
- (define-member-name initialize-this initialize-this-method-key)
- (define printing-corpus%
-   (class ((make-corpus-mixin initialize-this-method-key)
-           corpus%)
+ (define printing-corpus-mixin
+   (corpus-mixin [] []
      (super-new)
-     (define/override-final (initialize-this docs)
-       (printf "These are the docs!\n  ~v\n"
-               (set->list docs)))))
- (new printing-corpus%)
+     (printf "These are the docs!\n  ~v\n"
+             (set->list (super-docs)))))
+ (new (printing-corpus-mixin corpus%))
  ]}
 
+@defproc[(super-docs-evt? [v any/c]) any/c]{
+ Recognizes values produced by @racket[super-docs-evt].
+}
 
-
+@defthing[corpus<%> interface?]{
+ Equivalent to @racket[(class->interface corpus%)].
+}
 
 @section{Search Results}
 @deftogether[

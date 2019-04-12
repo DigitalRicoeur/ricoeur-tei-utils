@@ -2,7 +2,7 @@
 
 @title[#:style '(toc)]{Specification Language}
 @defmodule[(spec-lang-mod) #:lang
-           #:module-paths (ricoeur/tei/kernel/lang/specification-lang)]
+           #:module-paths (ricoeur/tei/spec-lang/specification-lang)]
 @(require "for-lang-kernel.rkt")
 
 

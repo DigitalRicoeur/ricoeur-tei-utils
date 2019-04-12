@@ -1,7 +1,7 @@
 #lang scribble/manual
 
 @title{Module Structure}
-@(declare-exporting ricoeur/tei/kernel/lang/doc-lang)
+@(declare-exporting ricoeur/tei/spec-lang/doc-lang)
 @(require "for-lang-kernel.rkt")
 
 
@@ -189,7 +189,7 @@ an implicit @racket[doc] submodule
 
 
 @section{Runtime Submodules}
-@(declare-exporting ricoeur/tei/kernel/lang/specification-lang)
+@(declare-exporting ricoeur/tei/spec-lang/specification-lang)
 @deftogether[
  (@defform[(module+ id form ...)]
    @defform*[((module* id module-path form ...)

@@ -1,10 +1,9 @@
 #lang scribble/manual
 
 @title{Defining TEI Elements}
-@(declare-exporting ricoeur/tei/kernel/lang/doc-lang)
+@(declare-exporting ricoeur/tei/spec-lang/doc-lang)
 @(require "for-lang-kernel.rkt"
-          scribble/bnf
-          )
+          scribble/bnf)
 
 @(define-syntax-rule (racket-BNF-alt datum ...)
    (BNF-alt (racket datum) ...))
@@ -104,7 +103,7 @@
 
 
  @section[#:tag "struct-type-def"]{Struct Type Definition Overview}
- @(declare-exporting ricoeur/tei/kernel/lang/specification-lang)
+ @(declare-exporting ricoeur/tei/spec-lang/specification-lang)
 
  @defform[#:link-target? #f #:id define-element
  #:literals [field 
@@ -329,7 +328,7 @@
 }
 
 @section{Field Definition Forms}
-@(declare-exporting ricoeur/tei/kernel/lang/specification-lang)
+@(declare-exporting ricoeur/tei/spec-lang/specification-lang)
 
 Several higher-level forms are included as alternatives to the
 primitive @racket[field] declaration.
@@ -380,7 +379,7 @@ primitive @racket[field] declaration.
 
 
 @section{Supporting Standard Interfaces}
-@(declare-exporting ricoeur/tei/kernel/lang/specification-lang)
+@(declare-exporting ricoeur/tei/spec-lang/specification-lang)
 @defform[(declare-resp-field option ...)
          #:grammar [(option (code:line attributes-expr (code:comment "required"))
                             (code:line #:key key-id))]
@@ -432,7 +431,7 @@ primitive @racket[field] declaration.
 
 
 @section{Implementing Additional Forms}
-@(declare-exporting ricoeur/tei/kernel/lang/specification-lang)
+@(declare-exporting ricoeur/tei/spec-lang/specification-lang)
 @deftogether[
  (@defform[(field/derived orig-datum field-name-id field-option ...)]
    @defform*[[(get-field/derived orig-datum field-name-id)

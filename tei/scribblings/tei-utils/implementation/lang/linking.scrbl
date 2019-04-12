@@ -1,11 +1,11 @@
 #lang scribble/manual
 
 @title{Linking & Invoking}
-@defmodule[(submod ricoeur/tei/kernel private)]
+@defmodule[(submod ricoeur/tei/spec-lang private)]
 @(require "for-lang-kernel.rkt")
 
 
-The @submodlink[(submod ricoeur/tei/kernel private)] module
+The @submodlink[(submod ricoeur/tei/spec-lang private)] module
 provides functions for working with
 @tech{elements specification transformers},
 plus some small utilities useful when writing contracts and constructors
@@ -49,6 +49,9 @@ in @racket[define-element] forms.
  It is a syntax error if the @racket[spec]s encapsulate duplicate
  element definitions, but missing elements are allowed at the linking stage.
 }
+
+@section{Additional Helper Functions}
+@defmodule[(submod ricoeur/tei/kernel private)]
 
 @defproc[(get-attributes [xs (and/c pair? xexpr/c)])
          (listof (list/c symbol? string?))]{
