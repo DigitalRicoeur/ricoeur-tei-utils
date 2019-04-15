@@ -2,7 +2,7 @@
 
 (define collection "ricoeur")
 (define pkg-desc "TEI utilities for Digital Ricoeur")
-(define version "0.5.7")
+(define version "0.5.8")
 (define pkg-authors '(philip))
 
 ;; Executables to build are listed in "tei/tools/info.rkt".
@@ -29,7 +29,7 @@
                ("xmllint-win32-x86_64" #:platform "win32\\x86_64"
                                        #:version "0.1")
                ;; The following are for the documentation time
-               ;; of #lang ricoeur/tei/kernel.
+               ;; of #lang ricoeur/tei/spec-lang.
                ;; Can they be made build-deps somehow?
                "at-exp-lib"
                "syntax-color-lib"

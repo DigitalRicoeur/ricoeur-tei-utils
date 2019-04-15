@@ -108,9 +108,9 @@
     #:property prop:evt
     (λ (this)
       (or (super-docs-evt-evt* this)
-          (let ([evt* (wrap-evt (semaphore-peek-evt
-                                 (super-docs-evt-sema this)
-                                 (λ (_) (unbox* (super-docs-evt-box this)))))])
+          (let* ([evt-bx (super-docs-evt-box this)]
+                 [evt* (wrap-evt (semaphore-peek-evt (super-docs-evt-sema this))
+                                 (λ (_) (unbox* evt-bx)))])
             (set-super-docs-evt-evt*! this evt*)
             evt*))))
   (define (make-super-docs-repr)
