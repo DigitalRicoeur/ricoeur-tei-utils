@@ -37,6 +37,7 @@
 
 (define-for-syntax stop-list
   (list #'#%begin-for-doc
+        #'#%app #'#%datum #'#%top ;; less work in local-expand
         #'begin ;; it's implicitly added, but let's be clear
         ;; Need to not try to expand these:
         #'#%require #'require
@@ -71,11 +72,14 @@
                  #:body (to-go ...))]
   [(_ #:wrap done-form
       #:collected (collected ...)
-      #:this (#%begin-for-doc form ...)
+      #:this (~and this ((~and bfd #%begin-for-doc) form ...))
       #:body (to-go ...))
-   #'(#%untangle #:wrap done-form
-                 #:collected (collected ... form ...)
-                 #:body (to-go ...))]
+   (syntax-track-origin
+    #'(#%untangle #:wrap done-form
+                  #:collected (collected ... form ...)
+                  #:body (to-go ...))
+    #'this
+    #'bfd)]
   [(_ #:wrap done-form
       #:collected (collected ...)
       #:this (~and this (begin raw ...))
