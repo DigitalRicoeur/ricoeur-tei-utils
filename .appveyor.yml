@@ -4,7 +4,7 @@ image:
 environment:
   CYGPATH: cygpath -u
   matrix:
-    - RACKET_VERSION: 7.2
+    - RACKET_VERSION: 7.4
     - RACKET_VERSION: HEAD
     - RACKET_VERSION: HEADCS
 
