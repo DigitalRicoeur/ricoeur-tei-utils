@@ -1,15 +1,16 @@
 #lang info
 
+(define pkg-name "ricoeur-tei-utils")
 (define collection "ricoeur")
 (define pkg-desc "TEI utilities for Digital Ricoeur")
-(define version "0.5.8")
+(define version "0.5.9")
 (define pkg-authors '(philip))
 
 ;; Executables to build are listed in "tei/tools/info.rkt".
 ;; Documentation to build is listed in "tei/info.rkt".
 
 ;; Dependencies:
-(define deps '(("base" #:version "7.2")
+(define deps '(("base" #:version "7.4")
                ("adjutor" #:version "0.2.5")
                "ricoeur-kernel"
                "functional-lib"
@@ -19,8 +20,8 @@
                "pict-lib"
                "scribble-lib"
                "data-lib"
-               "db-lib"
-               ("sql" #:version "1.3")
+               ("db-lib" #:version "1.4")
+               ("sql" #:version "1.5")
                "draw-lib"
                "icns"
                "parser-tools-lib"
