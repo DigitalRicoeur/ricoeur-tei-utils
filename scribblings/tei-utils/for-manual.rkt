@@ -46,7 +46,7 @@
   "Ricœur")
 
 (define guidelines
-  '(lib "ricoeur/tei/scribblings/guidelines/ricoeur-tei-guidelines.scrbl"))
+  '(lib "ricoeur/scribblings/guidelines/ricoeur-tei-guidelines.scrbl"))
 
 (define (guidelines-doc)
   @other-doc[guidelines])

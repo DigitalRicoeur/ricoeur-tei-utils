@@ -2,8 +2,7 @@
 
 @title{Digital Ricœur TEI Library}
 @author[(author+email @elem{Philip M@superscript{c}Grath}
-                      "philip@philipmcgrath.com"
-                      #:obfuscate? #t)]
+                      "philip@philipmcgrath.com")]
 @defmodule[#:multi (ricoeur/tei
                     ricoeur/tei/base
                     ricoeur/term-search)]
@@ -49,8 +48,9 @@ and @racket[cdata?] from @racketmodname[xml].
 @(table-of-contents)
 
 @include-section["installing.scrbl"] @; Installing
-@include-section["corpus.scrbl"] @; High-level Corpus Functionality
 @include-section["instance-info.scrbl"] @; Bibliographic Information
+@include-section["corpus.scrbl"] @; High-level Corpus Functionality
+@include-section["term-search.scrbl"] @; ``Term Search'' Tool
 @include-section["document.scrbl"] @; Document-level Functions
 @include-section["segment.scrbl"] @; Segments
 @include-section["element.scrbl"] @; TEI Element Representation

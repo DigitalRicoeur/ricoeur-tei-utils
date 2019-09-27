@@ -9,8 +9,8 @@ to assist in preparing and validating TEI XML documents.
 All of these require the library @racketmodname[ricoeur/tei],
 which should be installed as described under
 @secref["Installing___Updating_This_Library"
-        #:doc '(lib "ricoeur/tei/scribblings/tei-utils/ricoeur-tei-utils.scrbl")]
-in @other-doc['(lib "ricoeur/tei/scribblings/tei-utils/ricoeur-tei-utils.scrbl")].
+        #:doc '(lib "ricoeur/scribblings/tei-utils/ricoeur-tei-utils.scrbl")]
+in @other-doc['(lib "ricoeur/scribblings/tei-utils/ricoeur-tei-utils.scrbl")].
 
 All of our command-line tools accept the flags
 @DFlag{help} or @Flag{h} to print usage information.

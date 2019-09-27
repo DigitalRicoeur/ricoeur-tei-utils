@@ -21,5 +21,5 @@
 
 (define (lib-tech . args)
   (TODO/void lib-tech: avoid duplicating in teiHeader.rkt)
-  (apply tech #:doc '(lib "ricoeur/tei/scribblings/tei-utils/ricoeur-tei-utils.scrbl") args))
+  (apply tech #:doc '(lib "ricoeur/scribblings/tei-utils/ricoeur-tei-utils.scrbl") args))
 

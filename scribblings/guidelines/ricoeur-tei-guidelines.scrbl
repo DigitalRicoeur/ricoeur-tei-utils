@@ -2,8 +2,7 @@
 
 @title[#:version ""]{TEI Encoding Guidelines for Digital Ricœur}
 @author[(author+email @elem{Philip M@superscript{c}Grath}
-                      "philip@philipmcgrath.com"
-                      #:obfuscate? #t)
+                      "philip@philipmcgrath.com")
         @elem{Digital Ricœur}]
 
 @(require "for-guidelines.rkt")
