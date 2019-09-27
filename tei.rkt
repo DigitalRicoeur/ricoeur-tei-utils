@@ -1,14 +1,12 @@
 #lang racket/base
 
-(require ricoeur/tei/base
-         )
+(require ricoeur/tei/base)
 
 (require-provide (provide-only ricoeur/tei/base)
-                 ricoeur/tei/search
-                 ricoeur/tei/corpus
-                 )
+                 ricoeur/tei/corpus)
 
 (module+ test
+  #;ricoeur/tei/search
   (require rackunit/docs-complete)
 
   (define reexported-undocumented

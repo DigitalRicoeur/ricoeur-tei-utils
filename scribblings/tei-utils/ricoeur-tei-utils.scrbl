@@ -4,7 +4,9 @@
 @author[(author+email @elem{Philip M@superscript{c}Grath}
                       "philip@philipmcgrath.com"
                       #:obfuscate? #t)]
-@defmodule[#:multi (ricoeur/tei ricoeur/tei/base)]
+@defmodule[#:multi (ricoeur/tei
+                    ricoeur/tei/base
+                    ricoeur/term-search)]
 
 
 @(require "for-manual.rkt")

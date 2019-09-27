@@ -3,12 +3,12 @@
 (require racket/contract
          racket/unit
          ricoeur/tei/base
-         "search/noop.rkt"
-         "search/regexp.rkt"
-         "search/postgresql.rkt"
-         (submod "search/common.rkt" private))
+         "backend/noop.rkt"
+         "backend/regexp.rkt"
+         "backend/postgresql.rkt"
+         (submod "backend/common.rkt" private))
 
-(require-provide "search/common.rkt")
+(require-provide "backend/common.rkt")
 
 (module+ test
   (require rackunit

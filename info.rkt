@@ -7,7 +7,21 @@
 (define pkg-authors '(philip))
 
 ;; Executables to build are listed in "tei/tools/info.rkt".
-;; Documentation to build is listed in "tei/info.rkt".
+
+
+;; Documentation to build had been listed in "tei/info.rkt"
+;; so that `raco setup --doc-index ricoeur/tei` would work.
+;; Sould reconsider ...
+(define scribblings
+  '(("scribblings/tei-utils/ricoeur-tei-utils.scrbl"
+     (multi-page)
+     ("Digital Ricœur" 0)
+     )
+    ("scribblings/guidelines/ricoeur-tei-guidelines.scrbl"
+     (multi-page)
+     ("Digital Ricœur" 0)
+     )))
+
 
 ;; Dependencies:
 (define deps

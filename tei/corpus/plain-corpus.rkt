@@ -9,35 +9,29 @@
          racket/stxparam
          "class-exptime.rkt"
          (for-syntax racket/base
+                     "exptime-common.rkt"
                      racket/syntax
                      syntax/transformer))
 
 (provide checksum-table/c
+         corpus<%>
          corpus-mixin
-         corpus-mixin+interface
-         define-corpus-mixin+interface
          super-docs
          super-docs-evt
          super-docs-evt?
-         plain-corpus<%>
          (contract-out
-          [plain-corpus%
+          [corpus%
            (class/c (init [docs (instance-set/c tei-document?)]))]
-          [corpus-get-instance-info-set
-           (-> (is-a?/c plain-corpus%)
-               (instance-set/c))]
-          [corpus-get-checksum-table
-           (-> (is-a?/c plain-corpus%)
-               checksum-table/c)]
           ))
 
 (define/final-prop checksum-table/c
   (hash/c symbol? symbol?
           #:immutable #t))
 
+;; This is the top-secret method we must not expose:
 (define-local-member-name initialize)
 
-(define plain-corpus%
+(define corpus%
   (class* object% {(interface ()
                      [get-instance-info-set
                       (->m (instance-set/c))]
@@ -68,37 +62,48 @@
       (inner (void) initialize docs))
     #|END class plain-corpus%|#))
 
-(define plain-corpus<%>
-  (class->interface plain-corpus%))
+(define corpus<%>
+  (class->interface corpus%))
 
 
-(define gen:get-instance-info-set
-  (generic plain-corpus<%> get-instance-info-set))
-(define (corpus-get-instance-info-set c)
-  (send-generic c gen:get-instance-info-set))
+(define-syntax-parser corpus-mixin
+  #:track-literals
+  [(_ from:from-interfaces to:to-interfaces
+      clause:class-clause
+      ...+)
+   ;; this would be much nicer with a fix for any of
+   ;;   - https://github.com/racket/racket/issues/2578
+   ;;   - https://github.com/racket/racket/issues/1898
+   ;;   - https://github.com/racket/racket/issues/2580
+   ;;   - https://github.com/racket/racket/issues/2579
+   #`(let ()
+       (define-local-member-name repr/external)
+       (mixin [corpus<%> from.<%> ...] [to.<%> ...]
+         (field [(repr repr/external) (make-super-docs-repr)])
+         (define/augment (initialize docs)
+           (super-docs-repr-post! repr docs)
+           (inner (void) initialize docs))
+         (wrap-super-docs-class-clauses
+          repr [clause ...])
+         (set! repr #f)))])
 
-(define gen:get-checksum-table
-  (generic plain-corpus<%> get-checksum-table))
-(define (corpus-get-checksum-table c)
-  (send-generic c gen:get-checksum-table))
-
-;                                          
-;                                          
-;                                          
-;                                          
-;              ;               ;           
-;              ;;              ;;          
-;  ; ;; ;;  ;;;;;  ;;   ;;  ;;;;;   ;; ;   
-;  ;; ;; ;     ;;    ;  ;      ;;   ;;; ;  
-;  ;; ;; ;;    ;;    ; ;       ;;   ;;  ;; 
-;  ;; ;; ;;    ;;     ;        ;;   ;;  ;; 
-;  ;; ;; ;;    ;;    ; ;       ;;   ;;  ;; 
-;  ;; ;; ;;    ;;   ;   ;      ;;   ;;  ;; 
-;  ;; ;; ;;    ;;  ;;   ;;     ;;   ;;  ;; 
-;                                          
-;                                          
-;                                          
-;                                          
+;                                                             
+;                                                             
+;                                                             
+;                                                             
+;                                         ;;                  
+;                                         ;;                  
+;    ;; ;;; ;;  ; ;;    ;;   ;; ;      ;;;;;  ;;;    ;;;   ;; 
+;  ;;  ; ;; ;;  ;;  ;  ;  ;  ;;;      ;   ;; ;   ;  ;   ;;;  ;
+;   ;    ;; ;;  ;;  ;  ;  ;  ;;       ;   ;; ;   ;  ;     ;   
+;    ;;  ;; ;;  ;;  ;;;;;;;; ;;   ;;;;;   ;;;;   ;;;;      ;; 
+;      ;;;; ;;  ;;  ;  ;     ;;       ;   ;; ;   ;  ;        ;
+;  ;   ;  ; ;;  ;;  ;  ;     ;;       ;   ;; ;   ;  ;   ;;   ;
+;   ;;;   ;;;;  ;;;;    ;;;  ;;        ;;; ;  ;;;    ;;;  ;;; 
+;               ;;                                            
+;               ;;                                            
+;               ;;                                            
+;                                                             
 
 (module repr racket/base
   (require racket/match)
@@ -110,6 +115,7 @@
     #:auto-value #f
     #:property prop:evt
     (λ (this)
+      ;; why did I do this?
       (or (super-docs-evt-evt* this)
           (let* ([evt-bx (super-docs-evt-box this)]
                  [evt* (wrap-evt (semaphore-peek-evt (super-docs-evt-sema this))
@@ -135,7 +141,7 @@
          "already posted"
          "super-docs-repr" it
          "docs..." docs
-         "old-value..." (unbox bx)))))
+         "old value..." (unbox bx)))))
 (require 'repr)
 
 (define-syntax-parameter local-repr #f)
@@ -163,6 +169,26 @@
    #:fail-unless (super-docs-fail-unless)
    (super-docs-error-message)
    #'(do-super-docs-ref local-repr)])
+
+
+;                              
+;                              
+;                              
+;                              
+;                              
+;                              
+;  ;   ;   ; ;; ;  ;;    ; ;;  
+;  ;  ; ;  ; ;;;  ;  ;   ;;  ; 
+;   ; ; ; ;  ;;      ;;  ;;  ; 
+;   ; ; ; ;  ;;    ;;;;  ;;  ;;
+;   ; ; ; ;  ;;   ;  ;;  ;;  ; 
+;   ; ; ; ;  ;;  ;;  ;;  ;;  ; 
+;    ;   ;   ;;   ;;; ;  ;;;;  
+;                        ;;    
+;                        ;;    
+;                        ;;    
+;                              
+
 
 (begin-for-syntax
   (define-syntax-class method-opt-formal
@@ -201,132 +227,6 @@
                                   #'repr-simple-binding)])
             #,raw))))])
 
-(begin-for-syntax
-  (define-syntax-class from-interfaces
-    #:description "\"from\" interfaces"
-    #:attributes {[<%> 1]}
-    (pattern [<%>:expr ...]))
-  (define-syntax-class to-interfaces
-    #:description "\"to\" interfaces"
-    #:attributes {[<%> 1]}
-    (pattern [<%>:expr ...]))
-  (define-syntax-class class-clause
-    #:description "class clause"
-    (pattern :expr)))
 
-(define-syntax-parser corpus-mixin
-  #:track-literals
-  [(_ from:from-interfaces to:to-interfaces
-      clause:class-clause
-      ...+)
-   ;; this would be much nicer with a fix for any of
-   ;;   - https://github.com/racket/racket/issues/2578
-   ;;   - https://github.com/racket/racket/issues/1898
-   ;;   - https://github.com/racket/racket/issues/2580
-   ;;   - https://github.com/racket/racket/issues/2579
-   #`(let ()
-       (define-local-member-name repr/external)
-       (mixin [plain-corpus<%> from.<%> ...] [to.<%> ...]
-         (field [(repr repr/external) (make-super-docs-repr)])
-         (define/augment (initialize docs)
-           (super-docs-repr-post! repr docs)
-           (inner (void) initialize docs))
-         (wrap-super-docs-class-clauses
-          repr [clause ...])
-         (set! repr #f)))])
 
-(begin-for-syntax
-  (define-syntax-class super-list
-    #:description "parenthesized sequence of super-interface expressions"
-    (pattern (:expr ...))))
 
-(define-syntax (define-corpus-mixin+interface stx)
-  (define-syntax-class name-spec
-    #:description #f
-    #:attributes {name-mixin name<%>}
-    (pattern [name-mixin:id name<%>:id])
-    (pattern name:id
-             #:do [(define name-len
-                     (string-length (symbol->string (syntax-e #'name))))
-                   (define (mk rhs)
-                     (define made
-                       (format-id #'name #:source #'name
-                                  "~a~a" #'name rhs))
-                     (syntax-property
-                      made
-                      'sub-range-binders
-                      (vector-immutable (syntax-local-introduce made)
-                                        0 name-len 0.5 0.5
-                                        (syntax-local-introduce #'name)
-                                        0 name-len 0.5 0.5)))]
-             #:with name-mixin (mk "-mixin")
-             #:with name<%> (mk "<%>")))
-  (define-syntax-class interface-method-clause
-    #:description "interface method clause"
-    #:attributes {parsed}
-    ;; TODO: extend this to define functions,
-    ;; with local macros to expand to send-generic in their
-    ;; implementations, and handle when (current-corpus)
-    ;; doesn't implement it.
-    (pattern parsed:id)
-    (pattern (~and parsed [:id :expr])))
-  (syntax-parse stx
-    #:track-literals
-    #:literals {interface interface*}
-    [(_ :name-spec
-        from:from-interfaces to:to-interfaces
-        (~or* (interface supers:super-list
-                if-clause:interface-method-clause
-                ...)
-              (interface* supers:super-list
-                          ([prop:expr val:expr] ...)
-                if-clause:interface-method-clause
-                ...))
-        mixin-clause:class-clause
-        ...+)
-     #:with name-mixin-tag-method
-     ((make-syntax-introducer)
-      (format-id #f #:source #'name-mixin
-                 "~a-tag-method" #'name-mixin))
-     #'(begin
-         (define-member-name name-mixin-tag-method
-           (generate-member-key))
-         (define name<%>
-           (interface* supers
-                       (~? ([prop val] ...) ())
-             name-mixin-tag-method
-             if-clause.parsed ...))
-         (define name-mixin
-           (corpus-mixin (from.<%> ...) (to.<%> ... name<%>)
-             (define/public-final (name-mixin-tag-method)
-               (void))
-             mixin-clause ...)))]))
-
-(define-syntax (corpus-mixin+interface stx)
-  (define-syntax-class interface-method-clause
-    #:description "interface method clause"
-    ;; this variant won't support extra definitions
-    (pattern :id)
-    (pattern [:id :expr]))
-  (syntax-parse stx
-    #:track-literals
-    #:literals {interface interface*}
-    [(_ from:from-interfaces to:to-interfaces
-        (~or* (interface supers:super-list
-                if-clause:interface-method-clause
-                ...)
-              (interface* supers:super-list
-                          ([prop:expr val:expr] ...)
-                if-clause:interface-method-clause
-                ...))
-        mixin-clause:class-clause
-        ...+)
-     #'(let ()
-         (define-corpus-mixin+interface
-           [anonymous-corpus-mixin anonymous-corpus-mixin<%>]
-           (from.<%> ...) (to.<%> ...)
-           (interface* supers
-                       (~? ([prop val] ...) ())
-             if-clause ...)
-           mixin-clause ...)
-         (values anonymous-corpus-mixin anonymous-corpus-mixin<%>))]))

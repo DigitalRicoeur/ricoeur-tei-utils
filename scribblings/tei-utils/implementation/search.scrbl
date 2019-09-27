@@ -1,17 +1,16 @@
 #lang scribble/manual
 
 @title{Search Implementation}
-@defmodule[(submod ricoeur/tei/search/common private)]
+@defmodule[(submod ricoeur/term-search/backend/common private)]
 
 @(require "../for-manual.rkt"
-          (for-label (submod ricoeur/tei/search/common private)
-                     (only-in ricoeur/tei/search/noop noop@)
-                     ricoeur/tei/search/regexp
-                     ricoeur/tei/search/postgresql
-                     ))
+          (for-label (submod ricoeur/term-search/backend/common private)
+                     (only-in ricoeur/term-search/backend/noop noop@)
+                     ricoeur/term-search/backend/regexp
+                     ricoeur/term-search/backend/postgresql))
 
 This section documents the common utilities used to
-implement @racketmodname[ricoeur/tei]'s search feature
+implement @racketmodname[ricoeur/term-search]'s search feature
 (which is used through functions like @racket[term-search]),
 including everything necessary to implement new kinds of
 @tech{search backends}.
@@ -240,19 +239,19 @@ including everything necessary to implement new kinds of
 
 @subsection{Basic @racket[search^] Units}
 @subsubsection[#:style '(hidden toc-hidden)]{Noop Search Backend}
-@defmodule[ricoeur/tei/search/noop]
+@defmodule[ricoeur/term-search/backend/noop]
 @defthing[noop@
           (unit/c (import)
                   (export search^))]
 
 @subsubsection[#:style '(hidden toc-hidden)]{Regexp Search Backend}
-@defmodule[ricoeur/tei/search/regexp]
+@defmodule[ricoeur/term-search/backend/regexp]
 @defthing[regexp@
           (unit/c (import)
                   (export search^))]
 
 @subsubsection[#:style '(hidden toc-hidden)]{PostgreSQL Search Backend}
-@defmodule[ricoeur/tei/search/postgresql]
+@defmodule[ricoeur/term-search/backend/postgresql]
 @defthing[postgresql@
           (unit/c (import)
                   (export search^))]
