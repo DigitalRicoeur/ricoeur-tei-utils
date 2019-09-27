@@ -7,6 +7,9 @@
          syntax/parse/define
          (for-syntax racket/base
                      "exptime-common.rkt"
+                     (only-in syntax/parse/lib/function-header
+                              formal
+                              formals)
                      racket/syntax))
 
 (provide empty-corpus
@@ -35,7 +38,7 @@
   (make-parameter empty-corpus))
 
 
-(define-simple-macro (define-corpus-getters
+(define-simple-macro (define-base-corpus-getters
                        [method:id proc:id]
                        ...)
   #:with (gen ...) (generate-temporaries #'(method ...))
@@ -45,7 +48,7 @@
         (define (method) (proc (current-corpus))))
     ...))
 
-(define-corpus-getters
+(define-base-corpus-getters
   [get-instance-info-set corpus-get-instance-info-set]
   [get-checksum-table corpus-get-checksum-table])
 
@@ -68,7 +71,6 @@
     ;; this variant won't support extra definitions
     (pattern :id)
     (pattern [:id :expr]))
-
   
   (define-syntax-class name-spec
     #:description #f
@@ -91,19 +93,70 @@
              #:with name-mixin (mk "-mixin")
              #:with name<%> (mk "<%>")))
 
+
   
-  (define-syntax-class interface-method*-clause
-    #:description "interface method clause"
-    #:attributes {parsed}
-    ;; TODO: extend this to define functions,
-    ;; with local macros to expand to send-generic in their
-    ;; implementations, and handle when (current-corpus)
-    ;; doesn't implement it.
-    (pattern parsed:id)
-    (pattern [method:id contract:expr]
-             #:with parsed this-syntax)
-    (pattern [method:id (~optional contract:expr)]
-             #:with parsed #'(~? [method contract] method))))
+  (define-syntax-class define/method-id
+    #:description #f
+    (pattern (~or* (~literal define/public)
+                   (~literal define/pubment)
+                   (~literal define/public-final))))
+    
+  (define-syntax-class method-definition-form
+    #:description "method definition form"
+    #:attributes {method-definition method kw-formals send-args}
+    (pattern (define/method:define/method-id
+               (method:id
+                . (~and (~or* (arg:formal ...)
+                              (arg:formal ... . (~describe "rest argument"
+                                                           rest-arg:id)))
+                        ;; does great duplicate checking,
+                        ;; but doesn't expose nested attributes
+                        kw-formals:formals))
+               body:expr ...)
+             #:with method-definition this-syntax
+             #:with (arg/kw ...)
+             #'((~? (~@ arg.kw arg.name) arg.name) ...)
+             #:with send-args
+             #'(~? (arg/kw ... . rest-arg)
+                   (arg/kw ...))))
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  
+  (define-syntax-class (interface-method*-clause name<%>-stx)
+    #:description #f
+    #:attributes {parsed method-definition [splice-after 1]}
+    (pattern parsed:plain-interface-method-clause
+             #:attr method-definition #f
+             #:with (splice-after ...) #'())
+    (pattern (~describe
+              "extended interface method clause"
+              [(~alt (~once :method-definition-form)
+                     (~optional (~seq #:contract contract:expr))
+                     (~optional (~seq #:proc proc-name:id))
+                     (~optional
+                      (~seq (~or* #:with-current/infer
+                                  (~seq #:with-current explicit-with-current:id))
+                            #:else
+                            (~describe "parenthesized sequence of expressions"
+                                       [else-body:expr ...]))))
+               ...])
+             #:with parsed #'(~? [method contract] method)
+             #:with (gen-id) (generate-temporaries (list #'method))
+             #:with (splice-after ...)
+             (if (not (or (attribute proc-name) (attribute else-body)))
+                 #'()
+                 #`((define gen-id (generic #,name<%>-stx method))
+                    (~? (define (proc-name corpus . kw-formals)
+                          (send-generic corpus gen-id . send-args)))
+                    (~? (define ((~? explicit-with-current method) . kw-formals)
+                          (define corpus (current-corpus))
+                          (cond
+                            [(is-a? corpus #,name<%>-stx)
+                             (send-generic corpus gen-id . send-args)]
+                            [else
+                             else-body ...]))))))))
 
 
 
@@ -117,14 +170,15 @@
   [(_ :name-spec
       from:from-interfaces to:to-interfaces
       (~or* (interface :super-list
-              if-clause:interface-method*-clause
+              if-clause
               ...)
             (interface* :super-list
                         ([prop:expr val:expr] ...)
-              if-clause:interface-method*-clause
+              if-clause
               ...))
       mixin-clause:class-clause
       ...+)
+   #:declare if-clause (interface-method*-clause #'name<%>)
    #:with name-mixin-tag-method
    ((make-syntax-introducer)
     (format-id #f #:source #'name-mixin
@@ -141,7 +195,10 @@
          (corpus-mixin (from.<%> ...) (to.<%> ... name<%>)
            (define/public-final (name-mixin-tag-method)
              (void))
-           mixin-clause ...)))])
+           (~? if-clause.method-definition) ...
+           mixin-clause ...))
+       (~? (~@ if-clause.splice-after ...))
+       ...)])
 
 
 
