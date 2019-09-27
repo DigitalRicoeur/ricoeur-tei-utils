@@ -37,7 +37,9 @@
      rename-super rename-inner))
   
   (define the-stop-list
-    (list* #'begin #'define-syntax #'define-syntaxes #'define #'define-values
+    (list* #'define-syntax #'define-syntaxes
+           #'define #'define-values
+           #'begin
            class-keywords))
 
   (define-literal-set expanded-class-clause-literals
@@ -52,7 +54,8 @@
     (pattern (define name:id rhs:expr))
     (pattern (define lhs:function-header body:expr ...)
              #:do [(define-values [-name -rhs]
-                     (normalize-definition #'(define lhs body ...) #'λ #f #t))]
+                     (normalize-definition #'(define lhs body ...)
+                                           #'λ #f #t))]
              #:with name -name
              #:with rhs -rhs))
 

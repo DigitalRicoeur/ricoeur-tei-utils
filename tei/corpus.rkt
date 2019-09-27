@@ -13,6 +13,8 @@
          corpus-do-term-search
          corpus<%>
          corpus-mixin
+         corpus-mixin+interface
+         define-corpus-mixin+interface
          super-docs
          super-docs-evt
          super-docs-evt?

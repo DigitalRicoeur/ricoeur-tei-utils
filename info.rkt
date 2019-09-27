@@ -10,43 +10,44 @@
 ;; Documentation to build is listed in "tei/info.rkt".
 
 ;; Dependencies:
-(define deps '(("base" #:version "7.4")
-               ("adjutor" #:version "0.2.5")
-               "ricoeur-kernel"
-               "functional-lib"
-               "roman-numeral"
-               "gregor-lib"
-               "gui-lib"
-               "pict-lib"
-               "scribble-lib"
-               "data-lib"
-               ("db-lib" #:version "1.4")
-               ("sql" #:version "1.5")
-               "draw-lib"
-               "icns"
-               "parser-tools-lib"
-               "pict-snip-lib"
-               "typed-racket-lib"
-               ("xmllint-win32-x86_64" #:platform "win32\\x86_64"
-                                       #:version "0.1")
-               ;; The following are for the documentation time
-               ;; of #lang ricoeur/tei/spec-lang.
-               ;; Can they be made build-deps somehow?
-               "at-exp-lib"
-               "syntax-color-lib"
-               ))
-(define build-deps '("scribble-lib"
-                     "racket-doc"
-                     "at-exp-lib"
-                     "functional-doc"
-                     "gregor-doc"
-                     "rackunit-lib"
-                     ("_-exp" #:version "0.1")
-                     "db-doc"
-                     "data-doc"
-                     "gui-doc"
-                     "scribble-doc"
-                     "todo-list"
-                     "racket-index"
-                     ))
+(define deps
+  '(["base" #:version "7.4"]
+    ["adjutor" #:version "0.2.5"]
+    ["ricoeur-kernel" #:version "0.0.1"]
+    "functional-lib"
+    "roman-numeral"
+    "gregor-lib"
+    "gui-lib"
+    "pict-lib"
+    "scribble-lib"
+    "data-lib"
+    ["db-lib" #:version "1.4"]
+    ["sql" #:version "1.5"]
+    "draw-lib"
+    "icns"
+    "parser-tools-lib"
+    "pict-snip-lib"
+    "typed-racket-lib"
+    ["xmllint-win32-x86_64" #:platform "win32\\x86_64"
+                            #:version "0.1"]
+    ;; The following are for the documentation time
+    ;; of #lang ricoeur/tei/spec-lang.
+    ;; Can they be made build-deps somehow?
+    "at-exp-lib"
+    "syntax-color-lib"))
+
+(define build-deps
+  '("scribble-lib"
+    "racket-doc"
+    "at-exp-lib"
+    "functional-doc"
+    "gregor-doc"
+    "rackunit-lib"
+    ("_-exp" #:version "0.1")
+    "db-doc"
+    "data-doc"
+    "gui-doc"
+    "scribble-doc"
+    "todo-list"
+    "racket-index"))
 
