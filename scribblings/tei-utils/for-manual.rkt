@@ -22,6 +22,7 @@
                                        date?)
                             ricoeur/tei
                             ricoeur/tei/base
+                            ricoeur/term-search
                             xml
                             db
                             json

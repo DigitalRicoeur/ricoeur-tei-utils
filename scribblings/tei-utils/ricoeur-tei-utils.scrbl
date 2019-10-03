@@ -4,8 +4,7 @@
 @author[(author+email @elem{Philip M@superscript{c}Grath}
                       "philip@philipmcgrath.com")]
 @defmodule[#:multi (ricoeur/tei
-                    ricoeur/tei/base
-                    ricoeur/term-search)]
+                    ricoeur/tei/base)]
 
 
 @(require "for-manual.rkt")
@@ -15,6 +14,7 @@ working with Digital Ricœur's TEI XML documents.
 In addition to being valid and well-formed XML, the
 documents should conform to the structure specified in
 @(guidelines-doc).
+It also documents Digital Ricœur's @secref["_Term_Search__Tool"].
 
 This document is written for programmers intending either to
 use this library in their own programs

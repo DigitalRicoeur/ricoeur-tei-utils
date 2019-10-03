@@ -140,7 +140,7 @@
                                   (~seq #:with-current explicit-with-current:id))
                             #:else
                             (~describe "parenthesized sequence of expressions"
-                                       [else-body:expr ...]))))
+                                       [else-body:expr ...+]))))
                ...])
              #:with parsed #'(~? [method contract] method)
              #:with (gen-id) (generate-temporaries (list #'method))

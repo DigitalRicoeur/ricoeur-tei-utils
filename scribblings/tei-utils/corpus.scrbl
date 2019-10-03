@@ -16,18 +16,16 @@ This library provides @deftech{corpus objects}
 (instances of @racket[corpus%] or a subclass)
 to bundle collections of TEI documents with
 related functionality.
-Corpus objects provide a particularly convienient
-way to use this library's search functions, like
-@racket[term-search], though both parts of the
-library can be used independently.
+The @tech{corpus object} system is also the
+primary hook for tools to integrate with
+the larger Digital Ricœur application architecture.
 
 @section{Working with Corpus Objects}
 @defparam[current-corpus corpus
           (is-a?/c corpus%)
           #:value empty-corpus]{
  Contains a @tech{corpus object} for use by high-level functions
- like @racket[get-instance-info-set], @racket[get-checksum-table],
- and @racket[term-search].
+ like @racket[get-instance-info-set] and @racket[get-checksum-table].
 
  In practice, this parameter should usually be initialized
  with a @racket[directory-corpus%] instance.
@@ -67,69 +65,14 @@ library can be used independently.
  to encapsulate the very same TEI documents.
 }
 
-@deftogether[
- (@defproc[(term-search [term term/c]
-                        [#:ricoeur-only? ricoeur-only? any/c #t]
-                        [#:languages languages search-languages/c 'any]
-                        [#:book/article book/article (or/c 'any 'book 'article) 'any]
-                        [#:exact? exact? any/c #f])
-           (instance-set/c document-search-results?)]
-   @defthing[term/c flat-contract?
-             #:value (and/c string-immutable/c #px"[^\\s]")]
-   @defthing[search-languages/c flat-contract?
-             #:value (or/c 'any language-symbol/c (listof language-symbol/c))])]{
- Searches for @racket[term], an immutable string containing at least one non-whitespace
- character, in the @tech{TEI documents} encapsulated by @racket[(current-corpus)].
-
- If @racket[languages] is a list of symbols,
- results will only be returned from TEI documents for which
- @racket[instance-language] would have produced one of the
- symbols in the @racket[languages] list.
- If it is a single symbol satisfying @racket[language-symbol/c],
- it is treated like @racket[(list languages)].
- Otherwise, if @racket[languages] is @racket['any] (the default),
- documents in all languages will be searched.
- Use @racket['any] rather than listing all currently-supported
- languages so that, when support for additional languages is added
- to this library, they will be included automatically.
- 
- If @racket[book/article] is @racket['book] or @racket['article],
- only results from TEI documents that would have returned the
- same symbol from @racket[instance-book/article] will be returned.
- If @racket[book/article] is @racket['any] (the default),
- all TEI documents will be searched.
-
- If @racket[ricoeur-only?] is non-false (the default),
- results will only be returned from passages by Paul @|Ricoeur|.
- Otherwise, results from passages by editors @etc will also
- be included.
- See @racket[segment-by-ricoeur?] for more details.
-
- If @racket[exact?] is @racket[#false] (the default),
- @racket[term-search] will try to find matches for lexical
- variants of @racket[term].
- The precise details of how lexical variants are matched
- are unspecified and depend on the specific @tech{search backend}
- used by the @tech{corpus object}.
- If @racket[exact?] is non-false, lexical variants are ignored
- and only exact matches for @racket[term] are returned.
-}
-
 
 @deftogether[
  (@defproc[(corpus-get-instance-info-set [corpus (is-a?/c corpus%)])
            (instance-set/c)]
    @defproc[(corpus-get-checksum-table [corpus (is-a?/c corpus%)])
-            checksum-table/c]
-   @defproc[(corpus-do-term-search [corpus (is-a?/c corpus%)]
-                                   [term term/c]
-                                   [#:ricoeur-only? ricoeur-only? any/c #t]
-                                   [#:languages languages search-languages/c 'any]
-                                   [#:book/article book/article (or/c 'any 'book 'article) 'any]
-                                   [#:exact? exact? any/c #f])
-            (instance-set/c document-search-results?)])]{
- Like @racket[get-instance-info-set], @racket[get-checksum-table],
- and @racket[term-search], respectively,
+            checksum-table/c])]{
+ Like @racket[get-instance-info-set] and @racket[get-checksum-table],
+ respectively,
  but using @racket[corpus] instead of @racket[(current-corpus)].
 }
 
@@ -143,19 +86,13 @@ library can be used independently.
  convienient initialization than @racket[corpus%].
 
  Note that creating a new instance of @racket[corpus%]
- involves a fair amount of overhead,
+ often involves a fair amount of overhead,
  so creating redundant values should be avoided.
  Reusing @tech{corpus objects} may also improve 
  search performance through caching, for example.
  
- @defconstructor[([docs (instance-set/c tei-document?) (instance-set)]
-                  [search-backend search-backend/c '(eager noop)])]{
+ @defconstructor[([docs (instance-set/c tei-document?) (instance-set)])]{
   Constructs a @tech{corpus object} encapsulating @racket[docs].
-
-  The @racket[search-backend] argument is used as the
-  corpus object's @tech{search backend} and affects the behavior
-  of @method[corpus% term-search].
-  See @racket[search-backend/c] for more details.
  }
  @defmethod[#:mode public-final
             (get-instance-info-set)
@@ -169,16 +106,6 @@ library can be used independently.
   Implements @racket[get-checksum-table] and
   @racket[corpus-get-checksum-table].
  }
- @defmethod[#:mode public-final
-            (term-search [term term/c]
-                         [#:ricoeur-only? ricoeur-only? any/c #t]
-                         [#:languages languages search-languages/c 'any]
-                         [#:book/article book/article (or/c 'any 'book 'article) 'any]
-                         [#:exact? exact? any/c #f])
-            (instance-set/c document-search-results?)]{
-  Implements @racket[term-search] and
-  @racket[corpus-do-term-search].
- }
 }
 
 @defthing[empty-corpus (is-a?/c corpus%)]{
@@ -186,86 +113,8 @@ library can be used independently.
  the @racket[current-corpus] parameter.
 
  With @racket[empty-corpus], @method[corpus% get-instance-info-set]
- always returns @racket[(instance-set)],
- @method[corpus% get-checksum-table] always returns @racket[#hasheq()],
- and @method[corpus% term-search] always returns @racket[(instance-set)].
-}
-
-@deftogether[
- (@defthing[search-backend/c contract?
-            #:value (lazy+eager-search-backend/c
-                     (or/c 'noop 'regexp (postgresql-data-source/c)))]
-   @defproc[(lazy+eager-search-backend/c [base/c contract])
-            contract?
-            #:value (or/c base/c (list/c 'eager base/c))])]{
- The contract @racket[search-backend/c]
- recognizes @deftech{search backends}.
-
- A @tech{search backend} specifies both the underlying
- search implementation to be used for functions like
- @racket[term-search] and the strategy by which the implementation
- should be initialized.
- The actual initialization is handled either by a @tech{corpus object}
- or by direct use of @racket[initialize-search-backend].
-
- If the @tech{search backend} is a list beginning with @racket['eager],
- the search implementation is initialized synchronously,
- which is especially useful for debugging.
- Otherwise, the search implementation is initialized in
- a background thread, which can provide a substantial improvement
- in startup time.
-
- The @racket[base/c] portion of the @tech{search backend} value
- determines what underlying search implementation is used:
- @itemlist[
- @item{@racket['noop] indicates a trivial implementation
-   that never returns any search results.
-  }
- @item{@racket['regexp] specifies a simplistic regular-expression-based
-   search implemented in pure Racket, with no system-level dependencies.
-   The performance of @racket['regexp]-based @tech{search backends}
-   is extremely slow for large corpora.
-   Even for development, using @racket['regexp] with Digital @Ricoeur's
-   full set of digitized documents is not viable.
-  }
- @item{A value satisfying @racket[(postgresql-data-source/c)]
-   indicates a production-quality implementation using PostgreSQL’s
-   full-text search feature by connecting to the given database.
-   @bold{Note that initializing a PostgreSQL
-    search backend will perform destructive modifications
-    to the database.}
-   The specified database should be dedicated completely to use by the 
-   constructed @tech{corpus object} or @tech{searchable document set}:
-   it should not be relied upon for other purposes, and multiple
-   @tech{corpus objects} or @tech{searchable document sets}
-   should not use the same database at the same time.
-   }]
-}
-
-@defproc[(postgresql-data-source/c) contract?]{
- Returns an impersonator contract recognizing values
- created by @racket[postgresql-data-source] with
- sufficient arguments to be used with @racket[dsn-connect]
- without needing to supply any additional arguments.
- That is, at least the @racket[#:user] and @racket[#:database]
- arguments are required.
-
- Values satisfying @racket[(postgresql-data-source/c)] can
- be used as @tech{search backends}.
-
- Aside from checking that the @racket[data-source] value
- is well-formed and contains sufficient arguments,
- the primary purpose of @racket[(postgresql-data-source/c)]
- is to prevent mutation.
- Mutators like @racket[set-data-source-args!] raise exceptions
- when applied to values protected by @racket[(postgresql-data-source/c)].
- In addition, the first time @racket[(postgresql-data-source/c)]
- encounters a given @racket[data-source] value, the contract
- copies it (to prevent it from being mutated through another reference)
- and coerces any strings in the
- @racket[data-source-args] field to immutable strings.
- Therefore, values protected by @racket[(postgresql-data-source/c)]
- may not be @racket[eq?] or even @racket[equal?] to their originals.
+ always returns @racket[(instance-set)] and
+ @method[corpus% get-checksum-table] always returns @racket[#hasheq()].
 }
 
 @defclass[directory-corpus% corpus% ()]{
@@ -295,17 +144,14 @@ library can be used independently.
 }
 
 @section{Deriving New Corpus Classes}
-@defform[(corpus-mixin [from<%> ...] [to<%> ...]
-           class-clause ...+)
-         #:contracts ([from<%> interface?]
-                      [to<%> interface?])]{
- Clients of this library will want to extend the @tech{corpus object}
- system to support additional features by implementing
- new classes derived from @racket[corpus%].
- There are two main points where derived classes will want to interpose
- on @racket[corpus%]'s initialization:
- @(itemlist #:style 'ordered
-            @item{A few classes, like @racket[directory-corpus%],
+Clients of this library will want to extend the @tech{corpus object}
+system to support additional features by implementing
+new classes derived from @racket[corpus%].
+There are two main points where derived classes will want to interpose
+on @racket[corpus%]'s initialization:
+@itemlist[
+ #:style 'ordered
+ @item{A few classes, like @racket[directory-corpus%],
   will want to supply an alternate means of constructing
   the full @tech{instance set} of @tech{TEI documents}
   to be encapsulated by the @tech{corpus object}.
@@ -313,15 +159,35 @@ library can be used independently.
   object system, such as @racket[init] and @racket[super-new], to control the
   initialization of the base class.
  }
-            @item{More often, derived classes will want to use the complete
+ @item{More often, derived classes will want to use the complete
   @tech{instance set} of @tech{TEI documents} to initialize some extended functionality:
   for example, @racket[corpus%] itself extends a primitive, unexported class this way
   to initialize a @tech{searchable document set}.
   The @racketmodname[ricoeur/tei] library provides special support
-  for these kinds of extensions.
-  })
+  for these kinds of extensions through three syntactic forms:
+  @racket[corpus-mixin], @racket[corpus-mixin+interface],
+  and @racket[define-corpus-mixin+interface].
+  Most clients should use @racket[define-corpus-mixin+interface],
+  but it is best understood as an extension of the simpler forms.
+  }]
 
- A key design consideration is that @racket[corpus%] instance does
+
+@defform[(corpus-mixin [from<%> ...] [to<%> ...]
+           mixin-clause ...+)
+         #:contracts ([from<%> interface?]
+                      [to<%> interface?])]{
+ Like @racket[mixin], but cooperates with @racket[corpus%]
+ and the @racket[super-docs] and @racket[super-docs-evt] forms
+ to provide access to the encapsulated @tech{instance set} of
+ @tech{TEI documents} as a ``virtual'' initialization variable.
+ The @racket[corpus<%>] interface is implicitly added to
+ @racket[corpus-mixin]'s @racket[from<%>] interfaces.
+ 
+ Most clients should use the higher-level @racket[corpus-mixin+interface]
+ or @racket[define-corpus-mixin+interface], rather than using @racket[corpus-mixin]
+ directly.
+                                           
+ A key design consideration is that a @racket[corpus%] instance does
  not keep its @tech{TEI documents} reachable after its initialization,
  as @tech{TEI document} values can be rather large.
  Derived classes are urged to follow this practice:
@@ -330,19 +196,16 @@ library can be used independently.
  as soon as possible.
 
  Concretely, this means that @racket[corpus%] does not store
- the @tech{instance set} of @tech{TEI documents}
- in a @seclink["clfields" #:doc '(lib "scribblings/reference/reference.scrbl")]{field}
+ the @tech{instance set} of @tech{TEI documents} in a
+ @seclink["clfields" #:doc '(lib "scribblings/reference/reference.scrbl")]{field}
  (neither public nor private), as objects' fields are reachable after initialization. 
 
- The @racket[corpus-mixin] form is like @racket[mixin], but it cooperates
- with the @racket[super-docs] and @racket[super-docs-evt] forms
- to provide access to the @tech{instance set} of @tech{TEI documents} as
- a ``virtual'' initialization variable.
- (The @racket[corpus<%>] interface is implicitly included among
- @racket[corpus-mixin]'s @racket[from<%>] interfaces.)
-
+ Instead, derived classes can access the @tech{instance set} of @tech{TEI documents}
+ during initialization using @racket[super-docs] or @racket[super-docs-evt]:
+ 
  @defsubform[(super-docs)]{
-  Within a @racket[corpus-mixin] form, evaluates to the full @tech{instance set}
+  Within @racket[corpus-mixin] and related forms,
+  evaluates to the full @tech{instance set}
   of @tech{TEI documents} to be encapsulated by the @tech{corpus object} as a
   ``virtual'' @seclink["clinitvars" #:doc '(lib "scribblings/reference/reference.scrbl")]{
    initialization variable}: using @racket[(super-docs)] anywhere that an
@@ -354,7 +217,7 @@ library can be used independently.
   analagous to accessing an uninitialized field.
  }
  @defsubform[(super-docs-evt)]{
-  Within a @racket[corpus-mixin] form, similar to @racket[super-docs],
+  Within @racket[corpus-mixin] and related forms, similar to @racket[super-docs],
   but produces a @tech[#:doc '(lib "scribblings/reference/reference.scrbl")]{
    synchronizable event} which produces the @tech{instance set}
   of @tech{TEI documents} as its @tech[#:doc '(lib "scribblings/reference/reference.scrbl")]{
@@ -386,135 +249,93 @@ library can be used independently.
  Recognizes values produced by @racket[super-docs-evt].
 }
 
-@defthing[corpus<%> interface?]{
+@defform[#:literals {interface interface*}
+         (corpus-mixin+interface [from<%> ...] [to<%> ...]
+           interface-decl
+           mixin-clause ...+)
+         #:grammar
+         [(interface-decl (interface (super<%> ...)
+                            interface-method-clause ...)
+                          (interface* (super<%> ...)
+                                      ([prop-expr val-expr] ...)
+                            interface-method-clause ...))
+          (interface-method-clause method-id
+                                   [method-id contract-expr])]
+         #:contracts ([from<%> interface?]
+                      [to<%> interface?]
+                      [super<%> interface?]
+                      [prop-expr struct-type-property?]
+                      [contract-expr contract?])]{
+ Like @racket[corpus-mixin], but evaluates to two values,
+ a mixin and an assosciated interface.
+
+ ...
+
+ Most clients should use the higher-level @racket[define-corpus-mixin+interface],
+ rather than using @racket[corpus-mixin+interface] directly.
+}
+
+@defform[#:literals (interface interface*
+                      define/public define/pubment define/public-final)
+         (define-corpus-mixin+interface name-spec
+           [from<%> ...] [to<%> ...]
+           interface-decl*
+           mixin-clause ...+)
+         #:grammar
+         [(name-spec base-id [id-mixin id<%>])
+          (interface-decl* (interface (super<%> ...)
+                             interface-method-clause* ...)
+                           (interface* (super<%> ...)
+                                       ([prop-expr val-expr] ...)
+                             interface-method-clause* ...))
+          (interface-method-clause* interface-method-clause
+                                    ext-method-clause)
+          (interface-method-clause method-id
+                                   [method-id contract-expr])
+          (ext-method-clause [ext-clause-part ...])
+          (ext-clause-part (code:line method-definition-form (code:comment "required"))
+                           (code:line #:contract contract-expr)
+                           (code:line #:proc proc-id)
+                           with-current-decl)
+          (method-definition-form (define/method (method-id kw-formal ...)
+                                    body ...+))
+          (define/method define/public define/pubment define/public-final)
+          (with-current-decl (code:line #:with-current with-current-id
+                                        #:else [else-body ...+])
+                             (code:line #:with-current/infer
+                                        #:else [else-body ...+]))]
+         #:contracts ([from<%> interface?]
+                      [to<%> interface?]
+                      [super<%> interface?]
+                      [prop-expr struct-type-property?]
+                      [contract-expr contract?])]{
+ If no @racket[ext-method-clause] appears,
+ equivalent to:
+ @racketblock[
+ (define-values [id-mixin id<%>]
+   (corpus-mixin+interface [from<%> ...] [to<%> ...]
+     interface-decl*
+     mixin-clause ...+))]
+ except that @racket[define-corpus-mixin+interface] can often
+ produce better @seclink["infernames" #:doc '(lib "scribblings/reference/reference.scrbl")]{
+  inferred value names}.
+ If @racket[name-spec] is given as a single @racket[base-id],
+ identifiers are synthesized with the suffixes @racketid[-mixin] and @racketid[<%>]
+ using the lexical context of @racket[base-id].
+       
+ The @racket[ext-method-clause] variant extends the grammar of @racket[interface]
+ and @racket[interface*] to support defining functions related to
+ one of the interface's methods:
+ @itemlist[
+ @item{...}
+ ]}
+
+@definterface[corpus<%> (corpus%)]{
  Equivalent to @racket[(class->interface corpus%)].
+ Note that @racket[corpus%] implements lexically-protected
+ methods (see @racket[define-local-member-name]),
+ so @racket[corpus<%>] can only be implemented by
+ inheriting from @racket[corpus%]:
+ @racket[corpus<%>] is provided primarily as a convienience for
+ writing derived interfaces, mixins, and contracts.
 }
-
-@section{Search Results}
-@deftogether[
- (@defpredicate[document-search-results?]
-   @defproc[(document-search-results-count [doc-results document-search-results?])
-            exact-positive-integer?]
-   @defproc[(document-search-results-results [doc-results document-search-results?])
-            (non-empty-listof search-result?)]
-   @defform[#:kind "match expander"
-            (document-search-results kw-pat ...)
-            #:grammar [(kw-pat (code:line #:count count-pat)
-                               (code:line #:results results-pat))]])]{
- A @deftech{document search results} value, recognized by
- the predicate @racket[document-search-results?], encapsulates
- the results of a function like @racket[term-search]
- from a single @tech{TEI document}.
- Document search results values also serve as @tech{instance info}
- values for bibliographic information.
-
- A @tech{document search result} value will always contain at
- least one @tech{search result}.
-
- The function @racket[document-search-results-count] is equivalent to
- @racket[(compose1 length document-search-results-results)],
- but @racket[document-search-results-count] (and the corresponding
- @racket[match] pattern with @racket[document-search-results]) is
- cached for efficiency of repeated calls
-}
-
-@deftogether[
- (@defpredicate[search-result?]
-   @defproc[(search-result-excerpt [search-result search-result?])
-            (maybe/c (and/c string-immutable/c
-                            trimmed-string-px))]
-   @defform[#:kind "match expander"
-            (search-result excerpt-pat)])]{
- A @deftech{search result} value, recognized by @racket[search-result?],
- represents an individual match from a function like @racket[term-search].
- Search result values are also @tech{segments}, though
- a given @tech{document search result} may contain multiple
- @tech{search results} that are the same according to
- @racket[segment-meta=?] if there was more than one match for
- the search term within a single @tech{segment}.
-
- A search result's excerpt may be @racket[(nothing)] if
- there were too many results for the search term from that
- @tech{TEI document} to return excerpts for all of them.
-
- The @racket[trimmed-string-px] part of the contract on the result
- of @racket[search-result-excerpt] guaranties that, 
- if the returned excerpt is not @racket[(nothing)],
- the contained string will be non-empty and
- will neither start nor end with whitespace.
-
- See also @racket[search-result-<?] and @racket[search-result->?].
-}
-
-@deftogether[
- (@defproc[(search-result-<? [a search-result?] [b search-result?])
-           boolean?]
-   @defproc[(search-result->? [a search-result?] [b search-result?])
-            boolean?])]{
- Ordering functions on @tech{search results}, such as might be useful
- with @racket[sort].
- These are more fine-grained than functions based on
- @racket[segment-order] would be: if @racket[a] and @racket[b] are
- from the same @tech{segment} according to @racket[segment-meta=?],
- these functions will sort them according to their relative position
- within the segment.
-
- Sorting @tech{search results} with @racket[search-result-<?] will
- put them in the order in which they appeared in the original
- @tech{TEI document}.
-
- It is an error to use @racket[search-result-<?] or
- @racket[search-result->?] on @tech{search results} that did not
- come from the same @tech{document search result} value.
-}
-
-
-@section{Searching Without a Corpus Object}
-@deftogether[
- (@defproc[(initialize-search-backend [backend search-backend/c]
-                                      [docs (instance-set/c tei-document?)])
-           searchable-document-set?]
-   @defpredicate[searchable-document-set?])]{
- While @tech{corpus objects} are generally the preferred way to
- use this library's search functions, searching @tech{TEI documents}
- without a corpus object is possible by creating lower-level
- @deftech{searchable document sets} directly.
-
- A @tech{searchable document set} is recognized by the predicate
- @racket[searchable-document-set?] and can be created using
- @racket[initialize-search-backend], which takes a
- @tech{search backend}, just like @racket[corpus%], and an
- @tech{instance set} of @tech{TEI documents} to be searched.
- (In fact, @racket[corpus%] implements @method[corpus% term-search]
- by creating a @tech{searchable document set} internally.)
-
- As with creating an instance of @racket[corpus%],
- creating a new @tech{searchable document set} with
- @racket[initialize-search-backend] involves an appreciable
- amount of overhead, so creating redundant values should
- be avoided.
-}
-
-@defthing[noop-searchable-document-set searchable-document-set?]{
- A trivial @tech{searchable document set} which never returns any
- results. Calling @racket[initialize-search-backend] with a
- @tech{search backend} of @racket['(eager noop)] always
- returns @racket[noop-searchable-document-set].
-}
-
-@defproc[(searchable-document-set-do-term-search
-          [searchable-document-set searchable-document-set?]
-          [term term/c]
-          [#:ricoeur-only? ricoeur-only? any/c #t]
-          [#:languages languages search-languages/c 'any]
-          [#:book/article book/article (or/c 'any 'book 'article) 'any]
-          [#:exact? exact? any/c #f])
-         (instance-set/c document-search-results?)]{
- Like @racket[corpus-do-term-search], but uses the
- @tech{searchable document set} @racket[searchable-document-set].
-}
-
-
-
-
-
