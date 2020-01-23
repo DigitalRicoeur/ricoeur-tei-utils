@@ -1,0 +1,662 @@
+<book xmlns:oasis="http://docs.oasis-open.org/ns/oasis-exchange/table"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:xlink="http://www.w3.org/1999/xlink"
+      xmlns:mml="http://www.w3.org/1998/Math/MathML"
+      dtd-version="0.2"
+      xml:lang="eng">
+   <collection-meta>
+      <collection-id collection-id-type="jstor">j.ctt1ffjp1x</collection-id>
+   </collection-meta>
+   <book-meta>
+      <book-id book-id-type="jstor">j.ctt1gxpd95</book-id>
+      <subj-group subj-group-type="discipline">
+         <subject>Sociology</subject>
+      </subj-group>
+      <book-title-group>
+         <book-title>The Legacy of Pierre Bourdieu</book-title>
+         <subtitle>Critical Essays</subtitle>
+      </book-title-group>
+      <contrib-group>
+         <role content-type="editor">Edited by</role>
+         <contrib contrib-type="editor" id="contrib1">
+            <name name-style="western">
+               <surname>Susen</surname>
+               <given-names>Simon</given-names>
+            </name>
+         </contrib>
+         <contrib contrib-type="editor" id="contrib2">
+            <name name-style="western">
+               <surname>Turner</surname>
+               <given-names>Bryan S.</given-names>
+            </name>
+         </contrib>
+      </contrib-group>
+      <pub-date>
+         <day>15</day>
+         <month>04</month>
+         <year>2011</year>
+      </pub-date>
+      <isbn content-type="ppub">9780857287687</isbn>
+      <isbn content-type="epub">9780857289278</isbn>
+      <publisher>
+         <publisher-name>Anthem Press</publisher-name>
+         <publisher-loc>LONDON; NEW YORK; DELHI</publisher-loc>
+      </publisher>
+      <permissions>
+         <copyright-year>2011</copyright-year>
+         <copyright-holder>Simon Susen</copyright-holder>
+         <copyright-holder>Bryan S. Turner</copyright-holder>
+      </permissions>
+      <self-uri xlink:href="http://www.jstor.org/stable/j.ctt1gxpd95"/>
+      <abstract abstract-type="short">
+         <p>This volume explores the sociological legacy of the late Pierre Bourdieu through an examination of the intellectual division between his reception in the world of French social sciences and his reception in the Anglophone world.</p>
+      </abstract>
+      <counts>
+         <page-count count="470"/>
+      </counts>
+      <custom-meta-group>
+         <custom-meta>
+            <meta-name>
+                    lang
+                </meta-name>
+            <meta-value>eng</meta-value>
+         </custom-meta>
+      </custom-meta-group>
+   </book-meta>
+   <body>
+      <book-part indexed="true" xlink:type="simple">
+         <body>
+            <book-part>
+               <book-part-meta>
+                  <book-part-id book-part-id-type="jstor">j.ctt1gxpd95.1</book-part-id>
+                  <title-group>
+                     <title>Front Matter</title>
+                  </title-group>
+                  <fpage>i</fpage>
+               </book-part-meta>
+            </book-part>
+         </body>
+      </book-part>
+      <book-part indexed="true" xlink:type="simple">
+         <body>
+            <book-part>
+               <book-part-meta>
+                  <book-part-id book-part-id-type="jstor">j.ctt1gxpd95.2</book-part-id>
+                  <title-group>
+                     <title>Table of Contents</title>
+                  </title-group>
+                  <fpage>v</fpage>
+               </book-part-meta>
+            </book-part>
+         </body>
+      </book-part>
+      <book-part indexed="true" xlink:type="simple">
+         <body>
+            <book-part>
+               <book-part-meta>
+                  <book-part-id book-part-id-type="jstor">j.ctt1gxpd95.3</book-part-id>
+                  <title-group>
+                     <title>LIST OF CONTRIBUTORS</title>
+                  </title-group>
+                  <fpage>vii</fpage>
+               </book-part-meta>
+            </book-part>
+         </body>
+      </book-part>
+      <book-part indexed="true" xlink:type="simple">
+         <body>
+            <book-part>
+               <book-part-meta>
+                  <book-part-id book-part-id-type="jstor">j.ctt1gxpd95.4</book-part-id>
+                  <title-group>
+                     <title>INTRODUCTION:</title>
+                     <subtitle>Preliminary Reflections on the Legacy of Pierre Bourdieu</subtitle>
+                  </title-group>
+                  <contrib-group>
+                     <contrib contrib-type="author" id="contrib1" xlink:type="simple">
+                        <name name-style="western">
+                           <surname>Susen</surname>
+                           <given-names>Simon</given-names>
+                        </name>
+                     </contrib>
+                     <contrib contrib-type="author" id="contrib2" xlink:type="simple">
+                        <name name-style="western">
+                           <surname>Turner</surname>
+                           <given-names>Bryan S.</given-names>
+                        </name>
+                     </contrib>
+                  </contrib-group>
+                  <fpage>xiii</fpage>
+                  <abstract>
+                     <p>Unsurprisingly, the Second World War had separate and distinctive consequences for different national traditions of sociology. After the War, the dominant and arguably most successful of the Western democracies emerged in North America, and its sociological traditions assumed a celebratory and often triumphalist perspective on modernisation. The defeat of the fascist nations – notably Germany, Italy, and Japan – seemed to demonstrate the superiority of Western liberal democratic systems, and North American sociologists took the lead in developing theories of development and modernisation that were optimistic and forward-looking. The examples are numerous, but we might mention Daniel Lerner’s<italic>The Passing</italic>
+                     </p>
+                  </abstract>
+               </book-part-meta>
+            </book-part>
+         </body>
+      </book-part>
+      <book-part indexed="true" xlink:type="simple">
+         <body>
+            <book-part>
+               <book-part-meta>
+                  <book-part-id book-part-id-type="jstor">j.ctt1gxpd95.5</book-part-id>
+                  <title-group>
+                     <label>CHAPTER ONE</label>
+                     <title>Between Structuralism and Theory of Practice:</title>
+                     <subtitle>The Cultural Sociology of Pierre Bourdieu</subtitle>
+                  </title-group>
+                  <contrib-group>
+                     <contrib contrib-type="author" id="contrib1" xlink:type="simple">
+                        <name name-style="western">
+                           <surname>Joas</surname>
+                           <given-names>Hans</given-names>
+                        </name>
+                     </contrib>
+                     <contrib contrib-type="author" id="contrib2" xlink:type="simple">
+                        <name name-style="western">
+                           <surname>Knöbl</surname>
+                           <given-names>Wolfgang</given-names>
+                        </name>
+                     </contrib>
+                     <contrib contrib-type="translator" id="contrib3" xlink:type="simple">
+                        <role>Translated by</role>
+                        <name name-style="western">
+                           <surname>Skinner</surname>
+                           <given-names>Alex</given-names>
+                        </name>
+                     </contrib>
+                  </contrib-group>
+                  <fpage>1</fpage>
+                  <abstract>
+                     <p>Bourdieu’s work was deeply moulded by the national intellectual milieu in which it developed, that of France in the late 1940s and 1950s, a milieu characterised by disputes between phenomenologists and structuralists. But it is not this national and cultural dimension that distinguishes Bourdieu’s writings from those of other ‘grand theorists’. Habermas and Giddens, for example, owed as much to the academic or political context of their home countries. What set Bourdieu’s approach apart from that of his German and British ‘rivals’ was a significantly stronger linkage of theoretical and empirical knowledge. Bourdieu was first and foremost an empirical sociologist,</p>
+                  </abstract>
+               </book-part-meta>
+            </book-part>
+         </body>
+      </book-part>
+      <book-part indexed="true" xlink:type="simple">
+         <body>
+            <book-part>
+               <book-part-meta>
+                  <book-part-id book-part-id-type="jstor">j.ctt1gxpd95.6</book-part-id>
+                  <title-group>
+                     <label>CHAPTER TWO</label>
+                     <title>Pierre Bourdieu:</title>
+                     <subtitle>Unorthodox Marxist?</subtitle>
+                  </title-group>
+                  <contrib-group>
+                     <contrib contrib-type="author" id="contrib1" xlink:type="simple">
+                        <name name-style="western">
+                           <surname>Fowler</surname>
+                           <given-names>Bridget</given-names>
+                        </name>
+                     </contrib>
+                  </contrib-group>
+                  <fpage>33</fpage>
+                  <abstract>
+                     <p>Derek Robbins states categorically that ‘[t]here are no grounds for considering Bourdieu was ever a Marxist’ (2006: 513), whilst Brubaker argues that although Bourdieu might appear to be in the Marxist tradition, his critiques of Marxism should make us think otherwise (1985: 761). Although I shall be taking issue with both of these conclusions, I do not want to claim the opposite: that Marx alone influenced him. Bourdieu was unusually inventive in drawing also on Weber, Durkheim, Husserl, Mauss, Elias, and Pascal, not to mention others. Given more space, I would draw out all of these different strands in the</p>
+                  </abstract>
+               </book-part-meta>
+            </book-part>
+         </body>
+      </book-part>
+      <book-part indexed="true" xlink:type="simple">
+         <body>
+            <book-part>
+               <book-part-meta>
+                  <book-part-id book-part-id-type="jstor">j.ctt1gxpd95.7</book-part-id>
+                  <title-group>
+                     <label>CHAPTER THREE</label>
+                     <title>From Marx to Bourdieu:</title>
+                     <subtitle>The Limits of the Structuralism of Practice</subtitle>
+                  </title-group>
+                  <contrib-group>
+                     <contrib contrib-type="author" id="contrib1" xlink:type="simple">
+                        <name name-style="western">
+                           <surname>Karsenti</surname>
+                           <given-names>Bruno</given-names>
+                        </name>
+                     </contrib>
+                     <contrib contrib-type="translator" id="contrib2" xlink:type="simple">
+                        <role>Translated by</role>
+                        <name name-style="western">
+                           <surname>Susen</surname>
+                           <given-names>Simon</given-names>
+                        </name>
+                     </contrib>
+                  </contrib-group>
+                  <fpage>59</fpage>
+                  <abstract>
+                     <p>Let me begin by quoting Marx from the<sub>German Ideology</sub>:</p>
+                     <p>Men can be distinguished from animals by consciousness, by religion, or anything else you like. They themselves begin to distinguish themselves from animals as soon as they begin to produce their means of subsistence, a step which is conditioned by their physical organization. By producing their means of subsistence men are indirectly producing their actual material life. (Marx and Engels, 2000/1977 [1846]: 177)</p>
+                     <p>From a materialist point of view, the main criterion for distinguishing one species from another is its way of asserting itself as a living species. Thus,<italic>one</italic>
+                     </p>
+                  </abstract>
+               </book-part-meta>
+            </book-part>
+         </body>
+      </book-part>
+      <book-part indexed="true" xlink:type="simple">
+         <body>
+            <book-part>
+               <book-part-meta>
+                  <book-part-id book-part-id-type="jstor">j.ctt1gxpd95.8</book-part-id>
+                  <title-group>
+                     <label>CHAPTER FOUR</label>
+                     <title>Durkheim and Bourdieu:</title>
+                     <subtitle>The Common Plinth and its Cracks</subtitle>
+                  </title-group>
+                  <contrib-group>
+                     <contrib contrib-type="author" id="contrib1" xlink:type="simple">
+                        <name name-style="western">
+                           <surname>Wacquant</surname>
+                           <given-names>Loïc</given-names>
+                        </name>
+                     </contrib>
+                     <contrib contrib-type="translator" id="contrib2" xlink:type="simple">
+                        <role>Translated by</role>
+                        <name name-style="western">
+                           <surname>Wareh</surname>
+                           <given-names>Tarik</given-names>
+                        </name>
+                     </contrib>
+                  </contrib-group>
+                  <fpage>91</fpage>
+                  <abstract>
+                     <p>For lack of being able to offer here a systematic comparison between Bourdieu’s sociology and the thought of Durkheim – which would require an historicalanalytic monograph capable of reconstituting the double chain, social and intellectual, of the ramifying causations that link them to each other and to their respective milieu – I would like, by way of selective soundings, to bring out four of the pillars that support their common base: namely, (1) the fierce attachment to rationalism, (2) the refusal of pure theory and the stubborn defence of the undividedness of social science, (3) the relation to the historical</p>
+                  </abstract>
+               </book-part-meta>
+            </book-part>
+         </body>
+      </book-part>
+      <book-part indexed="true" xlink:type="simple">
+         <body>
+            <book-part>
+               <book-part-meta>
+                  <book-part-id book-part-id-type="jstor">j.ctt1gxpd95.9</book-part-id>
+                  <title-group>
+                     <label>CHAPTER FIVE</label>
+                     <title>With Weber Against Weber:</title>
+                     <subtitle>In Conversation With Pierre Bourdieu</subtitle>
+                  </title-group>
+                  <contrib-group>
+                     <contrib contrib-type="author" id="contrib1" xlink:type="simple">
+                        <name name-style="western">
+                           <surname>Bourdieu</surname>
+                           <given-names>Pierre</given-names>
+                        </name>
+                     </contrib>
+                     <contrib contrib-type="author" id="contrib2" xlink:type="simple">
+                        <name name-style="western">
+                           <surname>Schultheis</surname>
+                           <given-names>Franz</given-names>
+                        </name>
+                     </contrib>
+                     <contrib contrib-type="author" id="contrib3" xlink:type="simple">
+                        <name name-style="western">
+                           <surname>Pfeuffer</surname>
+                           <given-names>Andreas</given-names>
+                        </name>
+                     </contrib>
+                     <contrib contrib-type="translator" id="contrib4" xlink:type="simple">
+                        <role>Translated by</role>
+                        <name name-style="western">
+                           <surname>Susen</surname>
+                           <given-names>Simon</given-names>
+                        </name>
+                     </contrib>
+                  </contrib-group>
+                  <fpage>111</fpage>
+                  <abstract>
+                     <p>Question: When did you start to familiarise yourself with the work of Max Weber? If I understand you correctly, this happened during your time in Algeria. What sort of texts were you reading at that time?</p>
+                     <p>Pierre Bourdieu: I began with<italic>Die protestantische Ethik</italic>. During that time, I was working on a book which was intended to summarise my research on Algeria. In<italic>Die protestantische Ethik</italic>there was an abundance of things on the traditional, pre-capitalist ‘spirit’, and on economic behaviour – wonderful descriptions which were very useful and indeed quite impressive. I drew on Weber’s work in order to</p>
+                  </abstract>
+               </book-part-meta>
+            </book-part>
+         </body>
+      </book-part>
+      <book-part indexed="true" xlink:type="simple">
+         <body>
+            <book-part>
+               <book-part-meta>
+                  <book-part-id book-part-id-type="jstor">j.ctt1gxpd95.10</book-part-id>
+                  <title-group>
+                     <label>CHAPTER SIX</label>
+                     <title>Bourdieu and Nietzsche:</title>
+                     <subtitle>Taste as a Struggle</subtitle>
+                  </title-group>
+                  <contrib-group>
+                     <contrib contrib-type="author" id="contrib1" xlink:type="simple">
+                        <name name-style="western">
+                           <surname>Rahkonen</surname>
+                           <given-names>Keijo</given-names>
+                        </name>
+                     </contrib>
+                  </contrib-group>
+                  <fpage>125</fpage>
+                  <abstract>
+                     <p>This chapter makes a comparison, which from a sociological perspective might appear a little surprising: it is between Pierre Bourdieu’s and Friedrich Nietzsche’s respective conceptions of ‘power’ and ‘taste’. The aim is to show that there is an interesting resemblance between the two with regard to these conceptions in general, and to ‘struggle for power’, ‘ressentiment’ and ‘will to power’ in particular, and thus to shed light on some key aspects of Bourdieu’s thinking. The order of the<italic>dramatis personae</italic>in this analysis is no accident: Bourdieu and Nietzsche. This alludes to the fact that the discussion that follows is</p>
+                  </abstract>
+               </book-part-meta>
+            </book-part>
+         </body>
+      </book-part>
+      <book-part indexed="true" xlink:type="simple">
+         <body>
+            <book-part>
+               <book-part-meta>
+                  <book-part-id book-part-id-type="jstor">j.ctt1gxpd95.11</book-part-id>
+                  <title-group>
+                     <label>CHAPTER SEVEN</label>
+                     <title>Elias and Bourdieu</title>
+                  </title-group>
+                  <contrib-group>
+                     <contrib contrib-type="author" id="contrib1" xlink:type="simple">
+                        <name name-style="western">
+                           <surname>Paulle</surname>
+                           <given-names>Bowen</given-names>
+                        </name>
+                     </contrib>
+                     <contrib contrib-type="author" id="contrib2" xlink:type="simple">
+                        <name name-style="western">
+                           <surname>van Heerikhuizen</surname>
+                           <given-names>Bart</given-names>
+                        </name>
+                     </contrib>
+                     <contrib contrib-type="author" id="contrib3" xlink:type="simple">
+                        <name name-style="western">
+                           <surname>Emirbayer</surname>
+                           <given-names>Mustafa</given-names>
+                        </name>
+                     </contrib>
+                  </contrib-group>
+                  <fpage>145</fpage>
+                  <abstract>
+                     <p>The deeper one penetrates the universes of Norbert Elias and Pierre Bourdieu, the clearer it becomes: the similarities between their visions of society are striking. While the two sociologists always showed great sympathy for one another,¹ there are no indications that they were fully aware of how fundamental the subterranean intellectual affinities were.² And even though many social scientists combine a high regard for some of Elias’s works with great admiration for several works by Bourdieu, thereby showing an instinctive sense of the affinities between these authors, until now it seems that no one has noticed the degree to which</p>
+                  </abstract>
+               </book-part-meta>
+            </book-part>
+         </body>
+      </book-part>
+      <book-part indexed="true" xlink:type="simple">
+         <body>
+            <book-part>
+               <book-part-meta>
+                  <book-part-id book-part-id-type="jstor">j.ctt1gxpd95.12</book-part-id>
+                  <title-group>
+                     <label>CHAPTER EIGHT</label>
+                     <title>Bourdieu and Adorno on the Transformation of Culture in Modern Society:</title>
+                     <subtitle>Towards a Critical Theory of Cultural Production</subtitle>
+                  </title-group>
+                  <contrib-group>
+                     <contrib contrib-type="author" id="contrib1" xlink:type="simple">
+                        <name name-style="western">
+                           <surname>Susen</surname>
+                           <given-names>Simon</given-names>
+                        </name>
+                     </contrib>
+                  </contrib-group>
+                  <fpage>173</fpage>
+                  <abstract>
+                     <p>This chapter examines the transformation of culture in modern society by drawing upon the works of Pierre Bourdieu and Theodor W. Adorno. Far from intending to embrace the entire complexity of Bourdieusian and Adornian thought, the analysis focuses on some key dimensions that are particularly relevant to understanding the relationship between modern culture and modern society. This study seeks to show that comprehending the transformation of culture in the modern world requires taking into account the transformation of society as a whole. In order to demonstrate this, the chapter is structured as follows.</p>
+                     <p>The first section briefly elucidates<italic>the concept</italic>
+                     </p>
+                  </abstract>
+               </book-part-meta>
+            </book-part>
+         </body>
+      </book-part>
+      <book-part indexed="true" xlink:type="simple">
+         <body>
+            <book-part>
+               <book-part-meta>
+                  <book-part-id book-part-id-type="jstor">j.ctt1gxpd95.13</book-part-id>
+                  <title-group>
+                     <label>CHAPTER NINE</label>
+                     <title>The Grammar of an Ambivalence:</title>
+                     <subtitle>On the Legacy of Pierre Bourdieu in the Critical Theory of Axel Honneth</subtitle>
+                  </title-group>
+                  <contrib-group>
+                     <contrib contrib-type="author" id="contrib1" xlink:type="simple">
+                        <name name-style="western">
+                           <surname>Basaure</surname>
+                           <given-names>Mauro</given-names>
+                        </name>
+                     </contrib>
+                  </contrib-group>
+                  <fpage>203</fpage>
+                  <abstract>
+                     <p>In the mid-1980s, Axel Honneth – successor to Jürgen Habermas, and now considered the most prominent representative of the Frankfurt School’s third generation – made an important contribution to the sociophilosophical reading of Pierre Bourdieu’s work that fundamentally shaped its German reception (see Behr, 2001). This contribution is marked by a clear ambivalence. On the one hand, it is obvious that it was in no way gratuitous. Honneth knew from the beginning that Bourdieu’s work was to play a key role in his own project to renew the tradition of critical theory (Honneth, Basaure, Reemtsma and Willig, 2009). At the</p>
+                  </abstract>
+               </book-part-meta>
+            </book-part>
+         </body>
+      </book-part>
+      <book-part indexed="true" xlink:type="simple">
+         <body>
+            <book-part>
+               <book-part-meta>
+                  <book-part-id book-part-id-type="jstor">j.ctt1gxpd95.14</book-part-id>
+                  <title-group>
+                     <label>CHAPTER TEN</label>
+                     <title>Pierre Bourdieu and the Sociology of Religion</title>
+                  </title-group>
+                  <contrib-group>
+                     <contrib contrib-type="author" id="contrib1" xlink:type="simple">
+                        <name name-style="western">
+                           <surname>Turner</surname>
+                           <given-names>Bryan S.</given-names>
+                        </name>
+                     </contrib>
+                  </contrib-group>
+                  <fpage>223</fpage>
+                  <abstract>
+                     <p>Whereas in recent years many of sociologists and philosophers have come to the conclusion that religion has to be taken seriously in debates about modern politics and the public sphere, such was not the case with many post-war social theorists. Louis Althusser, Luc Boltanski, Ralf Dahrendorf, Norbert Elias, Anthony Giddens, David Harvey, Edward Said and Göran Therborn either ignored religion or paid little attention to it, rather than treating it as a central aspect of modern society. Michel Foucault was probably alone in his consistent interest in religion – for example, in his essays on medieval Christian teaching on chastity</p>
+                  </abstract>
+               </book-part-meta>
+            </book-part>
+         </body>
+      </book-part>
+      <book-part indexed="true" xlink:type="simple">
+         <body>
+            <book-part>
+               <book-part-meta>
+                  <book-part-id book-part-id-type="jstor">j.ctt1gxpd95.15</book-part-id>
+                  <title-group>
+                     <label>CHAPTER ELEVEN</label>
+                     <title>Bourdieu’s Sociological Fiction:</title>
+                     <subtitle>A Phenomenological Reading of Habitus</subtitle>
+                  </title-group>
+                  <contrib-group>
+                     <contrib contrib-type="author" id="contrib1" xlink:type="simple">
+                        <name name-style="western">
+                           <surname>Frère</surname>
+                           <given-names>Bruno</given-names>
+                        </name>
+                     </contrib>
+                  </contrib-group>
+                  <fpage>247</fpage>
+                  <abstract>
+                     <p>For nearly thirty years now, the critical sociology of Pierre Bourdieu has been used in an increasingly large number of studies in the social sciences. It is remarkable, however, that it has had a rather weak impact on my own field of research: the study of new social movements. This chapter argues that the reason for this anomaly lies with Bourdieu’s theory of habitus (a central element of Bourdieusian thought) and the particular problems that this theory poses for researchers of new social movements. As original and powerful as it can be, the theory of habitus is, first and foremost,</p>
+                  </abstract>
+               </book-part-meta>
+            </book-part>
+         </body>
+      </book-part>
+      <book-part indexed="true" xlink:type="simple">
+         <body>
+            <book-part>
+               <book-part-meta>
+                  <book-part-id book-part-id-type="jstor">j.ctt1gxpd95.16</book-part-id>
+                  <title-group>
+                     <label>CHAPTER TWELVE</label>
+                     <title>Overcoming Semiotic Structuralism:</title>
+                     <subtitle>Language and Habitus in Bourdieu</subtitle>
+                  </title-group>
+                  <contrib-group>
+                     <contrib contrib-type="author" id="contrib1" xlink:type="simple">
+                        <name name-style="western">
+                           <surname>Kögler</surname>
+                           <given-names>Hans-Herbert</given-names>
+                        </name>
+                     </contrib>
+                  </contrib-group>
+                  <fpage>271</fpage>
+                  <abstract>
+                     <p>Pierre Bourdieu’s conception of habitus marks a theoretical step which no adequate understanding of social reality can ignore. By introducing habitus, Bourdieu is able both to integrate and to transcend major insights of the linguistic turn in philosophy, most prominently the idea that conscious intentional understanding necessarily relies on a host of implicit, practical, and holistic background assumptions which constitute meaning while being themselves unrepresented (Searle, 1989). The concept of habitus incorporates this idea since it shows that individual agency and its self-understanding are constituted by relying on an acquired social sense, the cognitive habitus, which defines how an agent</p>
+                  </abstract>
+               </book-part-meta>
+            </book-part>
+         </body>
+      </book-part>
+      <book-part indexed="true" xlink:type="simple">
+         <body>
+            <book-part>
+               <book-part-meta>
+                  <book-part-id book-part-id-type="jstor">j.ctt1gxpd95.17</book-part-id>
+                  <title-group>
+                     <label>CHAPTER THIRTEEN</label>
+                     <title>Social Theory and Politics:</title>
+                     <subtitle>Aron, Bourdieu and Passeron, and the Events of May 1968</subtitle>
+                  </title-group>
+                  <contrib-group>
+                     <contrib contrib-type="author" id="contrib1" xlink:type="simple">
+                        <name name-style="western">
+                           <surname>Robbins</surname>
+                           <given-names>Derek</given-names>
+                        </name>
+                     </contrib>
+                  </contrib-group>
+                  <fpage>301</fpage>
+                  <abstract>
+                     <p>The purpose of this contribution is to explore historically the relationship between the social theory emerging at the Centre de sociologie européenne in Paris during the 1960s and the Parisian events of May 1968. Adopting the terminology of an article of 1981 by Pierre Bourdieu himself (‘Décrire et prescrire. Note sur les conditions de possibilité et les limites de l’efficacité politique’ [‘Describing and Prescribing. A Note on the Conditions of Possibility and the Limits of Political Effectiveness’] (Bourdieu, 1981), my purpose is to consider in what ways the work of the Centre de sociologie européenne could be said to<italic>describe</italic>
+                     </p>
+                  </abstract>
+               </book-part-meta>
+            </book-part>
+         </body>
+      </book-part>
+      <book-part indexed="true" xlink:type="simple">
+         <body>
+            <book-part>
+               <book-part-meta>
+                  <book-part-id book-part-id-type="jstor">j.ctt1gxpd95.18</book-part-id>
+                  <title-group>
+                     <label>CHAPTER FOURTEEN</label>
+                     <title>Intellectual Critique and the Public Sphere:</title>
+                     <subtitle>Between the Corporatism of the Universal and the Realpolitik of Reason</subtitle>
+                  </title-group>
+                  <contrib-group>
+                     <contrib contrib-type="author" id="contrib1" xlink:type="simple">
+                        <name name-style="western">
+                           <surname>Sintomer</surname>
+                           <given-names>Yves</given-names>
+                        </name>
+                     </contrib>
+                     <contrib contrib-type="translator" id="contrib2" xlink:type="simple">
+                        <role>Translated by</role>
+                        <name name-style="western">
+                           <surname>Corcoran</surname>
+                           <given-names>Steven</given-names>
+                        </name>
+                     </contrib>
+                  </contrib-group>
+                  <fpage>329</fpage>
+                  <abstract>
+                     <p>In the French edition of<italic>The Weight of the World</italic>, Bourdieu contends that the goal of his critical sociology is to ‘open up possibilities for rational action to unmake or remake what history has made’ (1999 [1993]: 187).¹ But what is ‘rational action’ in politics? And what potential contribution can intellectuals make to it? This last question is the one that I would like to address here, taking Bourdieu’s own answers to it as my starting point. The aim will not be to analyse the concrete orientation of his public interventions, but instead to understand the type of articulation between</p>
+                  </abstract>
+               </book-part-meta>
+            </book-part>
+         </body>
+      </book-part>
+      <book-part indexed="true" xlink:type="simple">
+         <body>
+            <book-part>
+               <book-part-meta>
+                  <book-part-id book-part-id-type="jstor">j.ctt1gxpd95.19</book-part-id>
+                  <title-group>
+                     <label>CHAPTER FIFTEEN</label>
+                     <title>Practice as Temporalisation:</title>
+                     <subtitle>Bourdieu and Economic Crisis</subtitle>
+                  </title-group>
+                  <contrib-group>
+                     <contrib contrib-type="author" id="contrib1" xlink:type="simple">
+                        <name name-style="western">
+                           <surname>Adkins</surname>
+                           <given-names>Lisa</given-names>
+                        </name>
+                     </contrib>
+                  </contrib-group>
+                  <fpage>347</fpage>
+                  <abstract>
+                     <p>This chapter will examine the question of whether Bourdieu’s social theory can be mobilised to understand our recent and ongoing global economic crisis. This may seem an odd question to pose on many fronts, not least because – and with the exception of markets for normatively defined cultural goods¹ – Bourdieu’s corpus is rarely, if ever, called upon to engage with strictly economic processes and formations.² And this is the case despite the fact that Bourdieu (2005 [2000]) dedicated a whole volume to the study of the social structures of the economy and despite the fact that in his later,</p>
+                  </abstract>
+               </book-part-meta>
+            </book-part>
+         </body>
+      </book-part>
+      <book-part indexed="true" xlink:type="simple">
+         <body>
+            <book-part>
+               <book-part-meta>
+                  <book-part-id book-part-id-type="jstor">j.ctt1gxpd95.20</book-part-id>
+                  <title-group>
+                     <title>AFTERWORD:</title>
+                     <subtitle>Concluding Reflections on the Legacy of Pierre Bourdieu</subtitle>
+                  </title-group>
+                  <contrib-group>
+                     <contrib contrib-type="author" id="contrib1" xlink:type="simple">
+                        <name name-style="western">
+                           <surname>Susen</surname>
+                           <given-names>Simon</given-names>
+                        </name>
+                     </contrib>
+                  </contrib-group>
+                  <fpage>367</fpage>
+                  <abstract>
+                     <p>Those who are unfamiliar, or barely familiar, with the writings of Pierre Bourdieu will find a useful and comprehensive introduction to his work in the opening chapter, entitled ‘Between Structuralism and Theory of Practice: The Cultural Sociology of Pierre Bourdieu’. In it, Hans Joas and Wolfgang Knöbl provide us with a clear and accessible overview of some of the main philosophical and sociological themes that run through Bourdieu’s writings. Joas and Knöbl centre their analysis on five interrelated concepts that play a pivotal role in Bourdieu’s work: the concepts of (1)<italic>practice</italic>, (2)<italic>action</italic>, (3)<italic>the social</italic>, (4)<italic>cultural sociology</italic>,</p>
+                  </abstract>
+               </book-part-meta>
+            </book-part>
+         </body>
+      </book-part>
+      <book-part indexed="true" xlink:type="simple">
+         <body>
+            <book-part>
+               <book-part-meta>
+                  <book-part-id book-part-id-type="jstor">j.ctt1gxpd95.21</book-part-id>
+                  <title-group>
+                     <title>INDEX OF NAMES</title>
+                  </title-group>
+                  <fpage>411</fpage>
+               </book-part-meta>
+            </book-part>
+         </body>
+      </book-part>
+      <book-part indexed="true" xlink:type="simple">
+         <body>
+            <book-part>
+               <book-part-meta>
+                  <book-part-id book-part-id-type="jstor">j.ctt1gxpd95.22</book-part-id>
+                  <title-group>
+                     <title>INDEX OF SUBJECTS</title>
+                  </title-group>
+                  <fpage>421</fpage>
+               </book-part-meta>
+            </book-part>
+         </body>
+      </book-part>
+      <book-part indexed="true" xlink:type="simple">
+         <body>
+            <book-part>
+               <book-part-meta>
+                  <book-part-id book-part-id-type="jstor">j.ctt1gxpd95.23</book-part-id>
+                  <title-group>
+                     <title>[Illustration]</title>
+                  </title-group>
+               </book-part-meta>
+            </book-part>
+         </body>
+      </book-part>
+   </body>
+</book>
