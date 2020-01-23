@@ -1,9 +1,9 @@
 ;; See https://github.com/racket/typed-racket/issues/902
 ;; Succeeds:
-;;   #lang typed/racket/no-check
+#lang typed/racket/no-check ;; FIXME !!!
 ;; Fails with "struct-ref: bad access",
 ;; with or without `#:no-optimize`:
-#lang typed/racket #:no-optimize
+;; #lang typed/racket #:no-optimize
 
 (provide Metadata-Archive
          metadata-archive?
@@ -53,8 +53,27 @@
 (define (write-metadata-archive it out)
   (archive-prefab->fasl (metadata-archive-external-representation it) out))
 
-(define-for-syntax varref
-  (#%variable-reference))
+
+(module mpi racket/base
+  (require racket/runtime-path
+           (for-syntax racket/base))
+  (provide mpi:ricoeur/preprocessor/types)
+  (define-runtime-module-path-index mpi:ricoeur/preprocessor/types
+    "../preprocessor/types.rkt"))
+(require (for-syntax (only-in (submod "." mpi)
+                              mpi:ricoeur/preprocessor/types)))
+
+(define-for-syntax (source-module->resolved-module-path spec)
+  (cond
+    [(resolved-module-path? spec)
+     spec]
+    [(module-path-index? spec)
+     (module-path-index-resolve spec)]
+    [(or (and (symbol? spec) spec)
+         (and (path? spec) (simplify-path spec)))
+     => make-resolved-module-path]
+    [else
+     #f]))
 
 (define-syntax make-metadata-archive-from-preprocessor
   (syntax-parser
@@ -62,22 +81,24 @@
      ;; The privacy-enforcement is experimental
      #:fail-unless (syntax-original? (syntax-local-introduce this-syntax))
      "use syntax is not syntax-original?"
-     (define expected
-       (module-path-index-resolve
-        (module-path-index-join
-         "../preprocessor/types.rkt"
-         (variable-reference->module-path-index varref))))
-     (define given
-       (let ([v (syntax-source this-syntax)])
-         (if (or (path? v) (symbol? v))
-             (make-resolved-module-path v)
-             v)))
-     (unless (equal? expected given)
-       (raise-syntax-error #f
-                           (format "illegal use site\n  expected: ~e\n  given: ~e"
-                                   expected
-                                   given)
-                           this-syntax))
+     (let* ([expected
+             (module-path-index-resolve
+              mpi:ricoeur/preprocessor/types)]
+            [stx-source-module
+             (syntax-source-module this-syntax)]
+            [stx-source-module/resolved
+             (source-module->resolved-module-path stx-source-module)])
+       (define (reject! given)
+         (define fmt "illegal use site\n  expected: ~e\n  given: ~e")
+         (raise-syntax-error #f (format fmt expected given) this-syntax))
+       (unless (equal? expected stx-source-module/resolved)
+         (unless (and stx-source-module/resolved
+                      (symbol? (resolved-module-path-name stx-source-module/resolved)))
+           (reject! (or stx-source-module/resolved stx-source-module)))
+         (define stx-source (syntax-source this-syntax))
+         (define stx-source/resolved (source-module->resolved-module-path stx-source))
+         (unless (equal? expected stx-source/resolved)
+           (reject! (or stx-source/resolved stx-source stx-source-module/resolved)))))
      (syntax-protect
       #'(ann (metadata-archive (ann prefab secondary-lit-metadata-archive))
              metadata-archive))]))
