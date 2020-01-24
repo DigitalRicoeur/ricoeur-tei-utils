@@ -36,14 +36,20 @@
 (module+ private-for-preprocessor
   (provide make-metadata-archive-from-preprocessor))
 
+(module+ private-for-frontend
+  (provide define-metadata-archive-subtype))
+
 (require "topic-model.rkt"
          (for-syntax racket/base
+                     syntax/struct
                      syntax/parse))
 
 (require/typed
  racket/fasl
- [(s-exp->fasl archive-prefab->fasl)
-  (-> secondary-lit-metadata-archive Output-Port Void)])
+ [{s-exp->fasl secondary-lit-metadata-archive->fasl}
+  (-> secondary-lit-metadata-archive Output-Port Void)]
+ [{fasl->s-exp fasl->secondary-lit-metadata-archive}
+  (-> (U Bytes Input-Port) secondary-lit-metadata-archive)])
 
 (define-type Metadata-Archive metadata-archive)
 (struct metadata-archive
@@ -51,7 +57,92 @@
 
 (: write-metadata-archive (-> Metadata-Archive Output-Port Void)) 
 (define (write-metadata-archive it out)
-  (archive-prefab->fasl (metadata-archive-external-representation it) out))
+  (secondary-lit-metadata-archive->fasl
+   (metadata-archive-external-representation it)
+   out))
+
+(define-syntax define-metadata-archive-subtype
+  (syntax-parser
+    #:track-literals
+    #:literals {struct}
+    [(_ subtype-name:id
+        (~alt (~optional (~seq #:type-name Type-Name:id))
+              (~optional (~and #:transparent subtype-transparent-kw))
+              (~once (~seq #:accessor-name metadata-archive->internal:id))
+              (~once (~seq #:reader-name read-metadata-archive:id))
+              (~once (~seq #:build build-proc-expr:expr))
+              (~once (~seq #:internal-representation
+                           (struct int-rep-name:id
+                             ([int-rep-field-name:id
+                               (~literal :)
+                               Int-Rep-Field-Type:id]
+                              ...)
+                             (~alt (~optional (~and (~or #:transparent #:prefab)
+                                                    int-rep-transparent-kw))
+                                   (~optional (~and #:mutable int-rep-mutable-kw))
+                                   (~optional (~seq #:type-name Int-Rep-Type-Name:id)))
+                             ...))))
+        ...)
+     #:with internal-representation #'internal-representation
+     #:with Subtype:id #'(~? Type-Name subtype-name)
+     #:with Int-Rep:id #'(~? Int-Rep-Type-Name int-rep-name)
+     #:with (_ _ subtype?:id subtype-internal-representation:id)
+     (build-struct-names #'subtype-name (list #'internal-representation) #f #t #'subtype-name)
+     #:with (_ _ int-rep?:id int-rep-field-accessor:id ...)
+     (build-struct-names #'int-rep-name
+                         (syntax->list #'(int-rep-field-name ...))
+                         #f #t
+                         #'int-rep-name)
+     #:with (real-subtype-name:id
+             real-subtype?:id real-subtype-internal-representation:id
+             real-int-rep-name:id
+             real-int-rep?:id real-int-rep-field-name:id ... real-int-rep-field-accessor:id ...)
+     (syntax-local-introduce #'(subtype-name
+                                subtype? subtype-internal-representation
+                                int-rep-name int-rep?
+                                int-rep-field-name ... int-rep-field-accessor ...))
+     #`(begin
+         (struct real-int-rep-name
+           ([real-int-rep-field-name : Int-Rep-Field-Type] ...)
+           (~? int-rep-transparent-kw)
+           (~? int-rep-mutable-kw)
+           #:type-name Int-Rep)
+         (define int-rep? real-int-rep?)
+         (define int-rep-field-accessor real-int-rep-field-accessor) ...
+         (struct real-subtype-name
+           ([internal-representation : Int-Rep])
+           (~? subtype-transparent-kw)
+           #:type-name Subtype)
+         (define subtype? real-subtype?)
+         (define build-int-rep-values
+           (ann build-proc-expr
+                (-> secondary-lit-metadata-archive
+                    (Values Int-Rep-Field-Type ...))))
+         (: build-int-rep (-> secondary-lit-metadata-archive Int-Rep))
+         (define (build-int-rep prefab)
+           (call-with-values (λ () (build-int-rep-values prefab))
+                             real-int-rep-name))
+         (: read-metadata-archive (-> (U Bytes Input-Port)
+                                      (U exn:fail Metadata-Archive)))
+         (define (read-metadata-archive in)
+           (with-handlers ([exn:fail? (λ (e) e)])
+             (define prefab
+               (fasl->secondary-lit-metadata-archive in))
+             (real-subtype-name prefab (build-int-rep prefab))))
+         (define cache : (Weak-HashTable Metadata-Archive Int-Rep)
+           (make-weak-hasheq))
+         (: metadata-archive->internal (-> Metadata-Archive Int-Rep))
+         (define (metadata-archive->internal outer)
+           (cond
+             [(real-subtype? outer)
+              (real-subtype-internal-representation outer)]
+             [(hash-ref cache outer #f)]
+             [else
+              (define ret
+                (build-int-rep (metadata-archive-external-representation outer)))
+              (hash-set! cache outer ret)
+              ret])))]))
+
 
 
 (module mpi racket/base
