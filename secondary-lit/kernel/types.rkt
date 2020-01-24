@@ -41,7 +41,7 @@
 
 (require "topic-model.rkt"
          (for-syntax racket/base
-                     syntax/struct
+                     racket/syntax
                      syntax/parse))
 
 (require/typed
@@ -83,24 +83,23 @@
                                    (~optional (~seq #:type-name Int-Rep-Type-Name:id)))
                              ...))))
         ...)
-     #:with internal-representation #'internal-representation
      #:with Subtype:id #'(~? Type-Name subtype-name)
      #:with Int-Rep:id #'(~? Int-Rep-Type-Name int-rep-name)
-     #:with (_ _ subtype?:id subtype-internal-representation:id)
-     (build-struct-names #'subtype-name (list #'internal-representation) #f #t #'subtype-name)
-     #:with (_ _ int-rep?:id int-rep-field-accessor:id ...)
-     (build-struct-names #'int-rep-name
-                         (syntax->list #'(int-rep-field-name ...))
-                         #f #t
-                         #'int-rep-name)
+     #:with (subtype?:id int-rep?:id)
+     (map (λ (id) (format-id id "~a?" id #:subs? #t))
+          (list #'subtype-name #'int-rep-name))
+     #:with (int-rep-field-accessor:id ...)
+     (map (λ (id) (format-id id "~a-~a" #'int-rep-name id #:subs? #t))
+          (syntax->list #'(int-rep-field-name ...)))
      #:with (real-subtype-name:id
-             real-subtype?:id real-subtype-internal-representation:id
-             real-int-rep-name:id
-             real-int-rep?:id real-int-rep-field-name:id ... real-int-rep-field-accessor:id ...)
-     (syntax-local-introduce #'(subtype-name
-                                subtype? subtype-internal-representation
-                                int-rep-name int-rep?
-                                int-rep-field-name ... int-rep-field-accessor ...))
+             real-subtype?:id real-int-rep-name:id real-int-rep?:id
+             [real-int-rep-field-name:id real-int-rep-field-accesspr] ...)
+     (syntax-local-introduce
+      #'(subtype-name
+         subtype? int-rep-name int-rep?
+         [int-rep-field-name int-rep-field-accesspr] ...))
+     #:with real-subtype-internal-representation:id
+     (format-id #'real-subtype-name "~a-internal-representation" #'real-subtype-name)
      #`(begin
          (struct real-int-rep-name
            ([real-int-rep-field-name : Int-Rep-Field-Type] ...)
