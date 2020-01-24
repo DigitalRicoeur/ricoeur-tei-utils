@@ -93,14 +93,18 @@
           (syntax->list #'(int-rep-field-name ...)))
      #:with (real-subtype-name:id
              real-subtype?:id real-int-rep-name:id real-int-rep?:id
-             [real-int-rep-field-name:id real-int-rep-field-accesspr] ...)
+             [real-int-rep-field-name:id real-int-rep-field-accessor] ...)
      (syntax-local-introduce
       #'(subtype-name
          subtype? int-rep-name int-rep?
-         [int-rep-field-name int-rep-field-accesspr] ...))
+         [int-rep-field-name int-rep-field-accessor] ...))
      #:with real-subtype-internal-representation:id
      (format-id #'real-subtype-name "~a-internal-representation" #'real-subtype-name)
-     #`(begin
+     #:with build-int-rep (format-id #'real-int-rep-name "build-~a" #'real-int-rep-name)
+     #:with build-int-rep-values #'(ann build-proc-expr
+                                        (-> secondary-lit-metadata-archive
+                                            (Values Int-Rep-Field-Type ...)))
+     #'(begin
          (struct real-int-rep-name
            ([real-int-rep-field-name : Int-Rep-Field-Type] ...)
            (~? int-rep-transparent-kw)
@@ -108,15 +112,11 @@
            #:type-name Int-Rep)
          (define int-rep? real-int-rep?)
          (define int-rep-field-accessor real-int-rep-field-accessor) ...
-         (struct real-subtype-name
+         (struct real-subtype-name metadata-archive
            ([internal-representation : Int-Rep])
            (~? subtype-transparent-kw)
            #:type-name Subtype)
          (define subtype? real-subtype?)
-         (define build-int-rep-values
-           (ann build-proc-expr
-                (-> secondary-lit-metadata-archive
-                    (Values Int-Rep-Field-Type ...))))
          (: build-int-rep (-> secondary-lit-metadata-archive Int-Rep))
          (define (build-int-rep prefab)
            (call-with-values (λ () (build-int-rep-values prefab))
@@ -141,6 +141,11 @@
                 (build-int-rep (metadata-archive-external-representation outer)))
               (hash-set! cache outer ret)
               ret])))]))
+
+
+
+
+
 
 
 
