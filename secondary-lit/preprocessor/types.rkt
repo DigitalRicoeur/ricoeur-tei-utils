@@ -3,10 +3,13 @@
 ;; occurs even with /no-check in this module.
 
 ;; TODO:
-;; Marty Dang's version also considered the whole-book abstract.
-;; Should we? Likewise re whole-book titles and journal titles.
-;; Some journal articles seem to have no abstract but lots of
-;; text in mixed-citation elements.
+;;   - Should we require a word boundary around matches?
+;;   - Should we consider matches in any of:
+;;       - whole-book abstracts
+;;       - whole-book titles
+;;       - journal titles (as opposed to article titles)
+;;   - Some journal articles seem to have no abstract but lots of
+;;     text in mixed-citation elements.
 
 (provide metadata-parsing-store?
          make-metadata-parsing-store

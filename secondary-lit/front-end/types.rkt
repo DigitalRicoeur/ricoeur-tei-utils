@@ -78,7 +78,31 @@
 (: book-part->forest (-> book-part whole-book-meta Flex-Xexpr*))
 (define (book-part->forest this whole)
 
-  '("book"))
+  `{,(cond
+       [(book-part-maybe-title this)
+        => (λ (x)
+             `(h2 ,@(append* (add-between
+                              (filter-true
+                               (list* (book-part-title-label x)
+                                      (book-part-title-main-title x)
+                                      (book-part-title-subtitles x)))
+                              '(": ")))))]
+       [else
+        `(h2 "Untitled")])
+    (p ,@(append* (add-between
+                   (cons (whole-book-meta-main-title whole)
+                         (whole-book-meta-subtitles whole))
+                   '(": ")))
+       ,@(let ([pages (book-part-page-spec this)])
+           (cond
+             [(string? pages)
+              (list ", p. " pages)]
+             [(pair? pages)
+              (list ", pp. " (car pages) "–" (cdr pages))]
+             [else
+              null])))
+    ,(maybe-abstract->xexpr (book-part-abstract this))
+    })
 
 (define #:∀ (A B) (apply-when [proc : (-> A B)] [v : (U A #f)])
   : (U B #f)
@@ -90,25 +114,29 @@
              #:when a)
     a))
 
+(define #:∀ (A) (filter-true* . [args : (U A #f) *])
+  : (Listof A)
+  (filter-true args))
+
 (: article->forest (-> article Flex-Xexpr*))
 (define (article->forest this)
-  `{,@(cond
-        [(article-article-title this)
-         => (λ (x)
-              `{(h2 ,@(append* (add-between
-                                (cons (article-title-main-title x)
-                                      (article-title-subtitles x))
-                                '(": "))))})]
-        [else
-         `{(h2 "Untitled")}])
+  `{,(cond
+       [(article-article-title this)
+        => (λ (x)
+             `(h2 ,@(append* (add-between
+                              (cons (article-title-main-title x)
+                                    (article-title-subtitles x))
+                              '(": ")))))]
+       [else
+        `(h2 "Untitled")])
     (p ,@(append*
-          (add-between (filter-true
-                        (list (let ([v (article-journal-title this)])
-                                (and v (list (journal-title-main-title v))))
-                              (let ([str (article-volume this)])
-                                (and str `("volume " ,str)))
-                              (let ([str (article-issue this)])
-                                (and str `("issue " ,str)))))
+          (add-between (filter-true*
+                        (let ([v (article-journal-title this)])
+                          (and v (list (journal-title-main-title v))))
+                        (let ([str (article-volume this)])
+                          (and str `("volume " ,str)))
+                        (let ([str (article-issue this)])
+                          (and str `("issue " ,str))))
                        '(", "))))
     ,(maybe-abstract->xexpr (article-abstract this))
     })
@@ -122,7 +150,7 @@
     [(abstract label title body)
      `(div
        (h3 ,@(append* (add-between (cons '("Abstract")
-                                         (filter-true (list label title)))
+                                         (filter-true* label title))
                                    '(": "))))
        ,@body)]))
      
