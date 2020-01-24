@@ -1,4 +1,4 @@
-#lang typed/racket/no-check ;; FIXME !!!
+#lang typed/racket/base/no-check ;; FIXME !!!
 ;; See https://github.com/racket/typed-racket/issues/902
 
 (provide read-metadata-archive)
@@ -23,8 +23,17 @@
    
 
 (require "../kernel/types.rkt"
+         racket/list
+         racket/match
          (submod "../kernel/types.rkt"
                  private-for-frontend))
+
+(define-type Flex-Xexpr* (Listof Flex-Xexpr))
+(define-type Flex-Xexpr
+  (U String
+     (Pairof Symbol (U Flex-Xexpr*
+                       (Pairof (Listof (List Symbol String))
+                               Flex-Xexpr*)))))
 
 (define-metadata-archive-subtype deserialized-metadata-archive
   #:transparent
@@ -32,11 +41,12 @@
   #:accessor-name metadata-archive->internal
   #:internal-representation
   (struct metadata
-    ([demo-xexpr : Any])
+    ([demo-xexpr : Flex-Xexpr])
     #:transparent
     #:type-name Internal-Metadata)
   #:build build-metadata-values)
 
+(: build-metadata-values (-> secondary-lit-metadata-archive Flex-Xexpr))
 (define (build-metadata-values prefab)
   (define books-vec
     (secondary-lit-metadata-archive-books prefab))
@@ -51,7 +61,7 @@
             [content "width=device-width,initial-scale=1"])))
     (body
      (h1 ,title-string)
-     ,@(map (λ (item)
+     ,@(map (λ ([item : metadata-item])
               (define inner (metadata-item-metadata item))
               `(section ()
                         ,@(if (pair? inner)
@@ -59,52 +69,61 @@
                               (article->forest inner))
                         (div
                          (h3 "Assosciated Words")
-                         (ul ,@(map (λ (pr)
+                         (ul ,@(map (λ ([pr : (Pairof Symbol Positive-Index)])
                                       `(li ,(symbol->string (car pr))))
                                     (metadata-item-matches item))))))
             (secondary-lit-metadata-archive-items prefab)))))
 
 
-
+(: book-part->forest (-> book-part whole-book-meta Flex-Xexpr*))
 (define (book-part->forest this whole)
 
   '("book"))
 
-(define (apply-when proc v)
+(define #:∀ (A B) (apply-when [proc : (-> A B)] [v : (U A #f)])
+  : (U B #f)
   (and v (proc v)))
 
+(define #:∀ (A) (filter-true [lst : (Listof (U A #f))])
+  : (Listof A)
+  (for/list ([a (in-list lst)]
+             #:when a)
+    a))
+
+(: article->forest (-> article Flex-Xexpr*))
 (define (article->forest this)
   `{,@(cond
         [(article-article-title this)
          => (λ (x)
-              `(h2 ,@(append* (add-between
-                               (cons (article-title-main-title x)
-                                     (article-title-subtitles x))
-                               '(": ")))))]
+              `{(h2 ,@(append* (add-between
+                                (cons (article-title-main-title x)
+                                      (article-title-subtitles x))
+                                '(": "))))})]
         [else
          `{(h2 "Untitled")}])
     (p ,@(append*
-          (add-between (filter values
-                               (list (apply-when (compose1 list journal-title-main-title)
-                                                 (article-journal-title this))
-                                     (apply-when (λ (str) `("volume " ,str))
-                                                 (article-volume this))
-                                     (apply-when (λ (str) `("issue " ,str))
-                                                 (article-issue this))))
+          (add-between (filter-true
+                        (list (let ([v (article-journal-title this)])
+                                (and v (list (journal-title-main-title v))))
+                              (let ([str (article-volume this)])
+                                (and str `("volume " ,str)))
+                              (let ([str (article-issue this)])
+                                (and str `("issue " ,str)))))
                        '(", "))))
     ,(maybe-abstract->xexpr (article-abstract this))
     })
 
 
+(: maybe-abstract->xexpr (-> (U #f abstract) Flex-Xexpr))
 (define maybe-abstract->xexpr
   (match-lambda
     [#f
      `(p "No abstract available.")]
     [(abstract label title body)
      `(div
-       (h3 ,(append* (add-between (cons '("Abstract")
-                                        (filter values (list label title)))
-                                  '(": "))))
+       (h3 ,@(append* (add-between (cons '("Abstract")
+                                         (filter-true (list label title)))
+                                   '(": "))))
        ,@body)]))
      
 

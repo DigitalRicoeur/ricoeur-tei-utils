@@ -1,9 +1,9 @@
 ;; See https://github.com/racket/typed-racket/issues/902
 ;; Succeeds:
-#lang typed/racket/no-check ;; FIXME !!!
+#lang typed/racket/base/no-check ;; FIXME !!!
 ;; Fails with "struct-ref: bad access",
 ;; with or without `#:no-optimize`:
-;; #lang typed/racket #:no-optimize
+;; #lang typed/racket/base #:no-optimize
 
 (provide Metadata-Archive
          metadata-archive?
@@ -39,10 +39,7 @@
 (module+ private-for-frontend
   (provide define-metadata-archive-subtype))
 
-(require "topic-model.rkt"
-         (for-syntax racket/base
-                     racket/syntax
-                     syntax/parse))
+(require "topic-model.rkt")
 
 (require/typed
  racket/fasl
@@ -61,8 +58,11 @@
    (metadata-archive-external-representation it)
    out))
 
-(define-syntax define-metadata-archive-subtype
-  (syntax-parser
+(module+ private-for-frontend
+  (require syntax/parse/define
+           (for-syntax racket/base
+                       racket/syntax))
+  (define-syntax-parser define-metadata-archive-subtype
     #:track-literals
     #:literals {struct}
     [(_ subtype-name:id
@@ -124,7 +124,7 @@
          (: read-metadata-archive (-> (U Bytes Input-Port)
                                       (U exn:fail Metadata-Archive)))
          (define (read-metadata-archive in)
-           (with-handlers ([exn:fail? (λ (e) e)])
+           (with-handlers ([exn:fail? (λ ([e : exn:fail]) e)])
              (define prefab
                (fasl->secondary-lit-metadata-archive in))
              (real-subtype-name prefab (build-int-rep prefab))))
@@ -148,30 +148,31 @@
 
 
 
+(module+ private-for-preprocessor
+  (module mpi racket/base
+    (require racket/runtime-path
+             (for-syntax racket/base))
+    (provide mpi:ricoeur/preprocessor/types)
+    (define-runtime-module-path-index mpi:ricoeur/preprocessor/types
+      "../preprocessor/types.rkt"))
+  (require syntax/parse/define
+           (for-syntax racket/base
+                       (only-in (submod "." mpi)
+                                mpi:ricoeur/preprocessor/types)))
 
-(module mpi racket/base
-  (require racket/runtime-path
-           (for-syntax racket/base))
-  (provide mpi:ricoeur/preprocessor/types)
-  (define-runtime-module-path-index mpi:ricoeur/preprocessor/types
-    "../preprocessor/types.rkt"))
-(require (for-syntax (only-in (submod "." mpi)
-                              mpi:ricoeur/preprocessor/types)))
+  (define-for-syntax (source-module->resolved-module-path spec)
+    (cond
+      [(resolved-module-path? spec)
+       spec]
+      [(module-path-index? spec)
+       (module-path-index-resolve spec)]
+      [(or (and (symbol? spec) spec)
+           (and (path? spec) (simplify-path spec)))
+       => make-resolved-module-path]
+      [else
+       #f]))
 
-(define-for-syntax (source-module->resolved-module-path spec)
-  (cond
-    [(resolved-module-path? spec)
-     spec]
-    [(module-path-index? spec)
-     (module-path-index-resolve spec)]
-    [(or (and (symbol? spec) spec)
-         (and (path? spec) (simplify-path spec)))
-     => make-resolved-module-path]
-    [else
-     #f]))
-
-(define-syntax make-metadata-archive-from-preprocessor
-  (syntax-parser
+  (define-syntax-parser make-metadata-archive-from-preprocessor
     [(_ prefab:expr)
      ;; The privacy-enforcement is experimental
      #:fail-unless (syntax-original? (syntax-local-introduce this-syntax))
