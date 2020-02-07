@@ -2,7 +2,8 @@
 
 @title{Module Structure}
 @(declare-exporting ricoeur/tei/spec-lang/doc-lang)
-@(require "for-lang-kernel.rkt")
+@(require "for-lang-kernel.rkt"
+          (only-in adjutor/unstable TODO/void))
 
 
 The reader for @(hash-lang-kernel) is a variant of the

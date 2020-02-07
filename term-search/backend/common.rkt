@@ -10,6 +10,7 @@
          data/order
          syntax/parse/define
          ricoeur/tei/base
+         (only-in adjutor/unstable TODO/void)
          (for-syntax racket/base
                      syntax/parse
                      racket/syntax

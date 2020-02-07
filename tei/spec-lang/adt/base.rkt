@@ -6,6 +6,7 @@
                  private)
          "../stxparam.rkt"
          (submod "../stxparam.rkt" private)
+         (only-in adjutor/unstable TODO/void)
          racket/contract
          racket/promise
          racket/stxparam

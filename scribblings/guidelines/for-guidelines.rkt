@@ -1,6 +1,7 @@
 #lang at-exp racket/base
 
 (require adjutor
+         (only-in adjutor/unstable TODO/void)
          scribble/manual)
 
 (require-provide (provide-only adjutor)

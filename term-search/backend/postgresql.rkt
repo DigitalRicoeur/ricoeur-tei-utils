@@ -17,6 +17,7 @@
          "data-source-contract.rkt"
          "sql-support.rkt"
          ricoeur/tei/base
+         (only-in adjutor/unstable TODO/void)
          (for-syntax racket/base))
 
 (provide postgresql-data-source/c

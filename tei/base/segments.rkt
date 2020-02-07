@@ -1,6 +1,7 @@
 #lang racket/base
 
 (require ricoeur/tei/kernel
+         (only-in adjutor/unstable TODO/void define/check-args)
          racket/contract
          racket/list
          racket/string
@@ -14,8 +15,7 @@
          (submod "segments/meta.rkt"
                  private)
          (for-syntax racket/base
-                     syntax/parse
-                     ))
+                     syntax/parse))
 
 (require-provide "segments/location-stack.rkt"
                  "segments/meta.rkt")

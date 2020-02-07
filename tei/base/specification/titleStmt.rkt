@@ -10,7 +10,8 @@
           xml/path)
  ]
 
-ƒ(require (for-label ricoeur/tei/kernel
+ƒ(require (only-in adjutor/unstable TODO/void)
+          (for-label ricoeur/tei/kernel
                      (except-in racket
                                 date?
                                 date)))

@@ -6,7 +6,7 @@
          "../toolkit.rkt"
          "common.rkt"
          "confirm.rkt"
-         )
+         (only-in adjutor/unstable TODO/void))
 
 (provide (contract-out
           [paragraphs:prompt%

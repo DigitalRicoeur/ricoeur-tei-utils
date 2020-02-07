@@ -5,7 +5,7 @@
          ricoeur/tei/base
          framework
          adjutor
-         )
+         (only-in adjutor/unstable TODO/void))
 
 (provide (contract-out
           [create-new-tei-document

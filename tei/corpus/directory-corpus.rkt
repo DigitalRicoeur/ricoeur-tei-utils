@@ -3,6 +3,7 @@
 (require racket/contract
          racket/class
          ricoeur/tei/base
+         (only-in adjutor/unstable TODO/void)
          "plain-corpus.rkt")
          
 (provide (contract-out 

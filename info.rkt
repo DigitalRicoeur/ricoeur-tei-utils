@@ -3,7 +3,7 @@
 (define pkg-name "ricoeur-tei-utils")
 (define collection "ricoeur")
 (define pkg-desc "TEI utilities for Digital Ricoeur")
-(define version "0.5.90")
+(define version "0.5.91")
 (define pkg-authors '(philip))
 
 ;; Executables to build are listed in "tei/tools/info.rkt".
@@ -24,8 +24,8 @@
 ;; Dependencies:
 (define deps
   '(["base" #:version "7.4"]
-    ["adjutor" #:version "0.2.5"]
-    ["ricoeur-kernel" #:version "0.0.1"]
+    ["adjutor" #:version "0.3"]
+    ["ricoeur-kernel" #:version "0.0.2"]
     "functional-lib"
     "roman-numeral"
     "gregor-lib"
@@ -39,7 +39,10 @@
     "icns"
     "parser-tools-lib"
     "pict-snip-lib"
+    "nanopass"
+    "reprovide-lang-lib"
     "typed-racket-lib"
+    "typed-racket-more"
     ["xmllint-win32-x86_64" #:platform "win32\\x86_64"
                             #:version "0.1"]
     ;; The following are for the documentation time
@@ -55,7 +58,7 @@
     "functional-doc"
     "gregor-doc"
     "rackunit-lib"
-    ("_-exp" #:version "0.1")
+    ["_-exp" #:version "0.1"]
     "db-doc"
     "data-doc"
     "gui-doc"

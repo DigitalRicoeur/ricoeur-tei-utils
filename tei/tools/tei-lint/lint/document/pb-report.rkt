@@ -1,6 +1,7 @@
 #lang racket
 
-(require ricoeur/tei/base)
+(require ricoeur/tei/base
+         (only-in adjutor/unstable TODO/void))
 
 (module+ test
   (require rackunit))
