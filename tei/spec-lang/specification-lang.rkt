@@ -10,6 +10,7 @@
          (prefix-in racket: (only-in racket/base
                                      module+
                                      module*))
+         (only-in adjutor/unstable TODO/void)
          (for-syntax racket/base
                      racket/list
                      racket/sequence

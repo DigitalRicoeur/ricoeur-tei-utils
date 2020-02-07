@@ -7,6 +7,7 @@
          ricoeur/kernel/pre-kernel-lib
          "xexpr/plain-contracts.rkt"
          "xexpr/normalize.rkt"
+         (only-in adjutor/unstable TODO/void)
          (for-syntax racket/base
                      syntax/parse))
 

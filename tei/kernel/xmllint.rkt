@@ -9,9 +9,9 @@
          racket/runtime-path
          ricoeur/kernel/pre-kernel-lib
          "schema.rkt"
+         (only-in adjutor/unstable TODO/void)
          (for-syntax racket/base
-                     setup/matching-platform
-                     ))
+                     setup/matching-platform))
 
 (provide xmllint-available?
          (contract-out

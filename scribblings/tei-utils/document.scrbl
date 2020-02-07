@@ -4,7 +4,8 @@
 @(declare-exporting ricoeur/tei/base
                     ricoeur/tei)
 
-@(require "for-manual.rkt")
+@(require "for-manual.rkt"
+          (only-in adjutor/unstable TODO/void))
 
 @defpredicate[tei-document?]{
  Recognizes @deftech{TEI document} values.

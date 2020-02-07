@@ -9,8 +9,8 @@
                     )
 
 @(require "for-manual.rkt"
-          (for-label ricoeur/tei/kernel
-                     ))
+          (only-in adjutor/unstable TODO/void)
+          (for-label ricoeur/tei/kernel))
 
 @defproc[(xml-path? [pth path-string?]) any/c]{
  Tests whether @racket[pth] is syntactically a path to an XML file, 

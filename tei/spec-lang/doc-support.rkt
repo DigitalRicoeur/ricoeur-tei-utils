@@ -10,6 +10,7 @@
          racket/match
          racket/list
          adjutor
+         (only-in adjutor/unstable TODO/void)
          ricoeur/tei/kernel/schema)
 
 (provide (all-from-out adjutor)

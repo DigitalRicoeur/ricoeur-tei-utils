@@ -4,7 +4,7 @@
          ricoeur/tei/base
          ricoeur/tei/tools/tei-lint/lib
          "../toolkit.rkt"
-         )
+         (only-in adjutor/unstable TODO/void))
 
 (provide (contract-out
           [add-title+path

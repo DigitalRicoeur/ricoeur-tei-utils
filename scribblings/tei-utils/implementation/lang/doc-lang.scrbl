@@ -1,7 +1,8 @@
 #lang scribble/manual
 
 @title{Documentation Phase}
-@(require "for-lang-kernel.rkt")
+@(require "for-lang-kernel.rkt"
+          (only-in adjutor/unstable TODO/void))
 
 @TODO/void[Document what is actually provided!]
 @;{

@@ -1,6 +1,7 @@
 #lang racket/base
 
-(require ricoeur/tei/kernel)
+(require ricoeur/tei/kernel
+         (only-in adjutor/unstable multi))
 
 (require-provide (provide-only ricoeur/tei/kernel)
                  (multi ricoeur/tei/base

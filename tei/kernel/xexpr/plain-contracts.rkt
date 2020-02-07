@@ -1,7 +1,7 @@
 #lang racket/base
 
 (require racket/contract
-         adjutor)
+         (only-in adjutor/unstable TODO/void))
 
 (provide raw-xexpr-element/c
          raw-xexpr-element?

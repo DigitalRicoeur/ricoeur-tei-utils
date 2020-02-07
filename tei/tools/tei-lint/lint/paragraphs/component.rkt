@@ -5,7 +5,7 @@
          ricoeur/tei/tools/tei-lint/lib
          "../toolkit.rkt"
          "prompt.rkt"
-         )
+         (only-in adjutor/unstable TODO/void))
 
 (provide document-frame-component:paragraphs)
 
