@@ -18,4 +18,4 @@ ARTICLE=$DIR/journal-article-10.5406_ethnomusicology.57.1.0001.xml
 #TARGET=$ARTICLE
 TARGET=$DIR # does both $BOOK and $ARTICLE
 
-"$RACKET" demo.rkt $TARGET >/dev/null
+"$RACKET" --version && "$RACKET" demo.rkt $TARGET >/dev/null
